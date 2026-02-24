@@ -17,7 +17,7 @@ export default function Login({ onLogin }) {
       localStorage.setItem("access_token", data.access_token);
       onLogin();
     } catch (err) {
-      setError(err.message);
+      setError("Incorrect email or password. Please try again.");
     } finally {
       setLoading(false);
     }
