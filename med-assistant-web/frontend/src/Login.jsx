@@ -27,105 +27,128 @@ export default function Login({ onLogin }) {
     <div
       style={{
         minHeight: "100vh",
-        backgroundColor: "#020617",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         padding: "16px",
-        color: "#e5e7eb",
-        fontFamily:
-          'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       }}
     >
       <div
+        className="glass-panel animate-fade-in"
         style={{
           width: "100%",
-          maxWidth: "360px",
-          backgroundColor: "#020617",
-          borderRadius: "12px",
-          border: "1px solid rgba(148,163,184,0.4)",
-          padding: "18px 20px",
-          boxShadow: "0 18px 40px rgba(15,23,42,0.8)",
+          maxWidth: "400px",
+          padding: "40px 32px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
         }}
       >
-        <h1
-          style={{
-            fontSize: "20px",
-            fontWeight: 600,
-            marginBottom: "4px",
-          }}
-        >
-          Med Consult AI
-        </h1>
-        <p
-          style={{
-            fontSize: "13px",
-            color: "#9ca3af",
-            marginBottom: "16px",
-          }}
-        >
-          Log in to view your consultations, transcripts, and summaries.
-        </p>
-
-        <form onSubmit={handleSubmit}>
-          <label
+        <div style={{ textAlign: "center", marginBottom: "32px" }}>
+          <h1
+            className="text-gradient"
             style={{
-              display: "block",
-              fontSize: "12px",
-              marginBottom: "4px",
+              fontSize: "28px",
+              fontWeight: 700,
+              margin: "0 0 8px 0",
+              letterSpacing: "-0.02em",
             }}
           >
-            Email
-          </label>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            Med Consult AI
+          </h1>
+          <p
             style={{
-              width: "100%",
-              borderRadius: "8px",
-              border: "1px solid rgba(148,163,184,0.7)",
-              backgroundColor: "#020617",
-              color: "#e5e7eb",
-              padding: "6px 8px",
-              fontSize: "13px",
-              marginBottom: "10px",
-            }}
-          />
-
-          <label
-            style={{
-              display: "block",
-              fontSize: "12px",
-              marginBottom: "4px",
+              fontSize: "15px",
+              color: "#94a3b8",
+              margin: 0,
             }}
           >
-            Password
-          </label>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{
-              width: "100%",
-              borderRadius: "8px",
-              border: "1px solid rgba(148,163,184,0.7)",
-              backgroundColor: "#020617",
-              color: "#e5e7eb",
-              padding: "6px 8px",
-              fontSize: "13px",
-              marginBottom: "10px",
-            }}
-          />
+            Welcome back. Please sign in to your account.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ width: "100%", display: "flex", flexDirection: "column", gap: "20px" }} className="animate-fade-in stagger-1">
+          <div>
+            <label
+              style={{
+                display: "block",
+                fontSize: "13px",
+                fontWeight: 500,
+                color: "#cbd5e1",
+                marginBottom: "8px",
+              }}
+            >
+              Email Address
+            </label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="doctor@med.ai"
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                borderRadius: "8px",
+                border: "1px solid rgba(148, 163, 184, 0.2)",
+                backgroundColor: "rgba(15, 23, 42, 0.6)",
+                color: "#f8fafc",
+                padding: "12px 16px",
+                fontSize: "14px",
+                outline: "none",
+                transition: "border-color 0.2s",
+              }}
+              onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
+              onBlur={(e) => e.target.style.borderColor = "rgba(148, 163, 184, 0.2)"}
+            />
+          </div>
+
+          <div>
+            <label
+              style={{
+                display: "block",
+                fontSize: "13px",
+                fontWeight: 500,
+                color: "#cbd5e1",
+                marginBottom: "8px",
+              }}
+            >
+              Password
+            </label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                borderRadius: "8px",
+                border: "1px solid rgba(148, 163, 184, 0.2)",
+                backgroundColor: "rgba(15, 23, 42, 0.6)",
+                color: "#f8fafc",
+                padding: "12px 16px",
+                fontSize: "14px",
+                outline: "none",
+                transition: "border-color 0.2s",
+              }}
+              onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
+              onBlur={(e) => e.target.style.borderColor = "rgba(148, 163, 184, 0.2)"}
+            />
+          </div>
 
           {error && (
             <div
+              className="animate-fade-in"
               style={{
-                fontSize: "12px",
-                color: "#fbbf24",
-                marginBottom: "8px",
+                fontSize: "13px",
+                color: "#ef4444",
+                backgroundColor: "rgba(239, 68, 68, 0.1)",
+                border: "1px solid rgba(239, 68, 68, 0.2)",
+                borderRadius: "6px",
+                padding: "10px 12px",
+                textAlign: "center",
               }}
             >
               {error}
@@ -137,16 +160,17 @@ export default function Login({ onLogin }) {
             disabled={loading}
             style={{
               width: "100%",
-              borderRadius: "999px",
+              borderRadius: "8px",
               border: "none",
-              padding: "8px 12px",
-              fontSize: "13px",
-              fontWeight: 500,
-              background: "linear-gradient(135deg, #16a34a, #22c55e)",
-              color: "#052e16",
+              padding: "12px 16px",
+              fontSize: "15px",
+              fontWeight: 600,
+              background: "var(--primary-gradient)",
+              color: "white",
               cursor: loading ? "default" : "pointer",
               opacity: loading ? 0.7 : 1,
-              marginTop: "4px",
+              marginTop: "8px",
+              boxShadow: "0 4px 14px 0 rgba(59, 130, 246, 0.39)",
             }}
           >
             {loading ? "Signing in..." : "Sign in"}
@@ -154,14 +178,15 @@ export default function Login({ onLogin }) {
         </form>
 
         <p
+          className="animate-fade-in stagger-2"
           style={{
-            fontSize: "11px",
-            color: "#9ca3af",
-            marginTop: "10px",
+            fontSize: "12px",
+            color: "#64748b",
+            marginTop: "32px",
+            textAlign: "center",
           }}
         >
-          For your FYP demo, you can pre‑create a doctor user via a signup
-          endpoint or a script.
+          Protected portal for medical professionals.
         </p>
       </div>
     </div>
