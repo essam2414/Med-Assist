@@ -1,64 +1,161 @@
 // frontend/src/App.jsx
 import { useEffect, useState } from "react";
-
-const API_URL = "http://localhost:8000";
+import { fetchConsultations, createConsultation } from "./api";
 
 function App() {
-  const [backendMessage, setBackendMessage] = useState("Loading...");
-  const [health, setHealth] = useState(null);
+  const [consultations, setConsultations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [title, setTitle] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    // Fetch welcome message from backend
-    fetch(`${API_URL}/`)
-      .then((res) => res.json())
-      .then((data) => setBackendMessage(data.message))
-      .catch(() => setBackendMessage("Unable to reach backend"));
-
-    // Fetch health check
-    fetch(`${API_URL}/health`)
-      .then((res) => res.json())
-      .then((data) => setHealth(data.status))
-      .catch(() => setHealth("error"));
+    fetchConsultations()
+      .then(setConsultations)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }, []);
 
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    setError("");
+    try {
+      const created = await createConsultation(title || "New consultation");
+      setConsultations((prev) => [...prev, created]);
+      setTitle("");
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-slate-900/80 border border-slate-700/70 rounded-xl px-6 py-5 shadow-2xl">
-        <h1 className="text-xl font-semibold text-slate-50 mb-2">
-          Med Consult AI – Web App
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#020617",
+        color: "#e5e7eb",
+        padding: "24px",
+        fontFamily:
+          'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "640px",
+          margin: "0 auto",
+          backgroundColor: "#020617",
+          borderRadius: "12px",
+          border: "1px solid rgba(148,163,184,0.4)",
+          padding: "16px 18px",
+          boxShadow: "0 18px 40px rgba(15,23,42,0.8)",
+        }}
+      >
+        <h1
+          style={{
+            fontSize: "20px",
+            fontWeight: 600,
+            marginBottom: "6px",
+          }}
+        >
+          Med Consult AI – Consultations
         </h1>
-        <p className="text-sm text-slate-300 mb-4">
-          This app will become the **brains** of your AI medical assistant,
-          showing transcripts, summaries, and insights from online consultations.
+        <p
+          style={{
+            fontSize: "13px",
+            color: "#9ca3af",
+            marginBottom: "14px",
+          }}
+        >
+          Create and view consultations that will be linked to your Chrome
+          extension audio recordings and AI summaries.
         </p>
 
-        <div className="mt-3 rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-3">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs tracking-wide text-slate-400 uppercase">
-              Welcome
-            </span>
-            <span
-              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide ${
-                health === "ok"
-                  ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-300"
-                  : "border-amber-500/60 bg-amber-500/10 text-amber-200"
-              }`}
-            >
-              <span
-                className={`h-1.5 w-1.5 rounded-full ${
-                  health === "ok" ? "bg-emerald-400" : "bg-amber-400"
-                }`}
-              ></span>
-              Backend {health === "ok" ? "online" : "checking"}
-            </span>
+        <form
+          onSubmit={handleCreate}
+          style={{
+            display: "flex",
+            gap: "8px",
+            marginBottom: "12px",
+          }}
+        >
+          <input
+            style={{
+              flex: 1,
+              borderRadius: "8px",
+              border: "1px solid rgba(148,163,184,0.7)",
+              backgroundColor: "#020617",
+              color: "#e5e7eb",
+              padding: "6px 8px",
+              fontSize: "13px",
+            }}
+            placeholder="Consultation title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <button
+            type="submit"
+            style={{
+              borderRadius: "999px",
+              border: "none",
+              padding: "6px 12px",
+              fontSize: "13px",
+              fontWeight: 500,
+              background:
+                "linear-gradient(135deg, #16a34a, #22c55e)",
+              color: "#052e16",
+              cursor: "pointer",
+            }}
+          >
+            New
+          </button>
+        </form>
+
+        {error && (
+          <div
+            style={{
+              marginBottom: "8px",
+              fontSize: "12px",
+              color: "#fbbf24",
+            }}
+          >
+            Error: {error}
           </div>
-          <div className="text-sm text-slate-100">{backendMessage}</div>
-        </div>
+        )}
 
-        <p className="mt-4 text-xs text-slate-400">
-          Next steps: add pages for consultations, transcripts, and AI-generated
-          notes, and connect this app to your Chrome extension audio pipeline.
-        </p>
+        {loading ? (
+          <div style={{ fontSize: "14px", color: "#cbd5f5" }}>Loading…</div>
+        ) : consultations.length === 0 ? (
+          <div style={{ fontSize: "14px", color: "#cbd5f5" }}>
+            No consultations yet. Create the first one above.
+          </div>
+        ) : (
+          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {consultations.map((c) => (
+              <li
+                key={c.id}
+                style={{
+                  borderRadius: "8px",
+                  border: "1px solid rgba(148,163,184,0.6)",
+                  backgroundColor: "#020617",
+                  padding: "8px 10px",
+                  marginBottom: "6px",
+                  fontSize: "13px",
+                }}
+              >
+                <div style={{ fontWeight: 500 }}>{c.title}</div>
+                <div
+                  style={{
+                    fontSize: "11px",
+                    color: "#9ca3af",
+                    marginTop: "2px",
+                  }}
+                >
+                  ID: {c.id} · Created at:{" "}
+                  {new Date(c.created_at).toLocaleString()}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
