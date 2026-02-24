@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from datetime import datetime
 from typing import List
 
@@ -36,6 +36,7 @@ def list_consultations(
 ):
     qs = (
         db.query(ConsultationModel)
+        .options(joinedload(ConsultationModel.transcripts), joinedload(ConsultationModel.insights))
         .filter(ConsultationModel.doctor_id == current_user.id)
         .order_by(ConsultationModel.created_at.desc())
     )
