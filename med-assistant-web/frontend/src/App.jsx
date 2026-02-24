@@ -1,8 +1,9 @@
 // frontend/src/App.jsx
 import { useEffect, useState } from "react";
+import Login from "./Login";
 import { fetchConsultations, createConsultation } from "./api";
 
-function App() {
+function Dashboard({ onLogout }) {
   const [consultations, setConsultations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
@@ -40,7 +41,7 @@ function App() {
     >
       <div
         style={{
-          maxWidth: "640px",
+          maxWidth: "680px",
           margin: "0 auto",
           backgroundColor: "#020617",
           borderRadius: "12px",
@@ -49,25 +50,48 @@ function App() {
           boxShadow: "0 18px 40px rgba(15,23,42,0.8)",
         }}
       >
-        <h1
+        <div
           style={{
-            fontSize: "20px",
-            fontWeight: 600,
-            marginBottom: "6px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "10px",
           }}
         >
-          Med Consult AI – Consultations
-        </h1>
-        <p
-          style={{
-            fontSize: "13px",
-            color: "#9ca3af",
-            marginBottom: "14px",
-          }}
-        >
-          Create and view consultations that will be linked to your Chrome
-          extension audio recordings and AI summaries.
-        </p>
+          <div>
+            <h1
+              style={{
+                fontSize: "20px",
+                fontWeight: 600,
+                marginBottom: "4px",
+              }}
+            >
+              Med Consult AI – Dashboard
+            </h1>
+            <p
+              style={{
+                fontSize: "13px",
+                color: "#9ca3af",
+              }}
+            >
+              View and create consultations linked to your online meetings.
+            </p>
+          </div>
+          <button
+            onClick={onLogout}
+            style={{
+              borderRadius: "999px",
+              border: "1px solid rgba(148,163,184,0.7)",
+              backgroundColor: "#020617",
+              color: "#e5e7eb",
+              fontSize: "11px",
+              padding: "4px 10px",
+              cursor: "pointer",
+            }}
+          >
+            Log out
+          </button>
+        </div>
 
         <form
           onSubmit={handleCreate}
@@ -99,8 +123,7 @@ function App() {
               padding: "6px 12px",
               fontSize: "13px",
               fontWeight: 500,
-              background:
-                "linear-gradient(135deg, #16a34a, #22c55e)",
+              background: "linear-gradient(135deg, #16a34a, #22c55e)",
               color: "#052e16",
               cursor: "pointer",
             }}
@@ -159,6 +182,27 @@ function App() {
       </div>
     </div>
   );
+}
+
+function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    !!localStorage.getItem("access_token")
+  );
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    setIsLoggedIn(false);
+  };
+
+  if (!isLoggedIn) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  return <Dashboard onLogout={handleLogout} />;
 }
 
 export default App;
