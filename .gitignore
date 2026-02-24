@@ -30,3 +30,7 @@ hs_err_pid*
 
 # Ignore Gradle build output directory
 build
+
+#ignore cache files.
+__pycache__/
+*.pyc
