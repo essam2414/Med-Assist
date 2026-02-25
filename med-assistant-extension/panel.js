@@ -1,5 +1,50 @@
 // panel.js
 
+const loginView = document.getElementById('login-view');
+const appView = document.getElementById('app-view');
+const loginBtn = document.getElementById('login-btn');
+
+loginBtn.addEventListener('click', () => {
+  chrome.tabs.create({ url: 'http://localhost:5173/' });
+});
+
+function checkAuthStatus() {
+  chrome.cookies.get({ url: 'http://localhost', name: 'logged_in' }, (cookie1) => {
+    chrome.cookies.get({ url: 'http://127.0.0.1', name: 'logged_in' }, (cookie2) => {
+      if ((cookie1 && cookie1.value === '1') || (cookie2 && cookie2.value === '1')) {
+        loginView.style.display = 'none';
+        appView.style.display = 'flex';
+      } else {
+        loginView.style.display = 'flex';
+        appView.style.display = 'none';
+      }
+    });
+  });
+}
+
+// Initial check
+checkAuthStatus();
+
+// Add listeners to detect login state changes efficiently
+window.addEventListener('focus', checkAuthStatus);
+
+if (chrome.tabs) {
+  chrome.tabs.onActivated.addListener(checkAuthStatus);
+  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.status === 'complete' && tab.url && (tab.url.includes('localhost') || tab.url.includes('127.0.0.1'))) {
+      checkAuthStatus();
+    }
+  });
+}
+
+if (chrome.cookies) {
+  chrome.cookies.onChanged.addListener((changeInfo) => {
+    if (changeInfo.cookie.name === 'logged_in') {
+      checkAuthStatus();
+    }
+  });
+}
+
 const statusEl = document.getElementById('status');
 const statusDot = document.getElementById('status-dot');
 const statusLabel = document.getElementById('status-label');
