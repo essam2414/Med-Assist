@@ -13,8 +13,7 @@ export default function Login({ onLogin }) {
     setError("");
     setLoading(true);
     try {
-      const data = await login(email, password);
-      localStorage.setItem("access_token", data.access_token);
+      await login(email, password);
       onLogin();
     } catch (err) {
       setError("Incorrect email or password. Please try again.");

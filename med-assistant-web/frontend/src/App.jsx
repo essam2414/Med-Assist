@@ -1,7 +1,7 @@
 // frontend/src/App.jsx
 import { useEffect, useState } from "react";
 import Login from "./Login";
-import { fetchConsultations, createConsultation } from "./api";
+import { fetchConsultations, createConsultation, logout } from "./api";
 
 function Dashboard({ onLogout }) {
   const [consultations, setConsultations] = useState([]);
@@ -12,9 +12,15 @@ function Dashboard({ onLogout }) {
   useEffect(() => {
     fetchConsultations()
       .then(setConsultations)
-      .catch((err) => setError(err.message))
+      .catch((err) => {
+        if (err.message === "unauthorized") {
+          onLogout();
+        } else {
+          setError(err.message);
+        }
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [onLogout]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -24,7 +30,11 @@ function Dashboard({ onLogout }) {
       setConsultations((prev) => [created, ...prev]);
       setTitle("");
     } catch (err) {
-      setError(err.message);
+      if (err.message === "unauthorized") {
+        onLogout();
+      } else {
+        setError(err.message);
+      }
     }
   };
 
@@ -87,7 +97,7 @@ function Dashboard({ onLogout }) {
         <div className="glass-panel" style={{ padding: "32px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
             <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "#f8fafc" }}>Recent Consultations</h2>
-            
+
             <form onSubmit={handleCreate} style={{ display: "flex", gap: "12px", width: "100%", maxWidth: "400px" }}>
               <input
                 style={{
@@ -160,7 +170,7 @@ function Dashboard({ onLogout }) {
                       <span>Started: {new Date(c.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
                     </div>
                   </div>
-                  
+
                   <div style={{ display: "flex", gap: "8px" }}>
                     {c.transcripts?.length > 0 ? (
                       <span style={{ padding: "4px 10px", backgroundColor: "rgba(59, 130, 246, 0.1)", color: "#60a5fa", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(59, 130, 246, 0.2)" }}>
@@ -194,15 +204,18 @@ function Dashboard({ onLogout }) {
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(
-    !!localStorage.getItem("access_token")
+    document.cookie.includes("logged_in=1")
   );
 
   const handleLogin = () => {
     setIsLoggedIn(true);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("access_token");
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (e) { }
+    document.cookie = "logged_in=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     setIsLoggedIn(false);
   };
 

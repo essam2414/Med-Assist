@@ -1,349 +1,409 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Med Consult Assistant</title>
-    <style>
-      :root {
-        --bg: #0f172a;
-        --bg-elevated: #020617;
-        --accent: #22c55e;
-        --accent-soft: rgba(34, 197, 94, 0.12);
-        --accent-border: rgba(34, 197, 94, 0.4);
-        --danger: #ef4444;
-        --danger-soft: rgba(239, 68, 68, 0.12);
-        --text: #e5e7eb;
-        --text-muted: #9ca3af;
-        --border-subtle: rgba(148, 163, 184, 0.25);
-      }
 
-      * {
-        box-sizing: border-box;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <title>Med Consult Assistant</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-elevated: #020617;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.12);
+      --accent-border: rgba(34, 197, 94, 0.4);
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.12);
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --border-subtle: rgba(148, 163, 184, 0.25);
+    }
 
-      body {
-        margin: 0;
-        padding: 0;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-          sans-serif;
-        background: radial-gradient(circle at top, #111827 0, #020617 55%);
-        color: var(--text);
-      }
+    * {
+      box-sizing: border-box;
+    }
 
-      .app {
-        padding: 12px 14px 14px 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+        sans-serif;
+      background: radial-gradient(circle at top, #111827 0, #020617 55%);
+      color: var(--text);
+    }
 
-      .header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-      }
+    .app {
+      padding: 12px 14px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
-      .title-group {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
 
-      .title {
-        font-size: 14px;
-        font-weight: 600;
-        letter-spacing: 0.02em;
-      }
+    .title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
 
-      .subtitle {
-        font-size: 11px;
-        color: var(--text-muted);
-      }
+    .title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
 
-      .status-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
-        border-radius: 999px;
-        border: 1px solid var(--border-subtle);
-        background: rgba(15, 23, 42, 0.75);
-        font-size: 11px;
-        white-space: nowrap;
-      }
+    .subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
 
-      .status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 999px;
-        background: var(--text-muted);
-      }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.75);
+      font-size: 11px;
+      white-space: nowrap;
+    }
 
-      .status-dot.active {
-        background: var(--accent);
-        box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25);
-      }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--text-muted);
+    }
 
-      .status-dot.idle {
-        background: var(--text-muted);
-      }
+    .status-dot.active {
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25);
+    }
 
-      .status-label {
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-      }
+    .status-dot.idle {
+      background: var(--text-muted);
+    }
 
-      .card {
-        background: linear-gradient(
-          135deg,
+    .status-label {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .card {
+      background: linear-gradient(135deg,
           rgba(15, 23, 42, 0.95),
-          rgba(15, 23, 42, 0.9)
-        );
-        border-radius: 10px;
-        padding: 10px 10px 8px 10px;
-        border: 1px solid rgba(148, 163, 184, 0.35);
-        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.8);
-      }
+          rgba(15, 23, 42, 0.9));
+      border-radius: 10px;
+      padding: 10px 10px 8px 10px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.8);
+    }
 
-      .card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 6px;
-      }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
 
-      .card-title {
-        font-size: 12px;
-        font-weight: 500;
-      }
+    .card-title {
+      font-size: 12px;
+      font-weight: 500;
+    }
 
-      .card-caption {
-        font-size: 11px;
-        color: var(--text-muted);
-      }
+    .card-caption {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
 
-      .controls {
-        display: flex;
-        gap: 8px;
-        margin-top: 6px;
-      }
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
 
-      .btn {
-        flex: 1;
-        font-size: 12px;
-        padding: 7px 10px;
-        border-radius: 999px;
-        border: 1px solid transparent;
-        cursor: pointer;
-        font-weight: 500;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        background: rgba(15, 23, 42, 0.9);
-        color: var(--text);
-        transition: background 0.15s ease, border-color 0.15s ease,
-          transform 0.08s ease, box-shadow 0.08s ease;
-      }
+    .btn {
+      flex: 1;
+      font-size: 12px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text);
+      transition: background 0.15s ease, border-color 0.15s ease,
+        transform 0.08s ease, box-shadow 0.08s ease;
+    }
 
-      .btn-primary {
-        background: linear-gradient(135deg, #16a34a, #22c55e);
-        border-color: rgba(34, 197, 94, 0.8);
-        color: #052e16;
-        box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.5),
-          0 14px 30px rgba(22, 163, 74, 0.4);
-      }
+    .btn-primary {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      border-color: rgba(34, 197, 94, 0.8);
+      color: #052e16;
+      box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.5),
+        0 14px 30px rgba(22, 163, 74, 0.4);
+    }
 
-      .btn-primary:hover:not(:disabled) {
-        background: linear-gradient(135deg, #16a34a, #4ade80);
-        transform: translateY(-1px);
-        box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.6),
-          0 16px 36px rgba(22, 163, 74, 0.55);
-      }
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #16a34a, #4ade80);
+      transform: translateY(-1px);
+      box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.6),
+        0 16px 36px rgba(22, 163, 74, 0.55);
+    }
 
-      .btn-ghost {
-        border-color: rgba(148, 163, 184, 0.5);
-        background: rgba(15, 23, 42, 0.85);
-      }
+    .btn-ghost {
+      border-color: rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.85);
+    }
 
-      .btn-ghost:hover:not(:disabled) {
-        border-color: rgba(148, 163, 184, 0.9);
-        background: rgba(15, 23, 42, 0.95);
-      }
+    .btn-ghost:hover:not(:disabled) {
+      border-color: rgba(148, 163, 184, 0.9);
+      background: rgba(15, 23, 42, 0.95);
+    }
 
-      .btn:disabled {
-        opacity: 0.45;
-        cursor: default;
-        box-shadow: none;
-        transform: none;
-      }
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
 
-      .btn-icon {
-        font-size: 13px;
-      }
+    .btn-icon {
+      font-size: 13px;
+    }
 
-      .audio-card {
-        margin-top: 4px;
-      }
+    .audio-card {
+      margin-top: 4px;
+    }
 
-      .audio-wrapper {
-        margin-top: 6px;
-      }
+    .audio-wrapper {
+      margin-top: 6px;
+    }
 
-      .audio-shell {
-        padding: 6px 8px;
-        border-radius: 8px;
-        border: 1px dashed rgba(148, 163, 184, 0.5);
-        background: rgba(15, 23, 42, 0.7);
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
+    .audio-shell {
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px dashed rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
 
-      .audio-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-      }
+    .audio-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
 
-      .audio-times {
-        font-size: 10px;
-        color: var(--text-muted);
-        display: flex;
-        justify-content: space-between;
-        gap: 6px;
-      }
+    .audio-times {
+      font-size: 10px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+    }
 
-      .audio-time {
-        min-width: 32px;
-        text-align: right;
-      }
+    .audio-time {
+      min-width: 32px;
+      text-align: right;
+    }
 
-      .audio-bar {
-        position: relative;
-        flex: 1;
-        height: 6px;
-        border-radius: 999px;
-        background: rgba(15, 23, 42, 0.9);
-        overflow: hidden;
-        border: 1px solid rgba(148, 163, 184, 0.3);
-        cursor: pointer;
-      }
+    .audio-bar {
+      position: relative;
+      flex: 1;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      cursor: pointer;
+    }
 
-      .audio-bar-fill {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: 0%;
-        border-radius: 999px;
-        background: linear-gradient(90deg, #22c55e, #4ade80);
-        box-shadow: 0 0 6px rgba(34, 197, 94, 0.7);
-      }
+    .audio-bar-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #22c55e, #4ade80);
+      box-shadow: 0 0 6px rgba(34, 197, 94, 0.7);
+    }
 
-      .hint {
-        font-size: 10px;
-        color: var(--text-muted);
-        margin-top: 4px;
-      }
+    .hint {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
 
-      .status-text {
-        font-size: 11px;
-        color: var(--text-muted);
-      }
+    .status-text {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
 
-      .status-text strong {
-        color: var(--text);
-        font-weight: 500;
-      }
+    .status-text strong {
+      color: var(--text);
+      font-weight: 500;
+    }
 
-      /* Hide native audio controls */
-      audio {
-        display: none;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="app">
-      <div class="header">
-        <div class="title-group">
-          <div class="title">Med Consult Assistant</div>
-          <div class="subtitle">Chrome tab audio capture · PoC</div>
-        </div>
-        <div class="status-pill">
-          <div class="status-dot idle" id="status-dot"></div>
-          <span class="status-label" id="status-label">Idle</span>
-        </div>
+    /* Login View Styles */
+    .login-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .login-box {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.9));
+      border-radius: 12px;
+      padding: 32px 24px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.8);
+      width: 100%;
+      max-width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .login-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+      color: var(--accent);
+    }
+
+    .login-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .login-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    #app-view {
+      display: none;
+    }
+
+    /* Hide native audio controls */
+    audio {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="login-view" class="login-view">
+    <div class="login-box">
+      <div class="login-icon">🔒</div>
+      <h2 class="login-title">Authentication Required</h2>
+      <p class="login-subtitle">Please log in to the Med Consult AI Assistant web application to use this extension.</p>
+      <button class="btn btn-primary" id="login-btn" style="margin-top: 8px; font-size: 14px; padding: 10px 16px;">
+        Log In to Web App
+      </button>
+    </div>
+  </div>
+
+  <div class="app" id="app-view">
+    <div class="header">
+      <div class="title-group">
+        <div class="title">Med Consult Assistant</div>
+        <div class="subtitle">Chrome tab audio capture · PoC</div>
       </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Recording controls</div>
-            <div class="card-caption">
-              Capture the current consultation tab’s audio.
-            </div>
-          </div>
-        </div>
-
-        <div class="controls">
-          <button class="btn btn-primary" id="start">
-            <span class="btn-icon">●</span>
-            Start capture
-          </button>
-          <button class="btn btn-ghost" id="stop" disabled>
-            <span class="btn-icon">■</span>
-            Stop
-          </button>
-        </div>
-      </div>
-
-      <div class="card audio-card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Latest recording</div>
-            <div class="card-caption">
-              Review the captured audio before sending to your AI backend.
-            </div>
-          </div>
-        </div>
-
-        <div class="controls">
-          <button class="btn btn-ghost" id="play" disabled>
-            <span class="btn-icon">▶</span>
-            Play recording
-          </button>
-        </div>
-
-        <div class="audio-wrapper">
-          <div class="audio-shell">
-            <div class="audio-row">
-              <div class="audio-bar" id="audio-bar">
-                <div class="audio-bar-fill" id="audio-bar-fill"></div>
-              </div>
-            </div>
-            <div class="audio-times">
-              <div class="audio-time" id="time-current">0:00</div>
-              <div class="audio-time" id="time-duration">0:00</div>
-            </div>
-          </div>
-        </div>
-
-        <audio id="player"></audio>
-
-        <div class="hint">
-          Tip: Start capture on the active Google Meet / telehealth tab, then
-          stop once the consultation ends.
-        </div>
-      </div>
-
-      <div class="status-text" id="status">
-        Not capturing. Open this on a tab with an active call or video.
+      <div class="status-pill">
+        <div class="status-dot idle" id="status-dot"></div>
+        <span class="status-label" id="status-label">Idle</span>
       </div>
     </div>
 
-    <script src="panel.js"></script>
-  </body>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Recording controls</div>
+          <div class="card-caption">
+            Capture the current consultation tab’s audio.
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="start">
+          <span class="btn-icon">●</span>
+          Start capture
+        </button>
+        <button class="btn btn-ghost" id="stop" disabled>
+          <span class="btn-icon">■</span>
+          Stop
+        </button>
+      </div>
+    </div>
+
+    <div class="card audio-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Latest recording</div>
+          <div class="card-caption">
+            Review the captured audio before sending to your AI backend.
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-ghost" id="play" disabled>
+          <span class="btn-icon">▶</span>
+          Play recording
+        </button>
+      </div>
+
+      <div class="audio-wrapper">
+        <div class="audio-shell">
+          <div class="audio-row">
+            <div class="audio-bar" id="audio-bar">
+              <div class="audio-bar-fill" id="audio-bar-fill"></div>
+            </div>
+          </div>
+          <div class="audio-times">
+            <div class="audio-time" id="time-current">0:00</div>
+            <div class="audio-time" id="time-duration">0:00</div>
+          </div>
+        </div>
+      </div>
+
+      <audio id="player"></audio>
+
+      <div class="hint">
+        Tip: Start capture on the active Google Meet / telehealth tab, then
+        stop once the consultation ends.
+      </div>
+    </div>
+
+    <div class="status-text" id="status">
+      Not capturing. Open this on a tab with an active call or video.
+    </div>
+  </div>
+
+  <script src="panel.js"></script>
+</body>
+
 </html>
