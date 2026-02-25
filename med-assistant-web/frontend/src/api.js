@@ -16,7 +16,7 @@ export async function login(email, password) {
 }
 
 function authHeaders() {
-  const token = localStorage.getItem("access_token");
+  const token = sessionStorage.getItem("access_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -27,6 +27,9 @@ export async function fetchConsultations() {
       ...authHeaders(),
     },
   });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
   if (!res.ok) throw new Error("Failed to load consultations");
   return res.json();
 }
@@ -40,6 +43,9 @@ export async function createConsultation(title) {
     },
     body: JSON.stringify({ title }),
   });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
   if (!res.ok) throw new Error("Failed to create consultation");
   return res.json();
 }

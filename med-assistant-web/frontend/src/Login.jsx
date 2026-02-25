@@ -14,7 +14,7 @@ export default function Login({ onLogin }) {
     setLoading(true);
     try {
       const data = await login(email, password);
-      localStorage.setItem("access_token", data.access_token);
+      sessionStorage.setItem("access_token", data.access_token);
       onLogin();
     } catch (err) {
       setError("Incorrect email or password. Please try again.");
