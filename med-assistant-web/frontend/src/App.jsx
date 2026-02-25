@@ -1,7 +1,7 @@
 // frontend/src/App.jsx
 import { useEffect, useState } from "react";
 import Login from "./Login";
-import { fetchConsultations, createConsultation } from "./api";
+import { fetchConsultations, createConsultation, logout } from "./api";
 
 function Dashboard({ onLogout }) {
   const [consultations, setConsultations] = useState([]);
@@ -204,15 +204,18 @@ function Dashboard({ onLogout }) {
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(
-    !!sessionStorage.getItem("access_token")
+    document.cookie.includes("logged_in=1")
   );
 
   const handleLogin = () => {
     setIsLoggedIn(true);
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem("access_token");
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (e) { }
+    document.cookie = "logged_in=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     setIsLoggedIn(false);
   };
 

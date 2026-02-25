@@ -6,6 +6,7 @@ export async function login(email, password) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
+    credentials: "include",
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -15,17 +16,20 @@ export async function login(email, password) {
   return res.json(); // { access_token, token_type }
 }
 
-function authHeaders() {
-  const token = sessionStorage.getItem("access_token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
+export async function logout() {
+  const res = await fetch(`${API_URL}/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
+  return res.json().catch(() => ({}));
 }
 
 export async function fetchConsultations() {
   const res = await fetch(`${API_URL}/consultations`, {
     headers: {
       "Content-Type": "application/json",
-      ...authHeaders(),
     },
+    credentials: "include",
   });
   if (res.status === 401) {
     throw new Error("unauthorized");
@@ -39,8 +43,8 @@ export async function createConsultation(title) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...authHeaders(),
     },
+    credentials: "include",
     body: JSON.stringify({ title }),
   });
   if (res.status === 401) {

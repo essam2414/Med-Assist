@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
@@ -43,7 +43,7 @@ def signup(user_in: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login")
-def login(user_in: UserLogin, db: Session = Depends(get_db)):
+def login(user_in: UserLogin, response: Response, db: Session = Depends(get_db)):
     user = (
         db.query(models.user.User)
         .filter(models.user.User.email == user_in.email)
@@ -56,4 +56,26 @@ def login(user_in: UserLogin, db: Session = Depends(get_db)):
         )
 
     token = create_access_token({"sub": str(user.id)})
+    
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        max_age=86400 * 7,
+        samesite="lax",
+    )
+    response.set_cookie(
+        key="logged_in",
+        value="1",
+        httponly=False,
+        max_age=86400 * 7,
+        samesite="lax",
+    )
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.post("/logout")
+def logout(response: Response):
+    response.delete_cookie("access_token")
+    response.delete_cookie("logged_in")
+    return {"message": "Logged out"}
