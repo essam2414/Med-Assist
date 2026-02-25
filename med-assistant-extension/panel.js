@@ -149,42 +149,49 @@ startBtn.addEventListener('click', async () => {
   try {
     const [tab] = await chrome.tabs.query({
       active: true,
-      currentWindow: true
+      lastFocusedWindow: true
     });
 
-    if (!tab || !tab.id || tab.url.startsWith('chrome://')) {
-      setStateIdle('Cannot capture this page. Try a normal website tab.');
+    if (tab && tab.url && tab.url.startsWith('chrome://')) {
+      setStateIdle('Cannot capture chrome:// pages. Try a normal website tab.');
       return;
     }
 
-    const streamId = await new Promise((resolve, reject) => {
-      chrome.tabCapture.getMediaStreamId({ targetTabId: tab.id }, (id) => {
-        if (chrome.runtime.lastError) {
-          reject(chrome.runtime.lastError);
-        } else {
-          resolve(id);
-        }
+    try {
+      mediaStream = await navigator.mediaDevices.getDisplayMedia({
+        audio: true,
+        video: {
+          displaySurface: 'browser'
+        },
+        preferCurrentTab: false
       });
-    });
+    } catch (e) {
+      if (e.name === 'NotAllowedError') {
+        setStateIdle('Permission denied or window closed. Capture was cancelled.');
+        return;
+      }
+      throw e;
+    }
 
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        mandatory: {
-          chromeMediaSource: 'tab',
-          chromeMediaSourceId: streamId
-        }
-      },
-      video: false
-    });
+    const audioTrack = mediaStream.getAudioTracks()[0];
+    if (!audioTrack) {
+      mediaStream.getTracks().forEach(track => track.stop());
+      setStateIdle('Please check "Share audio" when selecting a tab or screen.');
+      return;
+    }
+
+    // Stop video tracks since we only want audio
+    mediaStream.getVideoTracks().forEach(track => track.stop());
+
+    const audioStream = new MediaStream([audioTrack]);
 
     audioContext = new AudioContext();
-    sourceNode = audioContext.createMediaStreamSource(mediaStream);
-    sourceNode.connect(audioContext.destination);
+    sourceNode = audioContext.createMediaStreamSource(audioStream);
 
     recordedChunks = [];
     resetProgress();
 
-    mediaRecorder = new MediaRecorder(mediaStream, {
+    mediaRecorder = new MediaRecorder(audioStream, {
       mimeType: 'audio/webm'
     });
 
