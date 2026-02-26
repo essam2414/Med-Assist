@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
-from app import models
+from app import models, deps
 from app.schemas.user import UserCreate, UserLogin, UserOut
 from app.auth import hash_password, verify_password, create_access_token
 
@@ -79,3 +79,8 @@ def logout(response: Response):
     response.delete_cookie("access_token")
     response.delete_cookie("logged_in")
     return {"message": "Logged out"}
+
+
+@router.get("/me", response_model=UserOut)
+def get_me(current_user: models.user.User = Depends(deps.get_current_user)):
+    return current_user
