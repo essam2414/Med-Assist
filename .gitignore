@@ -34,3 +34,4 @@ build
 #ignore cache files.
 __pycache__/
 *.pyc
+med-assistant-web/backend/.env
