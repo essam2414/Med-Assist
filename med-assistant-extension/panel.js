@@ -59,6 +59,10 @@ const barFill = document.getElementById('audio-bar-fill');
 const timeCurrent = document.getElementById('time-current');
 const timeDuration = document.getElementById('time-duration');
 
+const transcribeBtn = document.getElementById('transcribe');
+const consultationSelect = document.getElementById('consultation-select');
+const transcriptBox = document.getElementById('transcript-box');
+
 let mediaStream = null;
 let mediaRecorder = null;
 let recordedChunks = [];
@@ -142,6 +146,97 @@ function resetProgress() {
   timeDuration.textContent = '0:00';
 }
 
+function loadConsultations() {
+  fetch('http://localhost:8000/consultations/', {
+    headers: {},
+    credentials: 'include'
+  })
+    .then(res => res.json())
+    .then(data => {
+      consultationSelect.innerHTML = '<option value="">Select a consultation</option>';
+      if (Array.isArray(data)) {
+        data.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.title || `Consultation ${c.id}`;
+          consultationSelect.appendChild(opt);
+        });
+      }
+    })
+    .catch(err => {
+      console.error('Failed to load consultations:', err);
+      consultationSelect.innerHTML = '<option value="">Error loading consultations</option>';
+    });
+}
+
+// Call loadConsultations after initial auth check if logged in
+function checkAuthStatus() {
+  chrome.cookies.get({ url: 'http://localhost', name: 'logged_in' }, (cookie1) => {
+    chrome.cookies.get({ url: 'http://127.0.0.1', name: 'logged_in' }, (cookie2) => {
+      if ((cookie1 && cookie1.value === '1') || (cookie2 && cookie2.value === '1')) {
+        loginView.style.display = 'none';
+        appView.style.display = 'flex';
+        // Only load if we haven't loaded yet
+        if (consultationSelect.options.length <= 1) {
+          loadConsultations();
+        }
+      } else {
+        loginView.style.display = 'flex';
+        appView.style.display = 'none';
+      }
+    });
+  });
+}
+
+function displayTranscripts(transcripts) {
+  if (!transcripts || transcripts.length === 0) {
+    transcriptBox.style.display = 'none';
+    return;
+  }
+
+  transcriptBox.style.display = 'flex';
+  transcriptBox.innerHTML = '';
+
+  // Sort transcripts by start time
+  const sorted = [...transcripts].sort((a, b) => a.start_time - b.start_time);
+
+  sorted.forEach(t => {
+    const entry = document.createElement('div');
+    entry.className = 'transcript-entry';
+
+    let timeStr = formatTime(t.start_time);
+
+    entry.innerHTML = `
+      <div class="transcript-speaker">${t.speaker || 'Speaker'} <span style="color:var(--text-muted); font-weight:normal;">[${timeStr}]</span></div>
+      <div class="transcript-text">${t.text}</div>
+    `;
+    transcriptBox.appendChild(entry);
+  });
+
+  transcriptBox.scrollTop = transcriptBox.scrollHeight;
+}
+
+consultationSelect.addEventListener('change', () => {
+  const consultationId = consultationSelect.value;
+  if (!consultationId) {
+    displayTranscripts([]);
+    return;
+  }
+
+  // Fetch transcripts for this consultation
+  fetch(`http://localhost:8000/consultations/`, { credentials: 'include' })
+    .then(res => res.json())
+    .then(data => {
+      const consultation = data.find(c => c.id == consultationId);
+      if (consultation && consultation.transcripts) {
+        displayTranscripts(consultation.transcripts);
+      } else {
+        displayTranscripts([]);
+      }
+    })
+    .catch(console.error);
+});
+
 startBtn.addEventListener('click', async () => {
   setStateProcessing();
   statusEl.textContent = 'Requesting permission and starting capture…';
@@ -149,42 +244,49 @@ startBtn.addEventListener('click', async () => {
   try {
     const [tab] = await chrome.tabs.query({
       active: true,
-      currentWindow: true
+      lastFocusedWindow: true
     });
 
-    if (!tab || !tab.id || tab.url.startsWith('chrome://')) {
-      setStateIdle('Cannot capture this page. Try a normal website tab.');
+    if (tab && tab.url && tab.url.startsWith('chrome://')) {
+      setStateIdle('Cannot capture chrome:// pages. Try a normal website tab.');
       return;
     }
 
-    const streamId = await new Promise((resolve, reject) => {
-      chrome.tabCapture.getMediaStreamId({ targetTabId: tab.id }, (id) => {
-        if (chrome.runtime.lastError) {
-          reject(chrome.runtime.lastError);
-        } else {
-          resolve(id);
-        }
+    try {
+      mediaStream = await navigator.mediaDevices.getDisplayMedia({
+        audio: true,
+        video: {
+          displaySurface: 'browser'
+        },
+        preferCurrentTab: false
       });
-    });
+    } catch (e) {
+      if (e.name === 'NotAllowedError') {
+        setStateIdle('Permission denied or window closed. Capture was cancelled.');
+        return;
+      }
+      throw e;
+    }
 
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        mandatory: {
-          chromeMediaSource: 'tab',
-          chromeMediaSourceId: streamId
-        }
-      },
-      video: false
-    });
+    const audioTrack = mediaStream.getAudioTracks()[0];
+    if (!audioTrack) {
+      mediaStream.getTracks().forEach(track => track.stop());
+      setStateIdle('Please check "Share audio" when selecting a tab or screen.');
+      return;
+    }
+
+    // Stop video tracks since we only want audio
+    mediaStream.getVideoTracks().forEach(track => track.stop());
+
+    const audioStream = new MediaStream([audioTrack]);
 
     audioContext = new AudioContext();
-    sourceNode = audioContext.createMediaStreamSource(mediaStream);
-    sourceNode.connect(audioContext.destination);
+    sourceNode = audioContext.createMediaStreamSource(audioStream);
 
     recordedChunks = [];
     resetProgress();
 
-    mediaRecorder = new MediaRecorder(mediaStream, {
+    mediaRecorder = new MediaRecorder(audioStream, {
       mimeType: 'audio/webm'
     });
 
@@ -203,6 +305,8 @@ startBtn.addEventListener('click', async () => {
 
       recordedBlobUrl = URL.createObjectURL(blob);
       audioEl.src = recordedBlobUrl;
+
+      transcribeBtn.disabled = false;
 
       cleanupStream();
       setStateReady();
@@ -232,6 +336,62 @@ playBtn.addEventListener('click', () => {
   if (recordedBlobUrl) {
     audioEl.currentTime = 0;
     audioEl.play();
+  }
+});
+
+transcribeBtn.addEventListener('click', async () => {
+  const consultationId = consultationSelect.value;
+  if (!consultationId) {
+    alert("Please select a consultation session first.");
+    return;
+  }
+
+  if (recordedChunks.length === 0) {
+    alert("No audio recorded.");
+    return;
+  }
+
+  transcribeBtn.disabled = true;
+  const originalText = transcribeBtn.innerHTML;
+  transcribeBtn.innerHTML = '<span class="btn-icon">⏳</span> Transcribing...';
+
+  const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+  const formData = new FormData();
+  formData.append('audio', blob, 'recording.webm');
+  formData.append('consultation_id', consultationId);
+
+  try {
+    const res = await fetch('http://localhost:8000/transcripts/upload', {
+      method: 'POST',
+      body: formData,
+      credentials: 'include'
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || 'Upload failed');
+    }
+
+    const data = await res.json();
+
+    // Add the new transcript to the display
+    transcriptBox.style.display = 'flex';
+    const entry = document.createElement('div');
+    entry.className = 'transcript-entry';
+    let timeStr = formatTime(data.start_time || 0);
+    entry.innerHTML = `
+      <div class="transcript-speaker">${data.speaker || 'Speaker'} <span style="color:var(--text-muted); font-weight:normal;">[${timeStr}]</span></div>
+      <div class="transcript-text">${data.text}</div>
+    `;
+    transcriptBox.appendChild(entry);
+    transcriptBox.scrollTop = transcriptBox.scrollHeight;
+
+  } catch (e) {
+    console.error('Transcription error:', e);
+    alert('Transcription error: ' + e.message);
+  } finally {
+    transcribeBtn.disabled = false;
+    transcribeBtn.innerHTML = originalText;
   }
 });
 

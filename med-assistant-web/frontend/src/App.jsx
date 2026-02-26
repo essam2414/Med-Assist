@@ -8,8 +8,9 @@ function Dashboard({ onLogout }) {
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [error, setError] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
 
-  useEffect(() => {
+  const loadData = () => {
     fetchConsultations()
       .then(setConsultations)
       .catch((err) => {
@@ -20,6 +21,17 @@ function Dashboard({ onLogout }) {
         }
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
+
+    // Poll for updates every 3 seconds
+    const intervalId = setInterval(() => {
+      loadData();
+    }, 3000);
+
+    return () => clearInterval(intervalId);
   }, [onLogout]);
 
   const handleCreate = async (e) => {
@@ -45,6 +57,17 @@ function Dashboard({ onLogout }) {
     0
   );
   const totalInsights = consultations.filter((c) => c.insights).length;
+
+  const handleToggleExpand = (id) => {
+    setExpandedId((prevId) => (prevId === id ? null : id));
+  };
+
+  const formatTime = (seconds) => {
+    if (!isFinite(seconds)) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
   return (
     <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
@@ -148,50 +171,89 @@ function Dashboard({ onLogout }) {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {consultations.map((c, index) => (
-                <div
-                  key={c.id}
-                  className="animate-fade-in"
-                  style={{
-                    animationDelay: `${(index % 5 + 3) * 0.1}s`,
-                    padding: "20px",
-                    backgroundColor: "rgba(30, 41, 59, 0.4)",
-                    border: "1px solid rgba(148, 163, 184, 0.1)",
-                    borderRadius: "12px",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                    gap: "16px"
-                  }}
-                >
-                  <div>
-                    <h3 style={{ margin: "0 0 6px 0", fontSize: "16px", fontWeight: 600, color: "#f1f5f9" }}>{c.title}</h3>
-                    <div style={{ display: "flex", gap: "16px", fontSize: "13px", color: "#94a3b8" }}>
-                      <span>Started: {new Date(c.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                <div key={c.id} className="animate-fade-in" style={{ animationDelay: `${(index % 5 + 3) * 0.1}s` }}>
+                  <div
+                    onClick={() => handleToggleExpand(c.id)}
+                    style={{
+                      padding: "20px",
+                      backgroundColor: "rgba(30, 41, 59, 0.4)",
+                      border: "1px solid rgba(148, 163, 184, 0.1)",
+                      borderRadius: expandedId === c.id ? "12px 12px 0 0" : "12px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: "16px",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease"
+                    }}
+                  >
+                    <div>
+                      <h3 style={{ margin: "0 0 6px 0", fontSize: "16px", fontWeight: 600, color: "#f1f5f9" }}>{c.title}</h3>
+                      <div style={{ display: "flex", gap: "16px", fontSize: "13px", color: "#94a3b8" }}>
+                        <span>Started: {new Date(c.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      {c.transcripts?.length > 0 ? (
+                        <span style={{ padding: "4px 10px", backgroundColor: "rgba(59, 130, 246, 0.1)", color: "#60a5fa", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(59, 130, 246, 0.2)" }}>
+                          {c.transcripts.length} Moments
+                        </span>
+                      ) : (
+                        <span style={{ padding: "4px 10px", backgroundColor: "rgba(148, 163, 184, 0.05)", color: "#64748b", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(148, 163, 184, 0.1)" }}>
+                          No Recording
+                        </span>
+                      )}
+
+                      {c.insights ? (
+                        <span style={{ padding: "4px 10px", backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#34d399", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(16, 185, 129, 0.2)" }}>
+                          Insight Ready
+                        </span>
+                      ) : (
+                        <span style={{ padding: "4px 10px", backgroundColor: "rgba(148, 163, 184, 0.05)", color: "#64748b", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(148, 163, 184, 0.1)" }}>
+                          Processing
+                        </span>
+                      )}
+
+                      <span style={{ marginLeft: "8px", color: "#94a3b8", transform: expandedId === c.id ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>
+                        ▼
+                      </span>
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    {c.transcripts?.length > 0 ? (
-                      <span style={{ padding: "4px 10px", backgroundColor: "rgba(59, 130, 246, 0.1)", color: "#60a5fa", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(59, 130, 246, 0.2)" }}>
-                        {c.transcripts.length} Moments
-                      </span>
-                    ) : (
-                      <span style={{ padding: "4px 10px", backgroundColor: "rgba(148, 163, 184, 0.05)", color: "#64748b", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(148, 163, 184, 0.1)" }}>
-                        No Recording
-                      </span>
-                    )}
-
-                    {c.insights ? (
-                      <span style={{ padding: "4px 10px", backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#34d399", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(16, 185, 129, 0.2)" }}>
-                        Insight Ready
-                      </span>
-                    ) : (
-                      <span style={{ padding: "4px 10px", backgroundColor: "rgba(148, 163, 184, 0.05)", color: "#64748b", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(148, 163, 184, 0.1)" }}>
-                        Processing
-                      </span>
-                    )}
-                  </div>
+                  {expandedId === c.id && (
+                    <div style={{
+                      padding: "20px",
+                      backgroundColor: "rgba(15, 23, 42, 0.6)",
+                      border: "1px solid rgba(148, 163, 184, 0.1)",
+                      borderTop: "none",
+                      borderRadius: "0 0 12px 12px",
+                    }}>
+                      <h4 style={{ margin: "0 0 16px 0", fontSize: "14px", fontWeight: 600, color: "#e2e8f0" }}>Transcripts</h4>
+                      {c.transcripts && c.transcripts.length > 0 ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                          {[...c.transcripts].sort((a, b) => a.start_time - b.start_time).map((t) => (
+                            <div key={t.id} style={{ display: "flex", gap: "12px", fontSize: "14px" }}>
+                              <div style={{ color: "#3b82f6", fontWeight: 500, minWidth: "80px" }}>
+                                {t.speaker}
+                                <div style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "normal" }}>
+                                  [{formatTime(t.start_time)}]
+                                </div>
+                              </div>
+                              <div style={{ color: "#f8fafc", lineHeight: "1.5", flex: 1, backgroundColor: "rgba(255,255,255,0.02)", padding: "10px 14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                                {t.text}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{ color: "#94a3b8", fontSize: "14px", fontStyle: "italic" }}>
+                          No transcripts available for this consultation.
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
