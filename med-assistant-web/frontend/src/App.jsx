@@ -1,7 +1,85 @@
 // frontend/src/App.jsx
 import { useEffect, useState } from "react";
 import Login from "./Login";
-import { fetchConsultations, createConsultation, logout } from "./api";
+import { fetchConsultations, createConsultation, logout, fetchCurrentUser } from "./api";
+import Sidebar from "./Sidebar";
+
+function Settings({ onLogout }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchCurrentUser()
+      .then(setUser)
+      .catch((err) => {
+        if (err.message === "unauthorized") {
+          if (onLogout) onLogout();
+        } else {
+          setError(err.message);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [onLogout]);
+
+  return (
+    <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }} className="animate-fade-in">
+        <div>
+          <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0" }}>
+            Settings
+          </h1>
+          <p style={{ color: "#94a3b8", margin: 0, fontSize: "16px" }}>
+            Manage your account and preferences.
+          </p>
+        </div>
+      </div>
+      <div className="glass-panel animate-fade-in stagger-1" style={{ padding: "32px", display: "flex", flexDirection: "column", gap: "24px" }}>
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "48px", color: "#64748b" }}>Loading your data...</div>
+        ) : error ? (
+          <div style={{ padding: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", color: "#ef4444", fontSize: "14px" }}>
+            {error}
+          </div>
+        ) : user ? (
+          <div>
+            <h2 style={{ fontSize: "20px", fontWeight: 600, margin: "0 0 24px 0", color: "#f8fafc" }}>Profile Information</h2>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px", maxWidth: "600px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Full Name</label>
+                <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px" }}>
+                  {user.name}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Email Address</label>
+                <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px" }}>
+                  {user.email}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Role</label>
+                <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px", textTransform: "capitalize" }}>
+                  {user.role}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Account Created</label>
+                <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px" }}>
+                  {new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 function Dashboard({ onLogout }) {
   const [consultations, setConsultations] = useState([]);
@@ -81,22 +159,6 @@ function Dashboard({ onLogout }) {
             Here is an overview of your recent patient consultations.
           </p>
         </div>
-        <button
-          onClick={onLogout}
-          className="glass-panel"
-          style={{
-            padding: "8px 16px",
-            color: "#e2e8f0",
-            backgroundColor: "rgba(30, 41, 59, 0.4)",
-            border: "1px solid rgba(148, 163, 184, 0.2)",
-            borderRadius: "999px",
-            fontSize: "14px",
-            fontWeight: 500,
-            cursor: "pointer",
-          }}
-        >
-          Sign Out
-        </button>
       </div>
 
       {/* Stats Overview */}
@@ -260,7 +322,7 @@ function Dashboard({ onLogout }) {
           )}
         </div>
       </div>
-    </div>
+    </div >
   );
 }
 
@@ -268,6 +330,8 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(
     document.cookie.includes("logged_in=1")
   );
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const handleLogin = () => {
     setIsLoggedIn(true);
@@ -276,7 +340,9 @@ function App() {
   const handleLogout = async () => {
     try {
       await logout();
-    } catch (e) { }
+    } catch (e) {
+      console.error(e);
+    }
     document.cookie = "logged_in=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     setIsLoggedIn(false);
   };
@@ -285,7 +351,21 @@ function App() {
     return <Login onLogin={handleLogin} />;
   }
 
-  return <Dashboard onLogout={handleLogout} />;
+  return (
+    <div style={{ display: "flex", width: "100%", height: "100vh", overflow: "hidden", margin: 0, padding: 0 }}>
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onLogout={handleLogout}
+        isCollapsed={!isSidebarOpen}
+        toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+      />
+      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", height: "100%" }}>
+        {activeTab === "dashboard" && <Dashboard onLogout={handleLogout} />}
+        {activeTab === "settings" && <Settings onLogout={handleLogout} />}
+      </div>
+    </div>
+  );
 }
 
 export default App;

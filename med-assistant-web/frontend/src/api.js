@@ -24,6 +24,20 @@ export async function logout() {
   return res.json().catch(() => ({}));
 }
 
+export async function fetchCurrentUser() {
+  const res = await fetch(`${API_URL}/auth/me`, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) throw new Error("Failed to fetch user details");
+  return res.json();
+}
+
 export async function fetchConsultations() {
   const res = await fetch(`${API_URL}/consultations`, {
     headers: {
