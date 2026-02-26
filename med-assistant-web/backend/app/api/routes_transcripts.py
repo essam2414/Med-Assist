@@ -14,7 +14,7 @@ from app.services.stt_service import transcribe_audio
 
 router = APIRouter(prefix="/transcripts", tags=["transcripts"])
 
-@router.post("/upload", response_model=TranscriptEntry)
+@router.post("/upload", response_model=List[TranscriptEntry])
 def upload_and_transcribe(
     audio: UploadFile = File(...),
     consultation_id: int = Form(...),
@@ -38,8 +38,8 @@ def upload_and_transcribe(
             temp_path = temp_audio.name
             
         try:
-            # Transcribe the audio
-            transcript_text = transcribe_audio(temp_path)
+            # Transcribe the audio, getting a list of dict segments
+            transcript_segments = transcribe_audio(temp_path)
         finally:
             # Clean up the temp file
             if os.path.exists(temp_path):
@@ -48,19 +48,26 @@ def upload_and_transcribe(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error transcribing audio: {str(e)}")
 
-    # Create the db record
-    t = TranscriptModel(
-        consultation_id=consultation.id,
-        speaker="Speaker", # Defaulting speaker
-        start_time=0.0,
-        end_time=None,
-        text=transcript_text,
-        created_at=datetime.utcnow(),
-    )
-    db.add(t)
+    # Create the db records
+    created_transcripts = []
+    for segment in transcript_segments:
+        t = TranscriptModel(
+            consultation_id=consultation.id,
+            speaker=segment["speaker"], 
+            start_time=segment["start_time"],
+            end_time=segment["end_time"],
+            text=segment["text"],
+            created_at=datetime.utcnow(),
+        )
+        db.add(t)
+        created_transcripts.append(t)
+        
     db.commit()
-    db.refresh(t)
-    return t
+    
+    for t in created_transcripts:
+        db.refresh(t)
+        
+    return created_transcripts
 
 @router.post("/", response_model=TranscriptEntry)
 def create_transcript(
