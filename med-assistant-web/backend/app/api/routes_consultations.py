@@ -41,3 +41,23 @@ def list_consultations(
         .order_by(ConsultationModel.created_at.desc())
     )
     return list(qs)
+@router.delete("/{consultation_id}")
+def delete_consultation(
+    consultation_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    c = (
+        db.query(ConsultationModel)
+        .filter(
+            ConsultationModel.id == consultation_id,
+            ConsultationModel.doctor_id == current_user.id,
+        )
+        .first()
+    )
+    if not c:
+        raise HTTPException(status_code=404, detail="Consultation not found")
+
+    db.delete(c)
+    db.commit()
+    return {"status": "ok"}
