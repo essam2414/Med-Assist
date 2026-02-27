@@ -8,12 +8,84 @@ loginBtn.addEventListener('click', () => {
   chrome.tabs.create({ url: 'http://localhost:5173/' });
 });
 
+/* Permissions Management */
+const permsIcon = document.getElementById('perms-icon');
+const permsPopup = document.getElementById('perms-popup');
+const micStatus = document.getElementById('mic-status');
+const managePermsBtn = document.getElementById('manage-perms');
+let currentMicPermission = 'prompt';
+
+async function refreshPermissions() {
+  try {
+    const micPerm = await navigator.permissions.query({ name: 'microphone' });
+    updatePermsUI(micPerm.state);
+    micPerm.onchange = () => updatePermsUI(micPerm.state);
+  } catch (e) {
+    console.error('Permission query failed', e);
+  }
+}
+
+function updatePermsUI(state) {
+  currentMicPermission = state;
+  const statusSubText = document.querySelector('#perms-popup p');
+
+  if (state === 'granted') {
+    permsIcon.classList.remove('missing');
+    permsIcon.classList.add('granted');
+    permsIcon.textContent = '🎙️';
+    micStatus.textContent = 'Granted';
+    micStatus.className = 'perms-channel-status perms-status-granted';
+
+    if (managePermsBtn) {
+      managePermsBtn.textContent = 'Manage Permissions';
+      managePermsBtn.className = 'btn manage-perms-btn bg-red';
+    }
+    if (statusSubText) {
+      statusSubText.innerHTML = 'Microphone is active. Click to manage settings.<br/><br/><strong>Tab Audio:</strong> When you press "Start Capture", ensure you select a tab and check the "Also share tab audio" box.';
+    }
+
+    if (startBtn) startBtn.disabled = statusLabel.textContent === 'Recording' || statusLabel.textContent === 'Processing';
+  } else {
+    permsIcon.classList.remove('granted');
+    permsIcon.classList.add('missing');
+    permsIcon.textContent = '!';
+    micStatus.textContent = state === 'denied' ? 'Blocked' : 'Inactive';
+    micStatus.className = 'perms-channel-status perms-status-missing';
+
+    if (managePermsBtn) {
+      managePermsBtn.textContent = 'Enable Microphone Access';
+      managePermsBtn.className = 'btn manage-perms-btn bg-green';
+    }
+    if (statusSubText) {
+      statusSubText.textContent = 'Microphone is inactive. Press to enable microphone.';
+    }
+
+    if (startBtn) startBtn.disabled = true;
+  }
+}
+
+permsIcon.addEventListener('click', (e) => {
+  e.stopPropagation();
+  permsPopup.classList.toggle('active');
+});
+
+document.addEventListener('click', (e) => {
+  if (!permsPopup.contains(e.target) && e.target !== permsIcon) {
+    permsPopup.classList.remove('active');
+  }
+});
+
+managePermsBtn.addEventListener('click', () => {
+  chrome.runtime.openOptionsPage();
+});
+
 function checkAuthStatus() {
   chrome.cookies.get({ url: 'http://localhost', name: 'logged_in' }, (cookie1) => {
     chrome.cookies.get({ url: 'http://127.0.0.1', name: 'logged_in' }, (cookie2) => {
       if ((cookie1 && cookie1.value === '1') || (cookie2 && cookie2.value === '1')) {
         loginView.style.display = 'none';
         appView.style.display = 'flex';
+        refreshPermissions();
         if (consultationSelect.options.length <= 1) {
           loadConsultations();
         }
@@ -97,7 +169,7 @@ function setStateIdle(message) {
   statusDot.classList.add('idle');
   statusLabel.textContent = 'Idle';
 
-  startBtn.disabled = false;
+  startBtn.disabled = currentMicPermission !== 'granted';
   stopBtn.disabled = true;
 }
 
@@ -239,21 +311,9 @@ consultationSelect.addEventListener('change', () => {
 
 startBtn.addEventListener('click', async () => {
   setStateProcessing();
-  statusEl.textContent = 'Requesting permission and starting capture…';
+  statusEl.textContent = 'Starting capture…';
 
   try {
-    // 1. Check Microphone Permission explicitly first!
-    try {
-      const micPerm = await navigator.permissions.query({ name: 'microphone' });
-      if (micPerm.state !== 'granted') {
-        chrome.runtime.openOptionsPage();
-        setStateIdle('Microphone permission required. Please grant it in the new tab, then try again.');
-        return;
-      }
-    } catch (e) {
-      console.log('Permission query error (ignoring)', e);
-    }
-
     const [tab] = await chrome.tabs.query({
       active: true,
       lastFocusedWindow: true
