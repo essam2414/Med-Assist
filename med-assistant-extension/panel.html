@@ -463,13 +463,25 @@
 
       <audio id="player"></audio>
 
-      <div class="transcript-box" id="transcript-box" style="display: none;">
-        <!-- Transcripts will appear here -->
-      </div>
 
       <div class="hint">
         Tip: Start capture on the active Google Meet / telehealth tab, then
         stop once the consultation ends.
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 4px;">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Transcripts</div>
+          <div class="card-caption">
+            Transcripts for the selected consultation.
+          </div>
+        </div>
+      </div>
+      <div id="transcripts-container"
+        style="max-height: 150px; overflow-y: auto; font-size: 12px; color: var(--text); display: flex; flex-direction: column; gap: 6px; padding-top: 6px;">
+        <div style="color: var(--text-muted); font-style: italic;">No transcripts found.</div>
       </div>
     </div>
 

@@ -10,13 +10,15 @@ from app.models.transcript import TranscriptEntry as TranscriptModel
 from app.models.consultation import Consultation as ConsultationModel
 from app.schemas.transcript import TranscriptEntry, TranscriptEntryCreate
 from app.models.user import User
-from app.services.stt_service import transcribe_audio
+from app.services.stt_service import transcribe_audio_async
+import asyncio
 
 router = APIRouter(prefix="/transcripts", tags=["transcripts"])
 
 @router.post("/upload", response_model=List[TranscriptEntry])
-def upload_and_transcribe(
-    audio: UploadFile = File(...),
+async def upload_and_transcribe(
+    audio_file: UploadFile = File(...),
+    mic_file: UploadFile = File(...),
     consultation_id: int = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -30,23 +32,44 @@ def upload_and_transcribe(
     if not consultation:
         raise HTTPException(status_code=404, detail="Consultation not found")
         
-    # Save UploadFile to a temporary file
+    transcript_segments = []
+
+    # Write both uploaded files to disk simultaneously
+    # Process audio_file (Patient/Others)
+    suffix_audio = os.path.splitext(audio_file.filename)[1] if audio_file.filename else ".webm"
+    temp_audio = tempfile.NamedTemporaryFile(delete=False, suffix=suffix_audio)
+    temp_audio.write(await audio_file.read())
+    temp_path_audio = temp_audio.name
+    temp_audio.close()
+        
+    # Process mic_file (Doctor)
+    suffix_mic = os.path.splitext(mic_file.filename)[1] if mic_file.filename else ".webm"
+    temp_mic = tempfile.NamedTemporaryFile(delete=False, suffix=suffix_mic)
+    temp_mic.write(await mic_file.read())
+    temp_path_mic = temp_mic.name
+    temp_mic.close()
+
     try:
-        suffix = os.path.splitext(audio.filename)[1] if audio.filename else ".webm"
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_audio:
-            temp_audio.write(audio.file.read())
-            temp_path = temp_audio.name
+        # Run both transcriptions concurrently
+        coro_audio = transcribe_audio_async(temp_path_audio, speaker_name="Patient/System")
+        coro_mic = transcribe_audio_async(temp_path_mic, speaker_name="Doctor")
+        
+        results = await asyncio.gather(coro_audio, coro_mic, return_exceptions=True)
+        
+        for result in results:
+            if isinstance(result, Exception):
+                raise HTTPException(status_code=500, detail=f"Error transcribing audio: {str(result)}")
+            transcript_segments.extend(result)
             
-        try:
-            # Transcribe the audio, getting a list of dict segments
-            transcript_segments = transcribe_audio(temp_path)
-        finally:
-            # Clean up the temp file
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
-                
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error transcribing audio: {str(e)}")
+    finally:
+        # Cleanup temp files
+        if os.path.exists(temp_path_audio):
+            os.remove(temp_path_audio)
+        if os.path.exists(temp_path_mic):
+            os.remove(temp_path_mic)
+
+    # Sort interleaved segments by start time
+    transcript_segments.sort(key=lambda x: x["start_time"])
 
     # Create the db records
     created_transcripts = []

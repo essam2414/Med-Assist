@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Med Consult Assistant - Microphone Permission</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: system-ui, sans-serif;
+            text-align: center;
+        }
+
+        .card {
+            background-color: #1e293b;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        h2 {
+            margin: 0 0 1rem 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        p {
+            color: #cbd5e1;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .status {
+            margin-bottom: 1rem;
+            font-weight: 500;
+            color: #4ade80;
+        }
+
+        .error {
+            margin-bottom: 1rem;
+            font-weight: 500;
+            color: #ef4444;
+        }
+
+        button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #2563eb;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h2>Med Consult Assistant</h2>
+        <p>The Chrome extension needs native microphone access to run in the background and mix your voice with the
+            consultation audio.</p>
+
+        <div id="status" class="status"></div>
+        <div id="error" class="error"></div>
+
+        <button id="grantBtn">Grant Microphone Access</button>
+    </div>
+
+    <script src="options.js"></script>
+</body>
+
+</html>

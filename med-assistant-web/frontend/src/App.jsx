@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Login from "./Login";
 import { fetchConsultations, createConsultation, logout, fetchCurrentUser } from "./api";
 import Sidebar from "./Sidebar";
+import MicPermission from "./MicPermission";
 
 function Settings({ onLogout }) {
   const [user, setUser] = useState(null);
@@ -346,6 +347,10 @@ function App() {
     document.cookie = "logged_in=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     setIsLoggedIn(false);
   };
+
+  if (window.location.pathname === "/mic") {
+    return <MicPermission />;
+  }
 
   if (!isLoggedIn) {
     return <Login onLogin={handleLogin} />;

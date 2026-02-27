@@ -14,6 +14,9 @@ function checkAuthStatus() {
       if ((cookie1 && cookie1.value === '1') || (cookie2 && cookie2.value === '1')) {
         loginView.style.display = 'none';
         appView.style.display = 'flex';
+        if (consultationSelect.options.length <= 1) {
+          loadConsultations();
+        }
       } else {
         loginView.style.display = 'flex';
         appView.style.display = 'none';
@@ -25,7 +28,6 @@ function checkAuthStatus() {
 // Initial check
 checkAuthStatus();
 
-// Add listeners to detect login state changes efficiently
 window.addEventListener('focus', checkAuthStatus);
 
 if (chrome.tabs) {
@@ -61,14 +63,22 @@ const timeDuration = document.getElementById('time-duration');
 
 const transcribeBtn = document.getElementById('transcribe');
 const consultationSelect = document.getElementById('consultation-select');
-const transcriptBox = document.getElementById('transcript-box');
+const transcriptBox = document.getElementById('transcripts-container');
 
 let mediaStream = null;
-let mediaRecorder = null;
-let recordedChunks = [];
-let recordedBlobUrl = null;
+let micStream = null;
+let liveAudio = null;
 let audioContext = null;
-let sourceNode = null;
+
+let mediaRecorderTab = null;
+let mediaRecorderMic = null;
+let tabRecordedChunks = [];
+let micRecordedChunks = [];
+let tabBlob = null;
+let micBlob = null;
+let tabBlobUrl = null;
+let micBlobUrl = null;
+let recordingTabId = null;
 
 function formatTime(seconds) {
   if (!isFinite(seconds)) return '0:00';
@@ -126,17 +136,26 @@ function setStateReady() {
 }
 
 function cleanupStream() {
-  if (sourceNode) {
-    sourceNode.disconnect();
-    sourceNode = null;
+  if (mediaStream) {
+    mediaStream.getTracks().forEach((t) => t.stop());
+    mediaStream = null;
+  }
+  if (micStream) {
+    micStream.getTracks().forEach((t) => t.stop());
+    micStream = null;
+  }
+  if (liveAudio) {
+    liveAudio.pause();
+    liveAudio.srcObject = null;
+    liveAudio = null;
   }
   if (audioContext) {
     audioContext.close();
     audioContext = null;
   }
-  if (mediaStream) {
-    mediaStream.getTracks().forEach((t) => t.stop());
-    mediaStream = null;
+  if (recordingTabId) {
+    chrome.tabs.update(recordingTabId, { muted: false }).catch(() => { });
+    recordingTabId = null;
   }
 }
 
@@ -167,25 +186,6 @@ function loadConsultations() {
       console.error('Failed to load consultations:', err);
       consultationSelect.innerHTML = '<option value="">Error loading consultations</option>';
     });
-}
-
-// Call loadConsultations after initial auth check if logged in
-function checkAuthStatus() {
-  chrome.cookies.get({ url: 'http://localhost', name: 'logged_in' }, (cookie1) => {
-    chrome.cookies.get({ url: 'http://127.0.0.1', name: 'logged_in' }, (cookie2) => {
-      if ((cookie1 && cookie1.value === '1') || (cookie2 && cookie2.value === '1')) {
-        loginView.style.display = 'none';
-        appView.style.display = 'flex';
-        // Only load if we haven't loaded yet
-        if (consultationSelect.options.length <= 1) {
-          loadConsultations();
-        }
-      } else {
-        loginView.style.display = 'flex';
-        appView.style.display = 'none';
-      }
-    });
-  });
 }
 
 function displayTranscripts(transcripts) {
@@ -242,6 +242,18 @@ startBtn.addEventListener('click', async () => {
   statusEl.textContent = 'Requesting permission and starting capture…';
 
   try {
+    // 1. Check Microphone Permission explicitly first!
+    try {
+      const micPerm = await navigator.permissions.query({ name: 'microphone' });
+      if (micPerm.state !== 'granted') {
+        chrome.runtime.openOptionsPage();
+        setStateIdle('Microphone permission required. Please grant it in the new tab, then try again.');
+        return;
+      }
+    } catch (e) {
+      console.log('Permission query error (ignoring)', e);
+    }
+
     const [tab] = await chrome.tabs.query({
       active: true,
       lastFocusedWindow: true
@@ -255,9 +267,7 @@ startBtn.addEventListener('click', async () => {
     try {
       mediaStream = await navigator.mediaDevices.getDisplayMedia({
         audio: true,
-        video: {
-          displaySurface: 'browser'
-        },
+        video: { displaySurface: 'browser' },
         preferCurrentTab: false
       });
     } catch (e) {
@@ -274,46 +284,61 @@ startBtn.addEventListener('click', async () => {
       setStateIdle('Please check "Share audio" when selecting a tab or screen.');
       return;
     }
-
-    // Stop video tracks since we only want audio
     mediaStream.getVideoTracks().forEach(track => track.stop());
 
-    const audioStream = new MediaStream([audioTrack]);
-
-    audioContext = new AudioContext();
-    sourceNode = audioContext.createMediaStreamSource(audioStream);
-
-    recordedChunks = [];
-    resetProgress();
-
-    mediaRecorder = new MediaRecorder(audioStream, {
-      mimeType: 'audio/webm'
+    // 2. Capture Microphone with Acoustic Echo Cancellation
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      }
     });
 
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data && event.data.size > 0) {
-        recordedChunks.push(event.data);
-      }
+    // 3. Mute to prevent physical iteration, pipe to internal audio renderer
+    recordingTabId = tab.id;
+    await chrome.tabs.update(recordingTabId, { muted: true });
+
+    liveAudio = new Audio();
+    liveAudio.srcObject = mediaStream;
+    liveAudio.volume = 1;
+    liveAudio.play();
+
+    // 4. Record the specific streams independently!
+    tabRecordedChunks = [];
+    micRecordedChunks = [];
+    tabBlob = null;
+    micBlob = null;
+
+    if (tabBlobUrl) { URL.revokeObjectURL(tabBlobUrl); tabBlobUrl = null; }
+    if (micBlobUrl) { URL.revokeObjectURL(micBlobUrl); micBlobUrl = null; }
+    transcribeBtn.disabled = true;
+
+    // Start Tab Recorder
+    mediaRecorderTab = new MediaRecorder(mediaStream, { mimeType: 'audio/webm' });
+    mediaRecorderTab.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) tabRecordedChunks.push(e.data);
+    };
+    mediaRecorderTab.onstop = () => {
+      tabBlob = new Blob(tabRecordedChunks, { type: 'audio/webm' });
+      checkBlobsReady();
     };
 
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(recordedChunks, { type: 'audio/webm' });
-
-      if (recordedBlobUrl) {
-        URL.revokeObjectURL(recordedBlobUrl);
-      }
-
-      recordedBlobUrl = URL.createObjectURL(blob);
-      audioEl.src = recordedBlobUrl;
-
-      transcribeBtn.disabled = false;
-
-      cleanupStream();
-      setStateReady();
+    // Start Mic Recorder
+    mediaRecorderMic = new MediaRecorder(micStream, { mimeType: 'audio/webm' });
+    mediaRecorderMic.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) micRecordedChunks.push(e.data);
+    };
+    mediaRecorderMic.onstop = () => {
+      micBlob = new Blob(micRecordedChunks, { type: 'audio/webm' });
+      checkBlobsReady();
     };
 
-    mediaRecorder.start();
+    mediaRecorderTab.start();
+    mediaRecorderMic.start();
+
     setStateRecording();
+    resetProgress();
   } catch (err) {
     console.error('Error starting capture:', err);
     setStateIdle('Error starting capture: ' + err.message);
@@ -321,19 +346,37 @@ startBtn.addEventListener('click', async () => {
   }
 });
 
+function checkBlobsReady() {
+  if (tabBlob && micBlob) {
+    cleanupStream(); // Stream cleanup done after both blobs are ready
+    tabBlobUrl = URL.createObjectURL(tabBlob);
+    micBlobUrl = URL.createObjectURL(micBlob);
+
+    audioEl.src = tabBlobUrl;
+    // Note: We use the tab audio duration to represent the whole clip since they start/stop together
+    transcribeBtn.disabled = false;
+    setStateReady();
+  }
+}
+
 stopBtn.addEventListener('click', () => {
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+  let isRecording = false;
+  if (mediaRecorderTab && mediaRecorderTab.state !== 'inactive') {
+    mediaRecorderTab.stop();
+    isRecording = true;
+  }
+  if (mediaRecorderMic && mediaRecorderMic.state !== 'inactive') {
+    mediaRecorderMic.stop();
+    isRecording = true;
+  }
+  if (isRecording) {
     setStateProcessing();
     statusEl.textContent = 'Stopping capture and finalising audio…';
-    mediaRecorder.stop();
-  } else {
-    cleanupStream();
-    setStateIdle();
   }
 });
 
 playBtn.addEventListener('click', () => {
-  if (recordedBlobUrl) {
+  if (tabBlobUrl) {
     audioEl.currentTime = 0;
     audioEl.play();
   }
@@ -346,8 +389,8 @@ transcribeBtn.addEventListener('click', async () => {
     return;
   }
 
-  if (recordedChunks.length === 0) {
-    alert("No audio recorded.");
+  if (!tabBlob || !micBlob) {
+    alert("Audio is not fully recorded yet.");
     return;
   }
 
@@ -355,9 +398,9 @@ transcribeBtn.addEventListener('click', async () => {
   const originalText = transcribeBtn.innerHTML;
   transcribeBtn.innerHTML = '<span class="btn-icon">⏳</span> Transcribing...';
 
-  const blob = new Blob(recordedChunks, { type: 'audio/webm' });
   const formData = new FormData();
-  formData.append('audio', blob, 'recording.webm');
+  formData.append('audio_file', tabBlob, 'tab_recording.webm');
+  formData.append('mic_file', micBlob, 'mic_recording.webm');
   formData.append('consultation_id', consultationId);
 
   try {
@@ -373,17 +416,29 @@ transcribeBtn.addEventListener('click', async () => {
     }
 
     const data = await res.json();
-
-    // Add the new transcript to the display
     transcriptBox.style.display = 'flex';
-    const entry = document.createElement('div');
-    entry.className = 'transcript-entry';
-    let timeStr = formatTime(data.start_time || 0);
-    entry.innerHTML = `
-      <div class="transcript-speaker">${data.speaker || 'Speaker'} <span style="color:var(--text-muted); font-weight:normal;">[${timeStr}]</span></div>
-      <div class="transcript-text">${data.text}</div>
-    `;
-    transcriptBox.appendChild(entry);
+
+    if (Array.isArray(data)) {
+      data.forEach(segment => {
+        const entry = document.createElement('div');
+        entry.className = 'transcript-entry';
+        let timeStr = formatTime(segment.start_time || 0);
+        entry.innerHTML = `
+              <div class="transcript-speaker">${segment.speaker || 'Speaker'} <span style="color:var(--text-muted); font-weight:normal;">[${timeStr}]</span></div>
+              <div class="transcript-text">${segment.text}</div>
+            `;
+        transcriptBox.appendChild(entry);
+      })
+    } else {
+      const entry = document.createElement('div');
+      entry.className = 'transcript-entry';
+      let timeStr = formatTime(data.start_time || 0);
+      entry.innerHTML = `
+          <div class="transcript-speaker">${data.speaker || 'Speaker'} <span style="color:var(--text-muted); font-weight:normal;">[${timeStr}]</span></div>
+          <div class="transcript-text">${data.text}</div>
+        `;
+      transcriptBox.appendChild(entry);
+    }
     transcriptBox.scrollTop = transcriptBox.scrollHeight;
 
   } catch (e) {
