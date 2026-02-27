@@ -326,6 +326,69 @@ function AIAnalytics() {
   );
 }
 
+function AskAI() {
+  return (
+    <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }} className="animate-fade-in">
+        <div>
+          <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0" }}>
+            Ask <span className="text-gradient">AI</span>
+          </h1>
+          <p style={{ color: "#94a3b8", margin: 0, fontSize: "16px" }}>
+            Chat with your medical assistant about consultation history.
+          </p>
+        </div>
+      </div>
+
+      <div className="glass-panel animate-fade-in stagger-1" style={{ padding: "48px", textAlign: "center" }}>
+        <div style={{
+          width: "80px",
+          height: "80px",
+          margin: "0 auto 32px auto",
+          background: "rgba(139, 92, 246, 0.1)",
+          borderRadius: "20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#8b5cf6"
+        }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M12 7v5" /><path d="M12 16h.01" /></svg>
+        </div>
+
+        <h2 style={{ fontSize: "24px", fontWeight: 600, color: "#f8fafc", marginBottom: "16px" }}>Interactive AI Chat Coming Soon</h2>
+
+        <div style={{ maxWidth: "600px", margin: "0 auto", color: "#94a3b8", border: "1px solid rgba(148, 163, 184, 0.1)", borderRadius: "16px", padding: "32px", backgroundColor: "rgba(15, 23, 42, 0.4)" }}>
+          <p style={{ margin: "0 0 24px 0", fontSize: "16px", lineHeight: "1.6" }}>
+            Our **Medical Chat Assistant** is currently in training. Soon, you'll be able to have
+            natural conversations with an AI that has full context of your patient records.
+          </p>
+
+          <ul style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: "16px", padding: 0, listStyle: "none" }}>
+            <li style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+              <span style={{ color: "#8b5cf6" }}>✦</span>
+              <div>
+                <strong>Contextual Recall:</strong> Ask things like "What was the diagnosis for John Doe last month?" or "Has this patient mentioned allergy X before?"
+              </div>
+            </li>
+            <li style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+              <span style={{ color: "#8b5cf6" }}>✦</span>
+              <div>
+                <strong>Smart Summarization:</strong> Quickly get a high-level overview of a patient's entire medical journey with you in seconds.
+              </div>
+            </li>
+            <li style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+              <span style={{ color: "#8b5cf6" }}>✦</span>
+              <div>
+                <strong>Differential Diagnosis:</strong> Use the AI as a sounding board to explore potential diagnoses based on aggregated consultation notes.
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Settings({ onLogout }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -690,6 +753,7 @@ function App() {
         {activeTab === "dashboard" && <Dashboard onLogout={handleLogout} />}
         {activeTab === "consultations" && <Consultations onLogout={handleLogout} />}
         {activeTab === "ai-insights" && <AIAnalytics />}
+        {activeTab === "ask-ai" && <AskAI />}
         {activeTab === "settings" && <Settings onLogout={handleLogout} />}
       </div>
     </div>
