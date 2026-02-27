@@ -61,3 +61,49 @@ def delete_consultation(
     db.delete(c)
     db.commit()
     return {"status": "ok"}
+
+
+@router.patch("/{consultation_id}")
+def update_consultation(
+    consultation_id: int,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    c = (
+        db.query(ConsultationModel)
+        .filter(
+            ConsultationModel.id == consultation_id,
+            ConsultationModel.doctor_id == current_user.id,
+        )
+        .first()
+    )
+    if not c:
+        raise HTTPException(status_code=404, detail="Consultation not found")
+    
+    if "status" in payload:
+        c.status = payload["status"]
+        if payload["status"] == "completed":
+            c.ended_at = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(c)
+    return c
+
+
+@router.get("/active")
+def get_active_consultation(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    c = (
+        db.query(ConsultationModel)
+        .options(joinedload(ConsultationModel.transcripts), joinedload(ConsultationModel.insights))
+        .filter(
+            ConsultationModel.doctor_id == current_user.id,
+            ConsultationModel.status == "draft" # Or "active"
+        )
+        .order_by(ConsultationModel.created_at.desc())
+        .first()
+    )
+    return c

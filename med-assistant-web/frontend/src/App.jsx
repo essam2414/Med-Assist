@@ -264,6 +264,68 @@ function Consultations({ onLogout }) {
   );
 }
 
+function AIAnalytics() {
+  return (
+    <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }} className="animate-fade-in">
+        <div>
+          <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0" }}>
+            AI <span className="text-gradient">Analytics</span>
+          </h1>
+          <p style={{ color: "#94a3b8", margin: 0, fontSize: "16px" }}>
+            Advanced health patterns and consultation intelligence.
+          </p>
+        </div>
+      </div>
+
+      <div className="glass-panel animate-fade-in stagger-1" style={{ padding: "48px", textAlign: "center" }}>
+        <div style={{
+          width: "80px",
+          height: "80px",
+          margin: "0 auto 32px auto",
+          background: "rgba(59, 130, 246, 0.1)",
+          borderRadius: "20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#3b82f6"
+        }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>
+        </div>
+
+        <h2 style={{ fontSize: "24px", fontWeight: 600, color: "#f8fafc", marginBottom: "16px" }}>Intellectual Analysis Coming Soon</h2>
+
+        <div style={{ maxWidth: "600px", margin: "0 auto", color: "#94a3b8", lineHeight: "1.8", fontSize: "16px" }}>
+          <p>
+            The **AI Analytics Engine** is currently under development. This section will feature a
+            specialized Large Language Model designed to securely process your historical
+            consultation data.
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginTop: "40px", textAlign: "left" }}>
+            <div style={{ padding: "20px", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "12px", border: "1px solid rgba(148, 163, 184, 0.1)" }}>
+              <div style={{ fontWeight: 600, color: "#f1f5f9", marginBottom: "8px" }}>📊 Pattern Recognition</div>
+              <div style={{ fontSize: "14px" }}>Identify recurring patient symptoms and diagnosis trends across your entire practice history.</div>
+            </div>
+            <div style={{ padding: "20px", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "12px", border: "1px solid rgba(148, 163, 184, 0.1)" }}>
+              <div style={{ fontWeight: 600, color: "#f1f5f9", marginBottom: "8px" }}>📈 Practice Growth</div>
+              <div style={{ fontSize: "14px" }}>Visual statistics on consultation volume, average session times, and automated reporting.</div>
+            </div>
+            <div style={{ padding: "20px", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "12px", border: "1px solid rgba(148, 163, 184, 0.1)" }}>
+              <div style={{ fontWeight: 600, color: "#f1f5f9", marginBottom: "8px" }}>🧬 Health Insights</div>
+              <div style={{ fontSize: "14px" }}>LLM-driven analysis of transcript data to suggest potential treatment paths and drug interactions.</div>
+            </div>
+            <div style={{ padding: "20px", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "12px", border: "1px solid rgba(148, 163, 184, 0.1)" }}>
+              <div style={{ fontWeight: 600, color: "#f1f5f9", marginBottom: "8px" }}>🔒 Private & Secure</div>
+              <div style={{ fontSize: "14px" }}>Local-first processing ensuring patient data never leaves your secure environment.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Settings({ onLogout }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -627,6 +689,7 @@ function App() {
       <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", height: "100%" }}>
         {activeTab === "dashboard" && <Dashboard onLogout={handleLogout} />}
         {activeTab === "consultations" && <Consultations onLogout={handleLogout} />}
+        {activeTab === "ai-insights" && <AIAnalytics />}
         {activeTab === "settings" && <Settings onLogout={handleLogout} />}
       </div>
     </div>
