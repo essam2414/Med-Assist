@@ -182,3 +182,65 @@ export async function deletePatient(id) {
   }
   return res.json();
 }
+
+export async function fetchChatSessions() {
+  const res = await fetch(`${API_URL}/api/chat/sessions`, {
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+  if (res.status === 401) throw new Error("unauthorized");
+  if (!res.ok) throw new Error("Failed to load sessions");
+  return res.json();
+}
+
+export async function createChatSession(title) {
+  const res = await fetch(`${API_URL}/api/chat/sessions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ title }),
+  });
+  if (res.status === 401) throw new Error("unauthorized");
+  if (!res.ok) throw new Error("Failed to create session");
+  return res.json();
+}
+
+export async function fetchChatSession(id) {
+  const res = await fetch(`${API_URL}/api/chat/sessions/${id}`, {
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+  if (res.status === 401) throw new Error("unauthorized");
+  if (!res.ok) throw new Error("Failed to load session");
+  return res.json();
+}
+
+export async function deleteChatSession(id) {
+  const res = await fetch(`${API_URL}/api/chat/sessions/${id}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+  if (res.status === 401) throw new Error("unauthorized");
+  if (!res.ok) throw new Error("Failed to delete session");
+  return res.json();
+}
+
+export async function sendChatMessage(sessionId, message) {
+  const res = await fetch(`${API_URL}/api/chat/sessions/${sessionId}/messages`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ message }),
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to send chat message");
+  }
+  return res.json();
+}

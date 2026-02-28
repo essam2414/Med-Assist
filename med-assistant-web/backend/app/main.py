@@ -10,6 +10,7 @@ from app.api.routes_transcripts import router as transcripts_router
 from app.api.routes_insights import router as insights_router
 from app.api.routes_auth import router as auth_router
 from app.api.routes_patients import router as patients_router
+from app.api.routes_chat import router as chat_router
 from app.db import Base, engine, SessionLocal
 import app.models  # noqa: F401  ensures models are imported so tables are known[web:178]
 
@@ -32,6 +33,7 @@ app.include_router(consultations_router)
 app.include_router(transcripts_router)
 app.include_router(insights_router)
 app.include_router(patients_router)
+app.include_router(chat_router)
 
 
 @app.get("/health", tags=["health"])

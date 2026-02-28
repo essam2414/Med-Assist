@@ -1,7 +1,7 @@
 // frontend/src/App.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Login from "./Login";
-import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient } from "./api";
+import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession } from "./api";
 import Sidebar from "./Sidebar";
 import MicPermission from "./MicPermission";
 
@@ -961,62 +961,318 @@ function AIAnalytics() {
 }
 
 function AskAI() {
+  const [sessions, setSessions] = useState([]);
+  const [activeSessionId, setActiveSessionId] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const scrollRef = useRef(null);
+
+  const loadSessions = async () => {
+    try {
+      const data = await fetchChatSessions();
+      setSessions(data);
+      if (data.length > 0 && !activeSessionId) {
+        handleSelectSession(data[0].id);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    loadSessions();
+  }, []);
+
+  const handleSelectSession = async (id) => {
+    setActiveSessionId(id);
+    try {
+      const session = await fetchChatSession(id);
+      setMessages(session.messages || []);
+    } catch (err) {
+      console.error("Failed to load session messages", err);
+    }
+  };
+
+  const handleNewChat = async () => {
+    try {
+      const newSession = await createChatSession("New Conversation");
+      setSessions([newSession, ...sessions]);
+      setActiveSessionId(newSession.id);
+      setMessages([]);
+    } catch (err) {
+      console.error("Failed to create new chat", err);
+    }
+  };
+
+  const handleDeleteSession = async (e, id) => {
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this conversation?")) return;
+    try {
+      await deleteChatSession(id);
+      setSessions(prev => prev.filter(s => s.id !== id));
+      if (activeSessionId === id) {
+        setActiveSessionId(null);
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error("Failed to delete chat", err);
+    }
+  };
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, loading]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!input.trim() || loading) return;
+
+    let targetSessionId = activeSessionId;
+    if (!targetSessionId) {
+      try {
+        const title = input.substring(0, 30) + (input.length > 30 ? "..." : "");
+        const newSession = await createChatSession(title);
+        setSessions([newSession, ...sessions]);
+        setActiveSessionId(newSession.id);
+        targetSessionId = newSession.id;
+      } catch (err) {
+        console.error("Failed to implicitly create chat", err);
+        return;
+      }
+    }
+
+    const userMessage = { role: "user", content: input.trim() };
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const response = await sendChatMessage(targetSessionId, userMessage.content);
+      setMessages([...newMessages, response]);
+    } catch (err) {
+      console.error(err);
+      setMessages([...newMessages, { role: "assistant", content: "Sorry, I encountered an error answering your question." }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }} className="animate-fade-in">
-        <div>
-          <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0" }}>
-            Ask <span className="text-gradient">AI</span>
-          </h1>
-          <p style={{ color: "#94a3b8", margin: 0, fontSize: "16px" }}>
-            Chat with your medical assistant about consultation history.
-          </p>
+    <div style={{ display: "flex", height: "100%", maxWidth: "1400px", margin: "0 auto", width: "100%", padding: "24px", boxSizing: "border-box", gap: "24px" }}>
+      {/* Sidebar for Sessions */}
+      <div className="glass-panel animate-fade-in stagger-1" style={{ width: "300px", display: "flex", flexDirection: "column", borderRadius: "16px", overflow: "hidden" }}>
+        <div style={{ padding: "20px", borderBottom: "1px solid rgba(148, 163, 184, 0.1)" }}>
+          <button
+            onClick={handleNewChat}
+            style={{
+              width: "100%",
+              background: "var(--primary-gradient)",
+              border: "none",
+              padding: "12px",
+              borderRadius: "8px",
+              color: "white",
+              fontWeight: 600,
+              fontSize: "15px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px"
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            New Chat
+          </button>
+        </div>
+
+        <div className="custom-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+          {sessions.length === 0 ? (
+            <div style={{ color: "#64748b", textAlign: "center", fontStyle: "italic", fontSize: "14px", marginTop: "20px" }}>No past conversations</div>
+          ) : (
+            sessions.map(s => (
+              <div
+                key={s.id}
+                onClick={() => handleSelectSession(s.id)}
+                style={{
+                  padding: "12px 16px",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  backgroundColor: activeSessionId === s.id ? "rgba(59, 130, 246, 0.15)" : "transparent",
+                  border: activeSessionId === s.id ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid transparent",
+                  transition: "all 0.2s ease",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center"
+                }}
+                className="hover-bg"
+              >
+                <div style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: activeSessionId === s.id ? "#60a5fa" : "#e2e8f0", fontSize: "14px", fontWeight: activeSessionId === s.id ? 600 : 400 }}>
+                  {s.title}
+                </div>
+                <button
+                  onClick={(e) => handleDeleteSession(e, s.id)}
+                  style={{
+                    background: "transparent", border: "none", color: "#64748b", cursor: "pointer", padding: "4px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "4px"
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = "#64748b"; e.currentTarget.style.backgroundColor = "transparent"; }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
-      <div className="glass-panel animate-fade-in stagger-1" style={{ padding: "48px", textAlign: "center" }}>
-        <div style={{
-          width: "80px",
-          height: "80px",
-          margin: "0 auto 32px auto",
-          background: "rgba(139, 92, 246, 0.1)",
-          borderRadius: "20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#8b5cf6"
-        }}>
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M12 7v5" /><path d="M12 16h.01" /></svg>
+      {/* Main Chat Area */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <div style={{ marginBottom: "20px" }} className="animate-fade-in">
+          <h1 style={{ fontSize: "32px", fontWeight: 700, margin: "0 0 8px 0" }}>
+            Ask <span className="text-gradient">AI</span>
+          </h1>
+          <p style={{ color: "#94a3b8", margin: 0, fontSize: "15px" }}>
+            Chat with your intelligent assistant.
+          </p>
         </div>
 
-        <h2 style={{ fontSize: "24px", fontWeight: 600, color: "#f8fafc", marginBottom: "16px" }}>Interactive AI Chat Coming Soon</h2>
+        <div className="glass-panel animate-fade-in stagger-2" style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "16px" }}>
+          {/* Chat window */}
+          <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: "20px" }}>
+            {messages.length === 0 && !loading && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "#64748b", gap: "16px", padding: "20px", textAlign: "center" }}>
+                <div style={{ width: "64px", height: "64px", borderRadius: "16px", background: "rgba(139, 92, 246, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#8b5cf6" }}>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M12 7v5" /><path d="M12 16h.01" /></svg>
+                </div>
+                <div>
+                  <h3 style={{ margin: "0 0 8px 0", color: "#f8fafc", fontSize: "18px" }}>How can I help you today?</h3>
+                  <p style={{ margin: 0, fontSize: "15px" }}>Start a new conversation or select one from the history.</p>
+                </div>
+              </div>
+            )}
 
-        <div style={{ maxWidth: "600px", margin: "0 auto", color: "#94a3b8", border: "1px solid rgba(148, 163, 184, 0.1)", borderRadius: "16px", padding: "32px", backgroundColor: "rgba(15, 23, 42, 0.4)" }}>
-          <p style={{ margin: "0 0 24px 0", fontSize: "16px", lineHeight: "1.6" }}>
-            Our **Medical Chat Assistant** is currently in training. Soon, you'll be able to have
-            natural conversations with an AI that has full context of your patient records.
-          </p>
+            {messages.map((msg, index) => {
+              const isUser = msg.role === "user";
+              return (
+                <div key={index} style={{ display: "flex", gap: "16px", alignSelf: isUser ? "flex-end" : "flex-start", maxWidth: "85%" }}>
+                  {!isUser && (
+                    <div style={{
+                      width: "36px", height: "36px", borderRadius: "10px", background: "rgba(139, 92, 246, 0.2)",
+                      display: "flex", alignItems: "center", justifyContent: "center", color: "#8b5cf6", flexShrink: 0
+                    }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M12 7v5" /><path d="M12 16h.01" /></svg>
+                    </div>
+                  )}
+                  <div style={{
+                    padding: "16px 20px",
+                    backgroundColor: isUser ? "var(--primary-gradient)" : "rgba(30, 41, 59, 0.5)",
+                    background: isUser ? "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" : undefined,
+                    borderRadius: isUser ? "20px 20px 4px 20px" : "20px 20px 20px 4px",
+                    color: "#f8fafc",
+                    fontSize: "15px",
+                    lineHeight: "1.6",
+                    border: isUser ? "none" : "1px solid rgba(148, 163, 184, 0.1)",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                  }}>
+                    {msg.content}
+                  </div>
+                  {isUser && (
+                    <div style={{
+                      width: "36px", height: "36px", borderRadius: "10px", background: "rgba(59, 130, 246, 0.2)",
+                      display: "flex", alignItems: "center", justifyContent: "center", color: "#3b82f6", flexShrink: 0
+                    }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
-          <ul style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: "16px", padding: 0, listStyle: "none" }}>
-            <li style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
-              <span style={{ color: "#8b5cf6" }}>✦</span>
-              <div>
-                <strong>Contextual Recall:</strong> Ask things like "What was the diagnosis for John Doe last month?" or "Has this patient mentioned allergy X before?"
+            {loading && (
+              <div style={{ display: "flex", gap: "16px", alignSelf: "flex-start", maxWidth: "80%" }}>
+                <div style={{
+                  width: "36px", height: "36px", borderRadius: "10px", background: "rgba(139, 92, 246, 0.2)",
+                  display: "flex", alignItems: "center", justifyContent: "center", color: "#8b5cf6", flexShrink: 0
+                }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M12 7v5" /><path d="M12 16h.01" /></svg>
+                </div>
+                <div style={{
+                  padding: "16px 20px",
+                  backgroundColor: "rgba(30, 41, 59, 0.5)",
+                  borderRadius: "20px 20px 20px 4px",
+                  color: "#94a3b8",
+                  fontSize: "15px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  border: "1px solid rgba(148, 163, 184, 0.1)"
+                }}>
+                  <div className="typing-dot" style={{ width: "6px", height: "6px", backgroundColor: "#8b5cf6", borderRadius: "50%" }}></div>
+                  <div className="typing-dot" style={{ width: "6px", height: "6px", backgroundColor: "#8b5cf6", borderRadius: "50%" }}></div>
+                  <div className="typing-dot" style={{ width: "6px", height: "6px", backgroundColor: "#8b5cf6", borderRadius: "50%" }}></div>
+                </div>
               </div>
-            </li>
-            <li style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
-              <span style={{ color: "#8b5cf6" }}>✦</span>
-              <div>
-                <strong>Smart Summarization:</strong> Quickly get a high-level overview of a patient's entire medical journey with you in seconds.
-              </div>
-            </li>
-            <li style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
-              <span style={{ color: "#8b5cf6" }}>✦</span>
-              <div>
-                <strong>Differential Diagnosis:</strong> Use the AI as a sounding board to explore potential diagnoses based on aggregated consultation notes.
-              </div>
-            </li>
-          </ul>
+            )}
+          </div>
+
+          {/* Input area */}
+          <div style={{ padding: "20px", borderTop: "1px solid rgba(148, 163, 184, 0.1)", backgroundColor: "rgba(15, 23, 42, 0.4)" }}>
+            <form onSubmit={handleSubmit} style={{ display: "flex", gap: "12px", position: "relative" }}>
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask me anything..."
+                style={{
+                  flex: 1,
+                  padding: "16px 24px",
+                  paddingRight: "60px",
+                  borderRadius: "999px",
+                  border: "1px solid rgba(148, 163, 184, 0.2)",
+                  backgroundColor: "rgba(15, 23, 42, 0.6)",
+                  color: "#f8fafc",
+                  fontSize: "15px",
+                  outline: "none",
+                  transition: "all 0.2s ease"
+                }}
+                disabled={loading}
+                onFocus={(e) => { e.target.style.borderColor = "rgba(139, 92, 246, 0.5)"; e.target.style.boxShadow = "0 0 0 2px rgba(139, 92, 246, 0.1)"; }}
+                onBlur={(e) => { e.target.style.borderColor = "rgba(148, 163, 184, 0.2)"; e.target.style.boxShadow = "none"; }}
+              />
+              <button
+                type="submit"
+                disabled={!input.trim() || loading}
+                style={{
+                  position: "absolute",
+                  right: "8px",
+                  top: "8px",
+                  bottom: "8px",
+                  width: "40px",
+                  borderRadius: "50%",
+                  border: "none",
+                  background: (!input.trim() || loading) ? "rgba(148, 163, 184, 0.1)" : "var(--primary-gradient)",
+                  backgroundImage: (!input.trim() || loading) ? "none" : "linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)",
+                  color: (!input.trim() || loading) ? "#64748b" : "white",
+                  cursor: (!input.trim() || loading) ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              </button>
+            </form>
+            <div style={{ textAlign: "center", marginTop: "12px", fontSize: "12px", color: "#64748b" }}>
+              AI can make mistakes. Consider verifying important information.
+            </div>
+          </div>
         </div>
       </div>
     </div>
