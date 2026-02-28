@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Med Consult AI Assistant (PoC)",
-  "description": "Side panel + tab audio capture for online medical consultations.",
-  "version": "0.2.0",
+  "name": "Med Assist",
+  "description": "Tab audio capture for online medical consultations.",
+  "version": "0.2.1",
   "permissions": [
     "sidePanel",
     "tabCapture",
@@ -15,7 +15,7 @@
     "<all_urls>"
   ],
   "action": {
-    "default_title": "Med Consult Assistant"
+    "default_title": "Med Assist"
   },
   "background": {
     "service_worker": "background.js",

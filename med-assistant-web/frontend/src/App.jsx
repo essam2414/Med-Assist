@@ -1,7 +1,7 @@
 // frontend/src/App.jsx
 import { useEffect, useState, useRef } from "react";
 import Login from "./Login";
-import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession } from "./api";
+import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount } from "./api";
 import Sidebar from "./Sidebar";
 import MicPermission from "./MicPermission";
 
@@ -1284,6 +1284,39 @@ function Settings({ onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError("New passwords do not match.");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await changePassword(currentPassword, newPassword);
+      setPasswordSuccess("Password changed successfully.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    } catch (err) {
+      if (err.message === "unauthorized") {
+        if (onLogout) onLogout();
+      } else {
+        setPasswordError(err.message || "Failed to change password");
+      }
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   useEffect(() => {
     fetchCurrentUser()
       .then(setUser)
@@ -1348,6 +1381,117 @@ function Settings({ onLogout }) {
                   {new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                 </div>
               </div>
+            </div>
+
+            <h2 style={{ fontSize: "20px", fontWeight: 600, margin: "32px 0 24px 0", color: "#f8fafc" }}>Change Password</h2>
+            <form onSubmit={handlePasswordChange} style={{ display: "flex", flexDirection: "column", gap: "16px", maxWidth: "600px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Current Password</label>
+                <input
+                  type="password"
+                  required
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="••••••••"
+                  style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px", outline: "none", transition: "border-color 0.2s" }}
+                  onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
+                  onBlur={(e) => e.target.style.borderColor = "rgba(148, 163, 184, 0.2)"}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>New Password</label>
+                <input
+                  type="password"
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px", outline: "none", transition: "border-color 0.2s" }}
+                  onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
+                  onBlur={(e) => e.target.style.borderColor = "rgba(148, 163, 184, 0.2)"}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Confirm New Password</label>
+                <input
+                  type="password"
+                  required
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px", outline: "none", transition: "border-color 0.2s" }}
+                  onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
+                  onBlur={(e) => e.target.style.borderColor = "rgba(148, 163, 184, 0.2)"}
+                />
+              </div>
+
+              {passwordError && (
+                <div style={{ padding: "10px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "6px", color: "#ef4444", fontSize: "13px", textAlign: "center" }}>
+                  {passwordError}
+                </div>
+              )}
+              {passwordSuccess && (
+                <div style={{ padding: "10px", backgroundColor: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "6px", color: "#34d399", fontSize: "13px", textAlign: "center" }}>
+                  {passwordSuccess}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={changingPassword || !currentPassword || !newPassword || !confirmNewPassword}
+                style={{
+                  background: "var(--primary-gradient)",
+                  border: "none",
+                  padding: "12px 24px",
+                  borderRadius: "8px",
+                  color: "white",
+                  fontWeight: 600,
+                  fontSize: "15px",
+                  cursor: (changingPassword || !currentPassword || !newPassword || !confirmNewPassword) ? "default" : "pointer",
+                  marginTop: "8px",
+                  opacity: (changingPassword || !currentPassword || !newPassword || !confirmNewPassword) ? 0.6 : 1,
+                  boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)",
+                }}
+              >
+                {changingPassword ? "Updating..." : "Change Password"}
+              </button>
+            </form>
+
+            <h2 style={{ fontSize: "20px", fontWeight: 600, margin: "48px 0 24px 0", color: "#f8fafc" }}>Danger Zone</h2>
+            <div style={{ padding: "24px", backgroundColor: "rgba(239, 68, 68, 0.05)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "24px" }}>
+              <div>
+                <h4 style={{ margin: "0 0 4px 0", color: "#ef4444", fontSize: "16px", fontWeight: 600 }}>Delete Account</h4>
+                <p style={{ margin: 0, color: "#94a3b8", fontSize: "14px" }}>Once you delete your account, there is no going back. Please be certain.</p>
+              </div>
+              <button
+                onClick={async () => {
+                  if (window.confirm("ARE YOU SURE? This will permanently delete your account and all associated data, including consultations and patients. This action cannot be undone.")) {
+                    try {
+                      await deleteAccount();
+                      if (onLogout) onLogout();
+                    } catch (err) {
+                      alert(err.message || "Failed to delete account");
+                    }
+                  }
+                }}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: "rgba(239, 68, 68, 0.1)",
+                  color: "#ef4444",
+                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease"
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.2)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)"; }}
+              >
+                Delete Permanently
+              </button>
             </div>
           </div>
         ) : null}
@@ -1573,6 +1717,7 @@ function App() {
 
   const handleLogin = () => {
     setIsLoggedIn(true);
+    setActiveTab("dashboard");
   };
 
   const handleLogout = async () => {

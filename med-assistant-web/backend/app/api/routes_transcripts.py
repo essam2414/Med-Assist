@@ -20,6 +20,7 @@ async def upload_and_transcribe(
     audio_file: UploadFile = File(...),
     mic_file: UploadFile = File(...),
     consultation_id: int = Form(...),
+    offset: float = Form(0.0),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -77,8 +78,8 @@ async def upload_and_transcribe(
         t = TranscriptModel(
             consultation_id=consultation.id,
             speaker=segment["speaker"], 
-            start_time=segment["start_time"],
-            end_time=segment["end_time"],
+            start_time=segment["start_time"] + offset,
+            end_time=segment["end_time"] + offset,
             text=segment["text"],
             created_at=datetime.utcnow(),
         )

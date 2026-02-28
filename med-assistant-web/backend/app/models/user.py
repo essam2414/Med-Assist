@@ -16,6 +16,6 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    consultations = relationship("Consultation", back_populates="doctor")
-    patients = relationship("Patient", back_populates="doctor")
-    chat_sessions = relationship("ChatSession", back_populates="user")
+    consultations = relationship("Consultation", back_populates="doctor", cascade="all, delete-orphan")
+    patients = relationship("Patient", back_populates="doctor", cascade="all, delete-orphan")
+    chat_sessions = relationship("ChatSession", back_populates="user", cascade="all, delete-orphan")
