@@ -7,6 +7,7 @@ from app.schemas.insight import AIInsight
 
 class ConsultationBase(BaseModel):
   title: str
+  patient_id: Optional[int] = None
 
 
 class ConsultationCreate(ConsultationBase):
@@ -22,4 +23,4 @@ class Consultation(ConsultationBase):
   insights: Optional[AIInsight] = None
 
   class Config:
-    orm_mode = True
+    from_attributes = True

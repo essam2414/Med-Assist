@@ -20,6 +20,7 @@ def create_consultation(
     c = ConsultationModel(
         title=payload.title,
         doctor_id=current_user.id,
+        patient_id=payload.patient_id,
         status="draft",
         created_at=datetime.utcnow(),
     )
