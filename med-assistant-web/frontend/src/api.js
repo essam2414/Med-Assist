@@ -57,6 +57,21 @@ export async function changePassword(current_password, new_password) {
   return res.json();
 }
 
+export async function deleteAccount() {
+  const res = await fetch(`${API_URL}/auth/me`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to delete account");
+  }
+  return res.json();
+}
+
 export async function fetchCurrentUser() {
   const res = await fetch(`${API_URL}/auth/me`, {
     headers: {

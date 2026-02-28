@@ -103,3 +103,20 @@ def change_password(
     user.hashed_password = hash_password(data.new_password)
     db.commit()
     return {"message": "Password changed successfully"}
+
+
+@router.delete("/me")
+def delete_account(
+    response: Response,
+    db: Session = Depends(get_db),
+    current_user: models.user.User = Depends(deps.get_current_user)
+):
+    # Re-fetch user to local session for deletion
+    user = db.query(models.user.User).filter(models.user.User.id == current_user.id).first()
+    db.delete(user)
+    db.commit()
+    
+    # Clean up cookies
+    response.delete_cookie("access_token")
+    response.delete_cookie("logged_in")
+    return {"message": "Account deleted successfully"}

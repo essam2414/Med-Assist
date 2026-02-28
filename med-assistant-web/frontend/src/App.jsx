@@ -1,7 +1,7 @@
 // frontend/src/App.jsx
 import { useEffect, useState, useRef } from "react";
 import Login from "./Login";
-import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword } from "./api";
+import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount } from "./api";
 import Sidebar from "./Sidebar";
 import MicPermission from "./MicPermission";
 
@@ -1458,6 +1458,41 @@ function Settings({ onLogout }) {
                 {changingPassword ? "Updating..." : "Change Password"}
               </button>
             </form>
+
+            <h2 style={{ fontSize: "20px", fontWeight: 600, margin: "48px 0 24px 0", color: "#f8fafc" }}>Danger Zone</h2>
+            <div style={{ padding: "24px", backgroundColor: "rgba(239, 68, 68, 0.05)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "24px" }}>
+              <div>
+                <h4 style={{ margin: "0 0 4px 0", color: "#ef4444", fontSize: "16px", fontWeight: 600 }}>Delete Account</h4>
+                <p style={{ margin: 0, color: "#94a3b8", fontSize: "14px" }}>Once you delete your account, there is no going back. Please be certain.</p>
+              </div>
+              <button
+                onClick={async () => {
+                  if (window.confirm("ARE YOU SURE? This will permanently delete your account and all associated data, including consultations and patients. This action cannot be undone.")) {
+                    try {
+                      await deleteAccount();
+                      if (onLogout) onLogout();
+                    } catch (err) {
+                      alert(err.message || "Failed to delete account");
+                    }
+                  }
+                }}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: "rgba(239, 68, 68, 0.1)",
+                  color: "#ef4444",
+                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease"
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.2)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)"; }}
+              >
+                Delete Permanently
+              </button>
+            </div>
           </div>
         ) : null}
       </div>
