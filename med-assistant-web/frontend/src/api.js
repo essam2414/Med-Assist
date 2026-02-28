@@ -182,3 +182,22 @@ export async function deletePatient(id) {
   }
   return res.json();
 }
+
+export async function sendChatMessage(messages) {
+  const res = await fetch(`${API_URL}/api/chat`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ messages }),
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to send chat message");
+  }
+  return res.json();
+}
