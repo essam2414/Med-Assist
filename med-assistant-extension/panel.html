@@ -7,228 +7,245 @@
   <style>
     :root {
       --bg: #0f172a;
-      --bg-elevated: #020617;
-      --accent: #22c55e;
-      --accent-soft: rgba(34, 197, 94, 0.12);
-      --accent-border: rgba(34, 197, 94, 0.4);
+      --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --glass-bg: rgba(30, 41, 59, 0.7);
+      --glass-border: rgba(148, 163, 184, 0.15);
+      --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
       --danger: #ef4444;
-      --danger-soft: rgba(239, 68, 68, 0.12);
-      --text: #e5e7eb;
-      --text-muted: #9ca3af;
-      --border-subtle: rgba(148, 163, 184, 0.25);
     }
 
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-        sans-serif;
-      background: radial-gradient(circle at top, #111827 0, #020617 55%);
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
+      background-attachment: fixed;
       color: var(--text);
+      overflow-x: hidden;
     }
 
     .app {
-      padding: 12px 14px 14px 14px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 20px;
+      max-width: 450px;
+      margin: 0 auto;
+      width: 100%;
     }
 
     .header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      gap: 12px;
     }
 
     .title-group {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 4px;
     }
 
     .title {
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .text-gradient {
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .subtitle {
-      font-size: 11px;
+      font-size: 12px;
       color: var(--text-muted);
     }
 
+    /* Glass Panels */
+    .glass-panel {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
     .status-pill {
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
+      gap: 8px;
+      padding: 6px 12px;
       border-radius: 999px;
-      border: 1px solid var(--border-subtle);
-      background: rgba(15, 23, 42, 0.75);
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--glass-border);
       font-size: 11px;
-      white-space: nowrap;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     .status-dot {
       width: 8px;
       height: 8px;
-      border-radius: 999px;
+      border-radius: 50%;
       background: var(--text-muted);
+      transition: all 0.3s ease;
     }
 
     .status-dot.active {
-      background: var(--accent);
-      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25);
-    }
-
-    .status-dot.idle {
-      background: var(--text-muted);
-    }
-
-    .status-label {
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
+      background: #10b981;
+      box-shadow: 0 0 10px #10b981;
     }
 
     .card {
-      background: linear-gradient(135deg,
-          rgba(15, 23, 42, 0.95),
-          rgba(15, 23, 42, 0.9));
-      border-radius: 10px;
-      padding: 10px 10px 8px 10px;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
     .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .card-title {
-      font-size: 12px;
-      font-weight: 500;
+      font-size: 15px;
+      font-weight: 600;
+      color: #f8fafc;
+      margin-bottom: 4px;
     }
 
     .card-caption {
-      font-size: 11px;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Form Elements */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 500;
       color: var(--text-muted);
     }
 
+    .select-input {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      color: #f1f5f9;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+    }
+
+    .select-input:focus {
+      border-color: var(--accent);
+      background-color: rgba(15, 23, 42, 0.6);
+    }
+
+    /* Buttons */
     .controls {
       display: flex;
-      gap: 8px;
-      margin-top: 6px;
+      gap: 12px;
     }
 
     .btn {
       flex: 1;
-      font-size: 12px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      border: 1px solid transparent;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
-      font-weight: 500;
-      display: inline-flex;
+      display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      background: rgba(15, 23, 42, 0.9);
-      color: var(--text);
-      transition: background 0.15s ease, border-color 0.15s ease,
-        transform 0.08s ease, box-shadow 0.08s ease;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #16a34a, #22c55e);
-      border-color: rgba(34, 197, 94, 0.8);
-      color: #052e16;
-      box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.5),
-        0 14px 30px rgba(22, 163, 74, 0.4);
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: linear-gradient(135deg, #16a34a, #4ade80);
-      transform: translateY(-1px);
-      box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.6),
-        0 16px 36px rgba(22, 163, 74, 0.55);
-    }
-
-    .btn-ghost {
-      border-color: rgba(148, 163, 184, 0.5);
-      background: rgba(15, 23, 42, 0.85);
-    }
-
-    .btn-ghost:hover:not(:disabled) {
-      border-color: rgba(148, 163, 184, 0.9);
-      background: rgba(15, 23, 42, 0.95);
+    .btn:active {
+      transform: scale(0.96);
     }
 
     .btn:disabled {
-      opacity: 0.45;
-      cursor: default;
-      box-shadow: none;
-      transform: none;
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
     }
 
-    .btn-icon {
-      font-size: 13px;
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: white;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
 
-    .audio-card {
+    .btn-primary:hover:not(:disabled) {
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-ghost {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--text);
+      border: 1px solid var(--glass-border);
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+      background: rgba(148, 163, 184, 0.15);
+    }
+
+    /* Audio Player */
+    .audio-wrapper {
       margin-top: 4px;
     }
 
-    .audio-wrapper {
-      margin-top: 6px;
-    }
-
     .audio-shell {
-      padding: 6px 8px;
-      border-radius: 8px;
-      border: 1px dashed rgba(148, 163, 184, 0.5);
-      background: rgba(15, 23, 42, 0.7);
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .audio-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .audio-times {
-      font-size: 10px;
-      color: var(--text-muted);
-      display: flex;
-      justify-content: space-between;
-      gap: 6px;
-    }
-
-    .audio-time {
-      min-width: 32px;
-      text-align: right;
+      padding: 16px;
+      background: rgba(15, 23, 42, 0.4);
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
     }
 
     .audio-bar {
-      position: relative;
-      flex: 1;
       height: 6px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-      overflow: hidden;
-      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 10px;
+      position: relative;
       cursor: pointer;
+      overflow: hidden;
+      margin-bottom: 12px;
     }
 
     .audio-bar-fill {
@@ -236,29 +253,160 @@
       top: 0;
       left: 0;
       height: 100%;
+      background: var(--primary-gradient);
+      border-radius: 10px;
       width: 0%;
-      border-radius: 999px;
-      background: linear-gradient(90deg, #22c55e, #4ade80);
-      box-shadow: 0 0 6px rgba(34, 197, 94, 0.7);
+      transition: width 0.1s linear;
     }
 
-    .hint {
-      font-size: 10px;
+    .audio-times {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
       color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    .status-text {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    .status-text strong {
-      color: var(--text);
       font-weight: 500;
     }
 
-    /* Login View Styles */
+    /* Custom Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.2);
+      border-radius: 10px;
+    }
+
+    /* Transcripts */
+    .transcript-box {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+
+    .transcript-entry {
+      padding: 12px;
+      background: rgba(15, 23, 42, 0.3);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+    }
+
+    .transcript-speaker {
+      font-size: 12px;
+      font-weight: 700;
+      color: #60a5fa;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .transcript-text {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* Permissions */
+    .perms-wrapper {
+      position: relative;
+    }
+
+    .perms-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1.5px solid var(--glass-border);
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    .perms-icon:hover {
+      background: rgba(148, 163, 184, 0.1);
+    }
+
+    .perms-icon.missing {
+      color: #ef4444;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .perms-icon.granted {
+      color: #10b981;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .perms-popup {
+      position: absolute;
+      top: calc(100% + 12px);
+      right: 0;
+      width: 260px;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .perms-popup.active {
+      display: flex;
+    }
+
+    .perms-channel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+
+    .perms-channel-status {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .perms-status-granted {
+      background: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .perms-status-missing {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .manage-perms-btn {
+      width: 100%;
+      padding: 10px;
+      font-size: 13px;
+    }
+
+    .bg-green {
+      background: var(--success-gradient);
+      color: white;
+    }
+
+    .bg-red {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Login View */
     .login-view {
       display: flex;
       flex-direction: column;
@@ -270,218 +418,57 @@
     }
 
     .login-box {
-      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.9));
-      border-radius: 12px;
-      padding: 32px 24px;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.8);
       width: 100%;
-      max-width: 300px;
+      max-width: 320px;
+      margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
     }
 
     .login-icon {
-      font-size: 32px;
+      font-size: 48px;
       margin-bottom: 8px;
-      color: var(--accent);
     }
 
     .login-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text);
-      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      color: #f8fafc;
     }
 
     .login-subtitle {
-      font-size: 13px;
+      font-size: 14px;
       color: var(--text-muted);
-      margin: 0;
-      line-height: 1.4;
+      line-height: 1.6;
     }
 
-    #app-view {
-      display: none;
-    }
-
-    /* Hide native audio controls */
-    audio {
-      display: none;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-
-    .form-label {
-      font-size: 11px;
-      font-weight: 500;
+    /* Hints */
+    .hint {
+      font-size: 12px;
       color: var(--text-muted);
+      line-height: 1.5;
+      font-style: italic;
+      padding: 0 4px;
     }
 
-    .select-input {
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      color: var(--text);
-      padding: 6px 10px;
-      border-radius: 6px;
+    .status-text {
       font-size: 12px;
-      outline: none;
-      transition: border-color 0.15s ease;
-      font-family: inherit;
-    }
-
-    .select-input:focus {
-      border-color: var(--accent);
-    }
-
-    .transcript-box {
-      margin-top: 10px;
-      padding: 8px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 6px;
-      border: 1px solid rgba(148, 163, 184, 0.15);
-      max-height: 150px;
-      overflow-y: auto;
-      font-size: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .transcript-entry {
-      border-left: 2px solid var(--accent);
-      padding-left: 6px;
-    }
-
-    .transcript-speaker {
-      font-weight: 600;
-      font-size: 10px;
-      color: var(--accent);
-      margin-bottom: 2px;
-    }
-
-    .transcript-text {
-      color: var(--text);
-      line-height: 1.4;
-    }
-
-    /* Permissions Style */
-    .perms-wrapper {
-      position: relative;
-    }
-
-    .perms-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 16px;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 2px solid var(--border-subtle);
-      background: rgba(15, 23, 42, 0.8);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-      font-weight: bold;
-    }
-
-    .perms-icon.granted {
-      color: #22c55e;
-      /* Green when granted */
-      border-color: rgba(34, 197, 94, 0.5);
-      background: rgba(34, 197, 94, 0.15);
-    }
-
-    .perms-icon.missing {
-      color: #ef4444;
-      /* Red when missing */
-      border-color: rgba(239, 68, 68, 0.5);
-      background: rgba(239, 68, 68, 0.15);
-    }
-
-    .perms-popup {
-      position: absolute;
-      top: calc(100% + 10px);
-      right: 0;
-      width: 240px;
-      background: #1e293b;
-      border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-      display: none;
-      flex-direction: column;
-      gap: 12px;
+      color: var(--text-muted);
       text-align: center;
-    }
-
-    .perms-popup.active {
-      display: flex;
-    }
-
-    .perms-channel {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12px;
-    }
-
-    .perms-channel-status {
-      font-weight: 600;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 10px;
-      text-transform: uppercase;
-    }
-
-    .perms-status-granted {
-      background: rgba(34, 197, 94, 0.2);
-      color: #4ade80;
-    }
-
-    .perms-status-missing {
-      background: rgba(239, 68, 68, 0.2);
-      color: #f87171;
-    }
-
-    .manage-perms-btn {
-      width: 100%;
-      margin-top: 8px;
-      padding: 10px;
-      font-size: 12px;
-      font-weight: 600;
-      border-radius: 8px;
-    }
-
-    .manage-perms-btn.bg-green {
-      background-color: #10b981;
-      color: white;
-      border: none;
-    }
-
-    .manage-perms-btn.bg-red {
-      background-color: #ef4444;
-      color: white;
-      border: none;
+      line-height: 1.5;
     }
   </style>
 </head>
 
 <body>
   <div id="login-view" class="login-view">
-    <div class="login-box">
+    <div class="glass-panel login-box animate-fade-in">
       <div class="login-icon">🔒</div>
       <h2 class="login-title">Authentication Required</h2>
-      <p class="login-subtitle">Please log in to the Med Consult AI Assistant web application to use this extension.</p>
-      <button class="btn btn-primary" id="login-btn" style="margin-top: 8px; font-size: 14px; padding: 10px 16px;">
+      <p class="login-subtitle">Please log in to the <span class="text-gradient" style="font-weight: 700;">Med
+          Assist</span> web application to use this extension.</p>
+      <button class="btn btn-primary" id="login-btn">
         Log In to Web App
       </button>
     </div>
@@ -490,28 +477,28 @@
   <div class="app" id="app-view">
     <div class="header">
       <div class="title-group">
-        <div class="title">Med Consult Assistant</div>
-        <div class="subtitle">Chrome tab audio capture · PoC</div>
+        <div class="title"><span class="text-gradient">Med</span> Assist</div>
+        <div class="subtitle">Tab Audio Capture</div>
       </div>
 
       <div style="display: flex; align-items: center; gap: 12px;">
         <div class="perms-wrapper">
           <div class="perms-icon missing" id="perms-icon" title="Check Permissions">!</div>
-          <div class="perms-popup" id="perms-popup">
-            <div style="font-weight: 600; font-size: 13px; color: var(--text);">Permission Status</div>
+          <div class="glass-panel perms-popup" id="perms-popup">
+            <div style="font-weight: 700; font-size: 14px; color: #f8fafc;">Permission Status</div>
 
             <div class="perms-channel">
-              <span style="display: flex; align-items: center; gap: 4px;">🎤 System Audio</span>
+              <span style="display: flex; align-items: center; gap: 8px;">🎙️ System Mic</span>
               <span id="mic-status" class="perms-channel-status perms-status-missing">Missing</span>
             </div>
 
             <div class="perms-channel">
-              <span style="display: flex; align-items: center; gap: 4px;">🎧 Tab Audio</span>
+              <span style="display: flex; align-items: center; gap: 8px;">🖥️ Tab Audio</span>
               <span id="tab-status" class="perms-channel-status perms-status-missing">Pending</span>
             </div>
 
-            <p style="font-size: 10px; color: var(--text-muted); margin: 0;">Microphone access is required for
-              background capture.</p>
+            <p style="font-size: 11px; color: var(--text-muted); margin: 0; line-height: 1.4;">Microphone access is
+              required for background capture.</p>
 
             <button class="btn btn-primary manage-perms-btn" id="manage-perms">
               Manage Permissions
@@ -521,18 +508,16 @@
 
         <div class="status-pill">
           <div class="status-dot idle" id="status-dot"></div>
-          <span class="status-label" id="status-label">Idle</span>
+          <span id="status-label">Idle</span>
         </div>
       </div>
     </div>
 
-    <div class="card">
+    <div class="glass-panel card">
       <div class="card-header">
-        <div>
-          <div class="card-title">Recording controls</div>
-          <div class="card-caption">
-            Capture the current consultation tab’s audio.
-          </div>
+        <div class="card-title">Recording Controls</div>
+        <div class="card-caption">
+          Select a session and start capturing audio.
         </div>
       </div>
 
@@ -545,77 +530,69 @@
 
       <div class="controls">
         <button class="btn btn-primary" id="start">
-          <span class="btn-icon">●</span>
-          Start capture
+          <span>●</span>
+          Start Capture
         </button>
         <button class="btn btn-ghost" id="stop" disabled>
-          <span class="btn-icon">■</span>
+          <span>■</span>
           Stop
         </button>
       </div>
     </div>
 
-    <div class="card audio-card">
+    <div class="glass-panel card audio-card">
       <div class="card-header">
-        <div>
-          <div class="card-title">Latest recording</div>
-          <div class="card-caption">
-            Review the captured audio before sending to your AI backend.
-          </div>
+        <div class="card-title">Review Recording</div>
+        <div class="card-caption">
+          Preview captured audio before transcribing.
         </div>
       </div>
 
       <div class="controls">
         <button class="btn btn-ghost" id="play" disabled>
-          <span class="btn-icon">▶</span>
-          Play recording
+          <span>▶</span>
+          Playback
         </button>
         <button class="btn btn-primary" id="transcribe" disabled>
-          <span class="btn-icon">⚡</span>
+          <span>⚡</span>
           Transcribe
         </button>
       </div>
 
       <div class="audio-wrapper">
         <div class="audio-shell">
-          <div class="audio-row">
-            <div class="audio-bar" id="audio-bar">
-              <div class="audio-bar-fill" id="audio-bar-fill"></div>
-            </div>
+          <div class="audio-bar" id="audio-bar">
+            <div class="audio-bar-fill" id="audio-bar-fill"></div>
           </div>
           <div class="audio-times">
-            <div class="audio-time" id="time-current">0:00</div>
-            <div class="audio-time" id="time-duration">0:00</div>
+            <div id="time-current">0:00</div>
+            <div id="time-duration">0:00</div>
           </div>
         </div>
       </div>
 
       <audio id="player"></audio>
 
-
       <div class="hint">
-        Tip: Start capture on the active Google Meet / telehealth tab, then
-        stop once the consultation ends.
+        Tip: Ensure you select a tab and check "Also share tab audio".
       </div>
     </div>
 
-    <div class="card" style="margin-top: 4px;">
+    <div class="glass-panel card">
       <div class="card-header">
-        <div>
-          <div class="card-title">Transcripts</div>
-          <div class="card-caption">
-            Transcripts for the selected consultation.
-          </div>
+        <div class="card-title">Recent Transcripts</div>
+        <div class="card-caption">
+          Last segments for this session.
         </div>
       </div>
-      <div id="transcripts-container"
-        style="max-height: 150px; overflow-y: auto; font-size: 12px; color: var(--text); display: flex; flex-direction: column; gap: 6px; padding-top: 6px;">
-        <div style="color: var(--text-muted); font-style: italic;">No transcripts found.</div>
+      <div id="transcripts-container" class="transcript-box custom-scrollbar">
+        <div style="color: var(--text-muted); font-style: italic; font-size: 13px; text-align: center; padding: 20px;">
+          No transcripts found.</div>
       </div>
     </div>
 
     <div class="status-text" id="status">
-      Not capturing. Open this on a tab with an active call or video.
+      Ready to capture.
     </div>
   </div>
 
