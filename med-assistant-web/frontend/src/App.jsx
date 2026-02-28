@@ -1,7 +1,7 @@
 // frontend/src/App.jsx
 import { useEffect, useState, useRef } from "react";
 import Login from "./Login";
-import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount, joinMeetingWithBot, disconnectBot } from "./api";
+import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount, joinMeetingWithBot, disconnectBot, updateConsultationStatus } from "./api";
 import Sidebar from "./Sidebar";
 import MicPermission from "./MicPermission";
 
@@ -34,6 +34,8 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [botError, setBotError] = useState('');
 
+  const activeConsultationObj = consultations.find(c => c.status === 'draft');
+
   const loadData = () => {
     fetchConsultations()
       .then(setConsultations)
@@ -51,14 +53,22 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
   useEffect(() => {
     loadData();
     const intervalId = setInterval(loadData, 5000);
-    return () => clearInterval(intervalId);
-  }, []);
+    const handleStatusChanged = () => loadData();
+    window.addEventListener('consultationStatusChanged', handleStatusChanged);
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('consultationStatusChanged', handleStatusChanged);
+    };
+  }, [onLogout]);
 
   const handleCreateView = () => {
+    if (activeConsultationObj) {
+      setError("Please finish your current active consultation before starting a new one.");
+      return;
+    }
     loadPatients();
     setCreateStep(1);
     setTitle("");
-    setSelectedPatientId("");
     setSelectedPatientId("");
     setView("create");
   };
@@ -66,6 +76,10 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim()) return;
+    if (activeConsultationObj) {
+      setError("An active consultation already exists.");
+      return;
+    }
     setError("");
     try {
       let finalPatientId = selectedPatientId;
@@ -122,6 +136,19 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
       console.error("Failed to disconnect bot", e);
     } finally {
       setIsDisconnecting(false);
+    }
+  };
+
+  const handleFinish = async (e, id) => {
+    if (e) e.stopPropagation();
+    if (!window.confirm("Mark this consultation as finished?")) return;
+    try {
+      const updated = await updateConsultationStatus(id, "completed");
+      setConsultations(prev => prev.map(c => c.id === id ? { ...c, ...updated } : c));
+      window.dispatchEvent(new Event('consultationStatusChanged'));
+    } catch (err) {
+      if (err.message === "unauthorized") onLogout();
+      else setError(err.message);
     }
   };
 
@@ -240,6 +267,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
     // ensure c gets updated when consultations refresh
     const updatedC = consultations.find(cons => cons.id === c.id) || c;
 
+
     return (
       <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box", animation: "fadeIn 0.3s ease" }}>
         <button onClick={() => setView("list")} style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
@@ -264,17 +292,27 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
               )}
               <span style={{ color: "#475569" }}>|</span>
               <span style={{ padding: "4px 8px", backgroundColor: updatedC.status === 'completed' ? "rgba(16, 185, 129, 0.1)" : "rgba(234, 179, 8, 0.1)", color: updatedC.status === 'completed' ? "#34d399" : "#facc15", borderRadius: "4px", fontSize: "12px", textTransform: "uppercase", fontWeight: 600 }}>
-                {updatedC.status}
+                {updatedC.status === 'completed' ? 'Finished' : (updatedC.status === 'draft' ? 'Active' : updatedC.status)}
               </span>
             </div>
           </div>
-          <button
-            onClick={(e) => handleDelete(e, updatedC.id)}
-            style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#ef4444", padding: "8px 16px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}
-            className="hover-bg-danger"
-          >
-            Delete
-          </button>
+          <div style={{ display: "flex", gap: "12px" }}>
+            {updatedC.status === 'draft' && (
+              <button
+                onClick={(e) => handleFinish(e, updatedC.id)}
+                style={{ background: "var(--success-gradient)", border: "none", color: "white", padding: "8px 20px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)" }}
+              >
+                Finish Consultation
+              </button>
+            )}
+            <button
+              onClick={(e) => handleDelete(e, updatedC.id)}
+              style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#ef4444", padding: "8px 16px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}
+              className="hover-bg-danger"
+            >
+              Delete
+            </button>
+          </div>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "24px" }}>
@@ -393,7 +431,11 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                 )}
               </div>
 
-              {updatedC.recall_bot_id ? (
+              {updatedC.status !== 'draft' ? (
+                <div style={{ padding: '12px', backgroundColor: 'rgba(148, 163, 184, 0.05)', border: '1px solid rgba(148, 163, 184, 0.1)', borderRadius: '8px', color: '#94a3b8', fontSize: '13px', textAlign: 'center', fontStyle: 'italic', marginTop: '10px' }}>
+                  Bot only available for active consultations.
+                </div>
+              ) : updatedC.recall_bot_id ? (
                 <button
                   onClick={() => handleDisconnectBot(updatedC.id)}
                   disabled={isDisconnecting}
@@ -406,7 +448,8 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                     border: '1px solid rgba(239, 68, 68, 0.2)',
                     fontSize: '12px',
                     fontWeight: 600,
-                    cursor: isDisconnecting ? 'not-allowed' : 'pointer'
+                    cursor: isDisconnecting ? 'not-allowed' : 'pointer',
+                    marginTop: '10px'
                   }}
                 >
                   {isDisconnecting ? 'Disconnecting...' : 'Disconnect Bot'}
@@ -506,6 +549,8 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
     );
   }
 
+
+
   // List View
   return (
     <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
@@ -518,22 +563,32 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
             View, create, and manage your patient records.
           </p>
         </div>
-        <button
-          onClick={handleCreateView}
-          style={{
-            background: "var(--primary-gradient)",
-            border: "none",
-            padding: "12px 24px",
-            borderRadius: "8px",
-            color: "white",
-            fontWeight: 600,
-            fontSize: "15px",
-            cursor: "pointer",
-            boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)",
-          }}
-        >
-          + New Consultation
-        </button>
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+          <button
+            onClick={handleCreateView}
+            disabled={!!activeConsultationObj}
+            style={{
+              background: activeConsultationObj ? "rgba(148, 163, 184, 0.1)" : "var(--primary-gradient)",
+              border: activeConsultationObj ? "1px solid rgba(148, 163, 184, 0.2)" : "none",
+              padding: "12px 24px",
+              borderRadius: "8px",
+              color: activeConsultationObj ? "#64748b" : "white",
+              fontWeight: 600,
+              fontSize: "15px",
+              cursor: activeConsultationObj ? "not-allowed" : "pointer",
+              boxShadow: activeConsultationObj ? "none" : "0 4px 12px rgba(59, 130, 246, 0.3)",
+              transition: "all 0.2s ease"
+            }}
+          >
+            + New Consultation
+          </button>
+          {activeConsultationObj && (
+            <div style={{ padding: "8px 12px", backgroundColor: "rgba(234, 179, 8, 0.1)", border: "1px solid rgba(234, 179, 8, 0.2)", borderRadius: "8px", color: "#facc15", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px", fontWeight: 500 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+              Complete "{activeConsultationObj.title}" to start another
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="glass-panel animate-fade-in stagger-1" style={{ padding: "32px" }}>
@@ -572,14 +627,26 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                 onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.4)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.1)"; }}
               >
-                <div>
-                  <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: 600, color: "#f1f5f9" }}>{c.title}</h3>
-                  <div style={{ fontSize: "13px", color: "#94a3b8", display: "flex", gap: "8px", alignItems: "center" }}>
-                    <span>{new Date(c.created_at).toLocaleDateString()}</span>
-                    {(c.transcripts?.length > 0 || c.insights) && <span>•</span>}
-                    {c.transcripts?.length > 0 && <span style={{ color: "#60a5fa" }}>{c.transcripts.length} Moments</span>}
-                    {c.insights && <span style={{ color: "#34d399" }}>Has Insights</span>}
-                  </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                  <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 600, color: "#f1f5f9" }}>{c.title}</h3>
+                  <span style={{
+                    padding: "2px 8px",
+                    backgroundColor: c.status === 'completed' ? "rgba(16, 185, 129, 0.1)" : "rgba(59, 130, 246, 0.1)",
+                    color: c.status === 'completed' ? "#34d399" : "#60a5fa",
+                    borderRadius: "4px",
+                    fontSize: "11px",
+                    textTransform: "uppercase",
+                    fontWeight: 700,
+                    border: `1px solid ${c.status === 'completed' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)'}`
+                  }}>
+                    {c.status === 'completed' ? 'Finished' : 'Active'}
+                  </span>
+                </div>
+                <div style={{ fontSize: "13px", color: "#94a3b8", display: "flex", gap: "8px", alignItems: "center" }}>
+                  <span>{new Date(c.created_at).toLocaleDateString()}</span>
+                  {(c.transcripts?.length > 0 || c.insights) && <span>•</span>}
+                  {c.transcripts?.length > 0 && <span style={{ color: "#60a5fa" }}>{c.transcripts.length} Moments</span>}
+                  {c.insights && <span style={{ color: "#34d399" }}>Has Insights</span>}
                 </div>
 
                 {c.patient ? (
@@ -600,6 +667,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                     No patient assigned
                   </div>
                 )}
+
               </div>
             ))}
           </div>
@@ -1632,8 +1700,13 @@ function Dashboard({ onLogout }) {
     const intervalId = setInterval(() => {
       loadData();
     }, 3000);
+    const handleStatusChanged = () => loadData();
+    window.addEventListener('consultationStatusChanged', handleStatusChanged);
 
-    return () => clearInterval(intervalId);
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('consultationStatusChanged', handleStatusChanged);
+    };
   }, [onLogout]);
 
   // Calculate stats for the welcome summary
@@ -1646,6 +1719,19 @@ function Dashboard({ onLogout }) {
 
   const handleToggleExpand = (id) => {
     setExpandedId((prevId) => (prevId === id ? null : id));
+  };
+
+  const handleFinish = async (e, id) => {
+    if (e) e.stopPropagation();
+    if (!window.confirm("Mark this consultation as finished?")) return;
+    try {
+      await updateConsultationStatus(id, "completed");
+      loadData(); // Dashboard's loadData
+      window.dispatchEvent(new Event('consultationStatusChanged'));
+    } catch (err) {
+      if (err.message === "unauthorized") onLogout();
+      else setError(err.message);
+    }
   };
 
   const formatTime = (seconds) => {
@@ -1752,6 +1838,29 @@ function Dashboard({ onLogout }) {
                         </span>
                       )}
 
+                      {c.status === 'draft' && (
+                        <button
+                          onClick={(e) => handleFinish(e, c.id)}
+                          style={{
+                            padding: "4px 12px",
+                            backgroundColor: "rgba(16, 185, 129, 0.15)",
+                            color: "#34d399",
+                            borderRadius: "6px",
+                            fontSize: "12px",
+                            fontWeight: 700,
+                            border: "1px solid rgba(16, 185, 129, 0.3)",
+                            cursor: "pointer",
+                            transition: "all 0.2s ease",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.02em"
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.25)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.15)"; }}
+                        >
+                          End Session
+                        </button>
+                      )}
+
                       <span style={{ marginLeft: "8px", color: "#94a3b8", transform: expandedId === c.id ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>
                         ▼
                       </span>
@@ -1853,6 +1962,7 @@ function App() {
         isCollapsed={!isSidebarOpen}
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         user={user}
+        onNavigateToConsultation={(id) => { setFocusedConsultationId(id); setActiveTab("consultations"); }}
       />
       <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", height: "100%" }}>
         {activeTab === "dashboard" && <Dashboard onLogout={handleLogout} />}
