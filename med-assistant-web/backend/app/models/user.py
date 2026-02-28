@@ -18,3 +18,4 @@ class User(Base):
 
     consultations = relationship("Consultation", back_populates="doctor")
     patients = relationship("Patient", back_populates="doctor")
+    chat_sessions = relationship("ChatSession", back_populates="user")
