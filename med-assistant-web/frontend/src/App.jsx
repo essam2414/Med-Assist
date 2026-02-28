@@ -1,7 +1,7 @@
 // frontend/src/App.jsx
 import { useEffect, useState, useRef } from "react";
 import Login from "./Login";
-import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount } from "./api";
+import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount, joinMeetingWithBot, disconnectBot } from "./api";
 import Sidebar from "./Sidebar";
 import MicPermission from "./MicPermission";
 
@@ -28,8 +28,11 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
   const [title, setTitle] = useState("");
   const [patients, setPatients] = useState([]);
   const [selectedPatientId, setSelectedPatientId] = useState("");
-  const [isCreatingPatient, setIsCreatingPatient] = useState(false);
-  const [newPatient, setNewPatient] = useState({ display_id: "", name: "", date_of_birth: "", gender: "" });
+  // Recall Bot State
+  const [meetingUrl, setMeetingUrl] = useState('');
+  const [isJoining, setIsJoining] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [botError, setBotError] = useState('');
 
   const loadData = () => {
     fetchConsultations()
@@ -56,8 +59,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
     setCreateStep(1);
     setTitle("");
     setSelectedPatientId("");
-    setIsCreatingPatient(false);
-    setNewPatient({ display_id: "", name: "", date_of_birth: "", gender: "" });
+    setSelectedPatientId("");
     setView("create");
   };
 
@@ -67,14 +69,6 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
     setError("");
     try {
       let finalPatientId = selectedPatientId;
-      if (isCreatingPatient) {
-        if (!newPatient.display_id) {
-          setError("Patient Display ID is required.");
-          return;
-        }
-        const createdP = await createPatient(newPatient);
-        finalPatientId = createdP.id;
-      }
 
       const created = await createConsultation(title, finalPatientId || null);
       setConsultations((prev) => [created, ...prev]);
@@ -100,7 +94,35 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
 
   const handleViewDetail = (c) => {
     setSelectedConsultation(c);
+    setMeetingUrl('');
+    setBotError('');
     setView("detail");
+  };
+
+  const handleJoinBot = async (consultationId) => {
+    if (!meetingUrl.trim()) return;
+    setIsJoining(true);
+    setBotError('');
+    try {
+      await joinMeetingWithBot(consultationId, meetingUrl);
+      setMeetingUrl('');
+      // The periodic loadData will update the recall_bot_id in the consultations list
+    } catch (e) {
+      setBotError(e.message || "Failed to join meeting");
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
+  const handleDisconnectBot = async (consultationId) => {
+    setIsDisconnecting(true);
+    try {
+      await disconnectBot(consultationId);
+    } catch (e) {
+      console.error("Failed to disconnect bot", e);
+    } finally {
+      setIsDisconnecting(false);
+    }
   };
 
   const formatTime = (seconds) => {
@@ -139,39 +161,24 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
               </label>
 
               <div style={{ display: "flex", flexWrap: "wrap", gap: "24px" }}>
-                <label style={{ display: "flex", alignItems: "center", gap: "10px", color: (!isCreatingPatient && selectedPatientId !== "") ? "#f8fafc" : "#94a3b8", cursor: "pointer", fontSize: "15px", transition: "color 0.2s" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "10px", color: (selectedPatientId !== "") ? "#f8fafc" : "#94a3b8", cursor: "pointer", fontSize: "15px", transition: "color 0.2s" }}>
                   <input
                     type="radio"
                     name="patient-mode"
-                    checked={!isCreatingPatient && selectedPatientId !== ""}
+                    checked={selectedPatientId !== ""}
                     onChange={() => {
-                      setIsCreatingPatient(false);
-                      setSelectedPatientId(patients.length > 0 ? patients[0].id : "");
+                      setSelectedPatientId(patients.length > 0 ? patients[0].id : "none_selected");
                     }}
                     style={{ cursor: "pointer", width: "18px", height: "18px", accentColor: "#3b82f6" }}
                   />
                   Select Existing
                 </label>
-                <label style={{ display: "flex", alignItems: "center", gap: "10px", color: isCreatingPatient ? "#f8fafc" : "#94a3b8", cursor: "pointer", fontSize: "15px", transition: "color 0.2s" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "10px", color: (selectedPatientId === "") ? "#f8fafc" : "#94a3b8", cursor: "pointer", fontSize: "15px", transition: "color 0.2s" }}>
                   <input
                     type="radio"
                     name="patient-mode"
-                    checked={isCreatingPatient}
+                    checked={selectedPatientId === ""}
                     onChange={() => {
-                      setIsCreatingPatient(true);
-                      setSelectedPatientId("");
-                    }}
-                    style={{ cursor: "pointer", width: "18px", height: "18px", accentColor: "#3b82f6" }}
-                  />
-                  Create New Patient
-                </label>
-                <label style={{ display: "flex", alignItems: "center", gap: "10px", color: (!isCreatingPatient && selectedPatientId === "") ? "#f8fafc" : "#94a3b8", cursor: "pointer", fontSize: "15px", transition: "color 0.2s" }}>
-                  <input
-                    type="radio"
-                    name="patient-mode"
-                    checked={!isCreatingPatient && selectedPatientId === ""}
-                    onChange={() => {
-                      setIsCreatingPatient(false);
                       setSelectedPatientId("");
                     }}
                     style={{ cursor: "pointer", width: "18px", height: "18px", accentColor: "#3b82f6" }}
@@ -180,80 +187,32 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                 </label>
               </div>
 
-              {!isCreatingPatient && selectedPatientId !== "" && (
+              {selectedPatientId !== "" && (
                 <div style={{ marginTop: "4px", animation: "fadeIn 0.2s ease" }}>
-                  <select
-                    style={{ width: "100%", padding: "14px", borderRadius: "10px", border: "1px solid rgba(59, 130, 246, 0.4)", backgroundColor: "rgba(15, 23, 42, 0.6)", color: "#f8fafc", outline: "none", fontSize: "15px", cursor: "pointer", boxShadow: "0 0 0 2px rgba(59,130,246,0.1)" }}
-                    value={selectedPatientId}
-                    onChange={(e) => setSelectedPatientId(e.target.value)}
-                  >
-                    {patients.length > 0 ? (
-                      patients.map(p => (
+                  {patients.length > 0 ? (
+                    <select
+                      style={{ width: "100%", padding: "14px", borderRadius: "10px", border: "1px solid rgba(59, 130, 246, 0.4)", backgroundColor: "rgba(15, 23, 42, 0.6)", color: "#f8fafc", outline: "none", fontSize: "15px", cursor: "pointer", boxShadow: "0 0 0 2px rgba(59,130,246,0.1)" }}
+                      value={selectedPatientId}
+                      onChange={(e) => setSelectedPatientId(e.target.value)}
+                    >
+                      {patients.map(p => (
                         <option key={p.id} value={p.id}>{p.name ? `${p.name} (${p.display_id})` : p.display_id}</option>
-                      ))
-                    ) : (
-                      <option value="" disabled>No patients available. Please create one.</option>
-                    )}
-                  </select>
+                      ))}
+                    </select>
+                  ) : (
+                    <div style={{ padding: "14px", borderRadius: "10px", border: "1px solid rgba(239, 68, 68, 0.3)", backgroundColor: "rgba(239, 68, 68, 0.05)", color: "#fca5a5", fontSize: "14px" }}>
+                      No patients are present in the system. Please create a patient in the Patients section first.
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-
-            {isCreatingPatient && (
-              <div style={{ padding: "20px", background: "rgba(15, 23, 42, 0.4)", borderRadius: "8px", border: "1px solid rgba(59, 130, 246, 0.3)", display: "flex", flexDirection: "column", gap: "16px" }}>
-                <h3 style={{ margin: 0, fontSize: "16px", color: "#f1f5f9" }}>New Patient Details</h3>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label style={{ fontSize: "12px", color: "#94a3b8" }}>Patient ID *</label>
-                    <input
-                      style={{ padding: "10px", borderRadius: "6px", border: "1px solid rgba(148, 163, 184, 0.2)", backgroundColor: "rgba(0, 0, 0, 0.2)", color: "#f8fafc" }}
-                      value={newPatient.display_id}
-                      onChange={(e) => setNewPatient({ ...newPatient, display_id: e.target.value })}
-                      placeholder="e.g. P-001"
-                      required={isCreatingPatient}
-                    />
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label style={{ fontSize: "12px", color: "#94a3b8" }}>Full Name</label>
-                    <input
-                      style={{ padding: "10px", borderRadius: "6px", border: "1px solid rgba(148, 163, 184, 0.2)", backgroundColor: "rgba(0, 0, 0, 0.2)", color: "#f8fafc" }}
-                      value={newPatient.name}
-                      onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
-                      placeholder="e.g. John Doe"
-                    />
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label style={{ fontSize: "12px", color: "#94a3b8" }}>Date of Birth</label>
-                    <input
-                      type="date"
-                      style={{ padding: "10px", borderRadius: "6px", border: "1px solid rgba(148, 163, 184, 0.2)", backgroundColor: "rgba(0, 0, 0, 0.2)", color: "#f8fafc" }}
-                      value={newPatient.date_of_birth}
-                      onChange={(e) => setNewPatient({ ...newPatient, date_of_birth: e.target.value })}
-                    />
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label style={{ fontSize: "12px", color: "#94a3b8" }}>Gender</label>
-                    <select
-                      style={{ padding: "10px", borderRadius: "6px", border: "1px solid rgba(148, 163, 184, 0.2)", backgroundColor: "rgba(0, 0, 0, 0.2)", color: "#f8fafc" }}
-                      value={newPatient.gender}
-                      onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value })}
-                    >
-                      <option value="">--</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {error && <div style={{ color: "#ef4444", fontSize: "14px" }}>{error}</div>}
 
             <button
               type="submit"
-              disabled={!title.trim() || (isCreatingPatient && !newPatient.display_id)}
+              disabled={!title.trim() || selectedPatientId === "none_selected"}
               style={{
                 background: "var(--primary-gradient)",
                 border: "none",
@@ -265,7 +224,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                 cursor: "pointer",
                 marginTop: "16px",
                 alignSelf: "flex-end",
-                opacity: (!title.trim() || (isCreatingPatient && !newPatient.display_id)) ? 0.6 : 1
+                opacity: (!title.trim() || selectedPatientId === "none_selected") ? 0.6 : 1
               }}
             >
               Start Consultation
@@ -349,11 +308,187 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
             )}
 
             <div className="glass-panel" style={{ padding: "24px", flex: 1, display: "flex", flexDirection: "column" }}>
+              <h3 style={{ margin: "0 0 20px 0", fontSize: "16px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Transcript Moments ({updatedC.transcripts?.length || 0})
+              </h3>
+
+              <div style={{ maxHeight: "calc(67.5vh - 60px)", overflowY: "auto", paddingRight: "12px", marginRight: "-12px" }} className="custom-scrollbar">
+                {updatedC.transcripts && updatedC.transcripts.length > 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                    {[...updatedC.transcripts].sort((a, b) => a.start_time - b.start_time).map((t) => (
+                      <div key={t.id} style={{ display: "flex", gap: "16px", fontSize: "15px" }}>
+                        <div style={{ color: "#3b82f6", fontWeight: 600, minWidth: "100px", fontSize: "14px" }}>
+                          {t.speaker}
+                          <div style={{ fontSize: "12px", color: "#64748b", fontWeight: "normal", marginTop: "4px" }}>
+                            {formatTime(t.start_time)}
+                          </div>
+                        </div>
+                        <div style={{ color: "#f8fafc", lineHeight: "1.6", flex: 1, backgroundColor: "rgba(15, 23, 42, 0.4)", padding: "16px", borderRadius: "12px", border: "1px solid rgba(148, 163, 184, 0.1)", overflowWrap: "anywhere", wordBreak: "break-word" }}>
+                          {t.text}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ padding: "40px 20px", textAlign: "center", color: "#64748b", fontSize: "15px", fontStyle: "italic", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "12px", border: "1px dashed rgba(148, 163, 184, 0.2)" }}>
+                    No transcript moments recorded for this consultation.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Transcripts & Bot Control */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            <div className="glass-panel" style={{ padding: "16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: (updatedC.recall_bot_id || botError) ? "12px" : "0" }}>
+                <h3 style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 0 0-10 10v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7a10 10 0 0 0-10-10z" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
+                  Recall Bot
+                  <div className="tooltip-container" style={{ position: "relative", display: "inline-flex", alignItems: "center", cursor: "help" }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#64748b" }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
+                    <div className="tooltip-text" style={{
+                      visibility: "hidden",
+                      width: "220px",
+                      backgroundColor: "#1e293b",
+                      color: "#f1f5f9",
+                      textAlign: "left",
+                      borderRadius: "8px",
+                      padding: "12px",
+                      position: "absolute",
+                      zIndex: 100,
+                      bottom: "125%",
+                      left: "50%",
+                      marginLeft: "-110px",
+                      opacity: 0,
+                      transition: "opacity 0.2s",
+                      fontSize: "12px",
+                      lineHeight: "1.5",
+                      fontWeight: 400,
+                      textTransform: "none",
+                      letterSpacing: "normal",
+                      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2)",
+                      border: "1px solid rgba(148, 163, 184, 0.2)"
+                    }}>
+                      <strong style={{ display: "block", marginBottom: "4px", color: "#3b82f6" }}>How to connect:</strong>
+                      1. Copy your Google Meet link.<br />
+                      2. Paste it in the input below.<br />
+                      3. Click "Invite" to bring the bot in.<br />
+                      4. Admit the bot (Recall.ai) to the meeting.
+                    </div>
+                  </div>
+                </h3>
+                <style dangerouslySetInnerHTML={{
+                  __html: `
+                  .tooltip-container:hover .tooltip-text {
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                  }
+                `}} />
+                {updatedC.recall_bot_id && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#818cf8', fontSize: '12px', fontWeight: 500 }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#818cf8', boxShadow: '0 0 6px #818cf8' }}></div>
+                    Listening...
+                  </div>
+                )}
+              </div>
+
+              {updatedC.recall_bot_id ? (
+                <button
+                  onClick={() => handleDisconnectBot(updatedC.id)}
+                  disabled={isDisconnecting}
+                  style={{
+                    width: "100%",
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    background: isDisconnecting ? 'rgba(239, 68, 68, 0.05)' : 'rgba(239, 68, 68, 0.1)',
+                    color: '#ef4444',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: isDisconnecting ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isDisconnecting ? 'Disconnecting...' : 'Disconnect Bot'}
+                </button>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                    <div className="input-group" style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(148, 163, 184, 0.2)',
+                      backgroundColor: 'rgba(15, 23, 42, 0.4)',
+                      transition: 'all 0.2s ease',
+                      position: 'relative',
+                      minWidth: 0
+                    }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64748b', flexShrink: 0 }}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                      <input
+                        type="text"
+                        placeholder="Meeting link..."
+                        value={meetingUrl}
+                        onChange={(e) => setMeetingUrl(e.target.value)}
+                        style={{
+                          flex: 1,
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#f8fafc',
+                          fontFamily: "'Inter', system-ui, sans-serif",
+                          fontSize: '14px',
+                          letterSpacing: '0.01em',
+                          outline: 'none',
+                          padding: 0,
+                          minWidth: 0
+                        }}
+                      />
+                    </div>
+                    <button
+                      onClick={() => handleJoinBot(updatedC.id)}
+                      disabled={isJoining || !meetingUrl.trim()}
+                      style={{
+                        padding: '8px 20px',
+                        borderRadius: '8px',
+                        background: isJoining ? 'rgba(59, 130, 246, 0.2)' : 'var(--primary-gradient)',
+                        color: 'white',
+                        border: 'none',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        cursor: isJoining ? 'not-allowed' : 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.2s ease',
+                        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.2)'
+                      }}
+                    >
+                      {isJoining ? 'Joining...' : 'Invite'}
+                    </button>
+                  </div>
+                  <style dangerouslySetInnerHTML={{
+                    __html: `
+                    .input-group:focus-within {
+                      border-color: rgba(59, 130, 246, 0.5) !important;
+                      background-color: rgba(15, 23, 42, 0.6) !important;
+                      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+                    }
+                    .input-group:hover {
+                      border-color: rgba(148, 163, 184, 0.4);
+                    }
+                  `}} />
+                </>
+              )}
+              {botError && <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '8px' }}>{botError}</div>}
+            </div>
+
+            <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column" }}>
               <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "8px" }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                 AI Summary & Insights
               </h3>
-              <div style={{ padding: "16px", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "10px", border: "1px solid rgba(148, 163, 184, 0.1)", flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: "200px" }}>
+              <div style={{ padding: "16px", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "10px", border: "1px solid rgba(148, 163, 184, 0.1)", flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: "450px", maxHeight: "70vh" }}>
                 {updatedC.insights ? (
                   <div style={{ color: "#f1f5f9", lineHeight: "1.6", fontSize: "15px", whiteSpace: "pre-wrap", overflowWrap: "anywhere", wordBreak: "break-word" }}>
                     {updatedC.insights.summary}
@@ -365,35 +500,6 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                 )}
               </div>
             </div>
-          </div>
-
-          {/* Right Column: Transcripts */}
-          <div className="glass-panel" style={{ padding: "24px", maxHeight: "70vh", overflowY: "auto" }}>
-            <h3 style={{ margin: "0 0 20px 0", fontSize: "16px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Transcript Moments ({updatedC.transcripts?.length || 0})
-            </h3>
-
-            {updatedC.transcripts && updatedC.transcripts.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                {[...updatedC.transcripts].sort((a, b) => a.start_time - b.start_time).map((t) => (
-                  <div key={t.id} style={{ display: "flex", gap: "16px", fontSize: "15px" }}>
-                    <div style={{ color: "#3b82f6", fontWeight: 600, minWidth: "100px", fontSize: "14px" }}>
-                      {t.speaker}
-                      <div style={{ fontSize: "12px", color: "#64748b", fontWeight: "normal", marginTop: "4px" }}>
-                        {formatTime(t.start_time)}
-                      </div>
-                    </div>
-                    <div style={{ color: "#f8fafc", lineHeight: "1.6", flex: 1, backgroundColor: "rgba(15, 23, 42, 0.4)", padding: "16px", borderRadius: "12px", border: "1px solid rgba(148, 163, 184, 0.1)", overflowWrap: "anywhere", wordBreak: "break-word" }}>
-                      {t.text}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ padding: "40px 20px", textAlign: "center", color: "#64748b", fontSize: "15px", fontStyle: "italic", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "12px", border: "1px dashed rgba(148, 163, 184, 0.2)" }}>
-                No transcript moments recorded for this consultation.
-              </div>
-            )}
           </div>
         </div>
       </div>
