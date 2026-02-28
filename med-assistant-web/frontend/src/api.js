@@ -52,14 +52,14 @@ export async function fetchConsultations() {
   return res.json();
 }
 
-export async function createConsultation(title) {
+export async function createConsultation(title, patient_id = null) {
   const res = await fetch(`${API_URL}/consultations`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     credentials: "include",
-    body: JSON.stringify({ title }),
+    body: JSON.stringify({ title, patient_id }),
   });
   if (res.status === 401) {
     throw new Error("unauthorized");
@@ -110,5 +110,75 @@ export async function updateConsultationStatus(id, status) {
     throw new Error("unauthorized");
   }
   if (!res.ok) throw new Error("Failed to update consultation");
+  return res.json();
+}
+
+export async function fetchPatients() {
+  const res = await fetch(`${API_URL}/patients`, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) throw new Error("Failed to load patients");
+  return res.json();
+}
+
+export async function createPatient(patientData) {
+  const res = await fetch(`${API_URL}/patients`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify(patientData),
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to create patient");
+  }
+  return res.json();
+}
+
+export async function updatePatient(id, patientData) {
+  const res = await fetch(`${API_URL}/patients/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify(patientData),
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to update patient");
+  }
+  return res.json();
+}
+
+export async function deletePatient(id) {
+  const res = await fetch(`${API_URL}/patients/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to delete patient");
+  }
   return res.json();
 }

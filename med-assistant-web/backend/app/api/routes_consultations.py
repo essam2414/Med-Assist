@@ -5,6 +5,8 @@ from typing import List
 
 from app.deps import get_db, get_current_user
 from app.models.consultation import Consultation as ConsultationModel
+from app.models.transcript import TranscriptEntry
+from app.models.insight import AIInsight
 from app.schemas.consultation import Consultation, ConsultationCreate
 from app.models.user import User
 
@@ -20,6 +22,7 @@ def create_consultation(
     c = ConsultationModel(
         title=payload.title,
         doctor_id=current_user.id,
+        patient_id=payload.patient_id,
         status="draft",
         created_at=datetime.utcnow(),
     )
@@ -36,7 +39,11 @@ def list_consultations(
 ):
     qs = (
         db.query(ConsultationModel)
-        .options(joinedload(ConsultationModel.transcripts), joinedload(ConsultationModel.insights))
+        .options(
+            joinedload(ConsultationModel.transcripts), 
+            joinedload(ConsultationModel.insights),
+            joinedload(ConsultationModel.patient)
+        )
         .filter(ConsultationModel.doctor_id == current_user.id)
         .order_by(ConsultationModel.created_at.desc())
     )
@@ -58,6 +65,8 @@ def delete_consultation(
     if not c:
         raise HTTPException(status_code=404, detail="Consultation not found")
 
+    db.query(TranscriptEntry).filter(TranscriptEntry.consultation_id == c.id).delete()
+    db.query(AIInsight).filter(AIInsight.consultation_id == c.id).delete()
     db.delete(c)
     db.commit()
     return {"status": "ok"}
@@ -98,7 +107,11 @@ def get_active_consultation(
 ):
     c = (
         db.query(ConsultationModel)
-        .options(joinedload(ConsultationModel.transcripts), joinedload(ConsultationModel.insights))
+        .options(
+            joinedload(ConsultationModel.transcripts), 
+            joinedload(ConsultationModel.insights),
+            joinedload(ConsultationModel.patient)
+        )
         .filter(
             ConsultationModel.doctor_id == current_user.id,
             ConsultationModel.status == "draft" # Or "active"

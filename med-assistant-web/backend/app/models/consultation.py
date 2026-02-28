@@ -14,6 +14,9 @@ class Consultation(Base):
     doctor_id = Column(Integer, ForeignKey("users.id"), index=True)
     doctor = relationship("User", back_populates="consultations")
 
+    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=True, index=True)
+    patient = relationship("Patient", back_populates="consultations")
+
     title = Column(String, nullable=False)
     status = Column(String, default="draft", index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
