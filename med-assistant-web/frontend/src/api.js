@@ -292,3 +292,40 @@ export async function sendChatMessage(sessionId, message) {
   }
   return res.json();
 }
+
+export async function joinMeetingWithBot(consultationId, meetingUrl) {
+  const res = await fetch(`${API_URL}/recall/join?consultation_id=${consultationId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ meeting_url: meetingUrl }),
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to join meeting with bot");
+  }
+  return res.json();
+}
+
+export async function disconnectBot(consultation_id) {
+  const res = await fetch(`${API_URL}/recall/disconnect?consultation_id=${consultation_id}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to disconnect bot");
+  }
+  return res.json();
+}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchActiveConsultation, updateConsultationStatus } from './api';
 
-export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed, toggleSidebar, user }) {
+export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed, toggleSidebar, user, onNavigateToConsultation }) {
     const [activeConsultation, setActiveConsultation] = useState(null);
 
     useEffect(() => {
@@ -18,16 +18,19 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed
         return () => clearInterval(interval);
     }, []);
 
-    const handleEndSession = async () => {
+    const handleEndSession = async (e) => {
+        if (e) e.stopPropagation();
         if (!activeConsultation) return;
         if (!window.confirm("Are you sure you want to end this session?")) return;
         try {
             await updateConsultationStatus(activeConsultation.id, "completed");
             setActiveConsultation(null);
+            window.dispatchEvent(new Event('consultationStatusChanged'));
         } catch (e) {
             console.error("Failed to end session", e);
         }
     };
+
 
     const navItems = [
         {
@@ -160,17 +163,22 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed
                 )}
 
                 {activeConsultation ? (
-                    <div style={{
-                        padding: isCollapsed ? '12px' : '12px',
-                        margin: isCollapsed ? '0 8px' : '0 4px',
-                        borderRadius: '10px',
-                        background: 'rgba(59, 130, 246, 0.05)',
-                        border: '1px solid rgba(59, 130, 246, 0.1)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '10px',
-                        alignItems: isCollapsed ? 'center' : 'stretch'
-                    }}>
+                    <div
+                        onClick={() => { if (onNavigateToConsultation) onNavigateToConsultation(activeConsultation.id); }}
+                        className="hover-bg"
+                        style={{
+                            padding: isCollapsed ? '12px' : '12px',
+                            margin: isCollapsed ? '0 8px' : '0 4px',
+                            borderRadius: '10px',
+                            background: 'rgba(59, 130, 246, 0.05)',
+                            border: '1px solid rgba(59, 130, 246, 0.1)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px',
+                            alignItems: isCollapsed ? 'center' : 'stretch',
+                            cursor: 'pointer'
+                        }}
+                    >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }}></div>
                             {!isCollapsed && (
@@ -184,14 +192,19 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed
                             <button
                                 onClick={handleEndSession}
                                 style={{
-                                    padding: '6px 10px',
-                                    borderRadius: '6px',
-                                    border: '1px solid rgba(239, 68, 68, 0.2)',
-                                    background: 'rgba(239, 68, 68, 0.05)',
+                                    marginTop: '8px',
+                                    padding: '8px 12px',
+                                    borderRadius: '8px',
+                                    background: 'rgba(239, 68, 68, 0.1)',
                                     color: '#ef4444',
+                                    border: '1px solid rgba(239, 68, 68, 0.3)',
                                     fontSize: '11px',
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    width: '100%'
                                 }}
                                 className="hover-bg-danger"
                             >
@@ -206,6 +219,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed
                         </div>
                     )
                 )}
+
             </div>
 
             {/* Footer / User Profile & Logout */}

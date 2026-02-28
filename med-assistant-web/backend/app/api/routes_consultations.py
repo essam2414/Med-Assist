@@ -9,6 +9,10 @@ from app.models.transcript import TranscriptEntry
 from app.models.insight import AIInsight
 from app.schemas.consultation import Consultation, ConsultationCreate
 from app.models.user import User
+from app.services.recall_service import recall_service
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/consultations", tags=["consultations"])
 
@@ -73,7 +77,7 @@ def delete_consultation(
 
 
 @router.patch("/{consultation_id}")
-def update_consultation(
+async def update_consultation(
     consultation_id: int,
     payload: dict,
     db: Session = Depends(get_db),
@@ -94,6 +98,12 @@ def update_consultation(
         c.status = payload["status"]
         if payload["status"] == "completed":
             c.ended_at = datetime.utcnow()
+            if c.recall_bot_id:
+                try:
+                    await recall_service.leave_call(c.recall_bot_id)
+                except Exception as e:
+                    logger.warning(f"Failed to leave call for bot {c.recall_bot_id}: {e}")
+                c.recall_bot_id = None
     
     db.commit()
     db.refresh(c)

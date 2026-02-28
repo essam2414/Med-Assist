@@ -19,6 +19,7 @@ class Consultation(Base):
 
     title = Column(String, nullable=False)
     status = Column(String, default="draft", index=True)
+    recall_bot_id = Column(String, nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     ended_at = Column(DateTime, nullable=True)
 

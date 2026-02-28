@@ -17,8 +17,10 @@ class ConsultationCreate(ConsultationBase):
 
 class Consultation(ConsultationBase):
   id: int
+  status: str
   created_at: datetime
   ended_at: Optional[datetime] = None
+  recall_bot_id: Optional[str] = None
   
   transcripts: List[TranscriptEntry] = []
   insights: Optional[AIInsight] = None
