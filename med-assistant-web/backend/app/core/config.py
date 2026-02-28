@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change-this-in-prod"  # better: read from .env
     OPENAI_API_KEY: str  # will be loaded from .env
     ASSEMBLYAI_API_KEY: str
+    RECALL_API_KEY: str
+    RECALL_REGION: str = "us-east-1"
     class Config:
         env_file = ".env"
 

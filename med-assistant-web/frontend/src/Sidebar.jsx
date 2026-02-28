@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { fetchActiveConsultation, updateConsultationStatus } from './api';
+import { fetchActiveConsultation, updateConsultationStatus, joinMeetingWithBot, disconnectBot } from './api';
 
 export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed, toggleSidebar, user }) {
     const [activeConsultation, setActiveConsultation] = useState(null);
+    const [meetingUrl, setMeetingUrl] = useState('');
+    const [isJoining, setIsJoining] = useState(false);
+    const [isDisconnecting, setIsDisconnecting] = useState(false);
+    const [botError, setBotError] = useState('');
 
     useEffect(() => {
         const loadActive = async () => {
@@ -26,6 +30,35 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed
             setActiveConsultation(null);
         } catch (e) {
             console.error("Failed to end session", e);
+        }
+    };
+
+    const handleJoinBot = async () => {
+        if (!activeConsultation || !meetingUrl.trim()) return;
+        setIsJoining(true);
+        setBotError('');
+        try {
+            await joinMeetingWithBot(activeConsultation.id, meetingUrl);
+            alert("Bot joined successfully! Transcripts will appear live.");
+            setMeetingUrl('');
+        } catch (e) {
+            setBotError(e.message || "Failed to join meeting");
+            console.error("Join Bot Error:", e);
+        } finally {
+            setIsJoining(false);
+        }
+    };
+
+    const handleDisconnectBot = async () => {
+        if (!activeConsultation) return;
+        setIsDisconnecting(true);
+        try {
+            await disconnectBot(activeConsultation.id);
+            setActiveConsultation({ ...activeConsultation, recall_bot_id: null });
+        } catch (e) {
+            console.error("Failed to disconnect bot", e);
+        } finally {
+            setIsDisconnecting(false);
         }
     };
 
@@ -205,6 +238,90 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed
                             No active session
                         </div>
                     )
+                )}
+
+                {/* Recall Bot Section */}
+                {!isCollapsed && activeConsultation && (
+                    <div style={{ marginTop: '24px', padding: '0 4px' }}>
+                        <div style={{ marginBottom: '12px', padding: '0 8px', fontSize: '11px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 0 0-10 10v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7a10 10 0 0 0-10-10z" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
+                            Recall AI Bot
+                        </div>
+                        <div style={{
+                            padding: '12px',
+                            borderRadius: '10px',
+                            background: 'rgba(99, 102, 241, 0.05)',
+                            border: '1px solid rgba(99, 102, 241, 0.15)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px'
+                        }}>
+                            {activeConsultation.recall_bot_id ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#818cf8', fontSize: '12px', fontWeight: 500 }}>
+                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#818cf8', boxShadow: '0 0 6px #818cf8' }}></div>
+                                        Bot is listening...
+                                    </div>
+                                    <button
+                                        onClick={handleDisconnectBot}
+                                        disabled={isDisconnecting}
+                                        style={{
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            background: isDisconnecting ? 'rgba(239, 68, 68, 0.05)' : 'rgba(239, 68, 68, 0.1)',
+                                            color: '#ef4444',
+                                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                                            fontSize: '10px',
+                                            fontWeight: 600,
+                                            cursor: isDisconnecting ? 'not-allowed' : 'pointer',
+                                            alignSelf: 'flex-start'
+                                        }}
+                                    >
+                                        {isDisconnecting ? 'Disconnecting...' : 'Disconnect Bot'}
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    <input
+                                        type="text"
+                                        placeholder="Paste meeting link..."
+                                        value={meetingUrl}
+                                        onChange={(e) => setMeetingUrl(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '8px 10px',
+                                            borderRadius: '6px',
+                                            border: '1px solid rgba(148, 163, 184, 0.2)',
+                                            background: 'rgba(15, 23, 42, 0.3)',
+                                            color: '#f1f5f9',
+                                            fontSize: '12px',
+                                            outline: 'none',
+                                            boxSizing: 'border-box'
+                                        }}
+                                    />
+                                    {botError && <div style={{ color: '#ef4444', fontSize: '10px' }}>{botError}</div>}
+                                    <button
+                                        onClick={handleJoinBot}
+                                        disabled={isJoining || !meetingUrl.trim()}
+                                        style={{
+                                            padding: '8px',
+                                            borderRadius: '6px',
+                                            background: isJoining ? 'rgba(99, 102, 241, 0.2)' : 'var(--primary-gradient)',
+                                            color: 'white',
+                                            border: 'none',
+                                            fontSize: '11px',
+                                            fontWeight: 600,
+                                            cursor: isJoining ? 'not-allowed' : 'pointer',
+                                            transition: 'all 0.2s',
+                                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                        }}
+                                    >
+                                        {isJoining ? 'Joining...' : 'Invite Bot'}
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
                 )}
             </div>
 
