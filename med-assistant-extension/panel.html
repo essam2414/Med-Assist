@@ -538,45 +538,13 @@
           Stop
         </button>
       </div>
-    </div>
-
-    <div class="glass-panel card audio-card">
-      <div class="card-header">
-        <div class="card-title">Review Recording</div>
-        <div class="card-caption">
-          Preview captured audio before transcribing.
-        </div>
-      </div>
-
-      <div class="controls">
-        <button class="btn btn-ghost" id="play" disabled>
-          <span>▶</span>
-          Playback
-        </button>
-        <button class="btn btn-primary" id="transcribe" disabled>
-          <span>⚡</span>
-          Transcribe
-        </button>
-      </div>
-
-      <div class="audio-wrapper">
-        <div class="audio-shell">
-          <div class="audio-bar" id="audio-bar">
-            <div class="audio-bar-fill" id="audio-bar-fill"></div>
-          </div>
-          <div class="audio-times">
-            <div id="time-current">0:00</div>
-            <div id="time-duration">0:00</div>
-          </div>
-        </div>
-      </div>
-
-      <audio id="player"></audio>
 
       <div class="hint">
-        Tip: Ensure you select a tab and check "Also share tab audio".
+        Tip: Recording is automatic. Transcripts will appear every 10 seconds.
       </div>
     </div>
+
+    <audio id="player" style="display: none;"></audio>
 
     <div class="glass-panel card">
       <div class="card-header">

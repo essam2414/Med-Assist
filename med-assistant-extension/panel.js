@@ -125,15 +125,7 @@ const statusLabel = document.getElementById('status-label');
 
 const startBtn = document.getElementById('start');
 const stopBtn = document.getElementById('stop');
-const playBtn = document.getElementById('play');
 const audioEl = document.getElementById('player');
-
-const bar = document.getElementById('audio-bar');
-const barFill = document.getElementById('audio-bar-fill');
-const timeCurrent = document.getElementById('time-current');
-const timeDuration = document.getElementById('time-duration');
-
-const transcribeBtn = document.getElementById('transcribe');
 const consultationSelect = document.getElementById('consultation-select');
 const transcriptBox = document.getElementById('transcripts-container');
 
@@ -141,6 +133,8 @@ let mediaStream = null;
 let micStream = null;
 let liveAudio = null;
 let audioContext = null;
+let analyser = null;
+let dataArray = null;
 
 let mediaRecorderTab = null;
 let mediaRecorderMic = null;
@@ -175,14 +169,13 @@ function setStateIdle(message) {
 
 function setStateRecording() {
   statusEl.textContent =
-    'Capturing tab audio… stop when the consultation segment is complete.';
+    'Capturing audio… stop when the consultation segment is complete.';
   statusDot.classList.remove('idle');
   statusDot.classList.add('active');
   statusLabel.textContent = 'Recording';
 
   startBtn.disabled = true;
   stopBtn.disabled = false;
-  playBtn.disabled = true;
 }
 
 function setStateProcessing() {
@@ -197,14 +190,13 @@ function setStateProcessing() {
 
 function setStateReady() {
   statusEl.textContent =
-    'Recording ready. Play it back or send it to your AI backend.';
+    'Recording complete. You can now transcribe the segment.';
   statusDot.classList.remove('active');
   statusDot.classList.add('idle');
   statusLabel.textContent = 'Ready';
 
   startBtn.disabled = false;
   stopBtn.disabled = true;
-  playBtn.disabled = false;
 }
 
 function cleanupStream() {
@@ -222,9 +214,13 @@ function cleanupStream() {
     liveAudio = null;
   }
   if (audioContext) {
-    audioContext.close();
+    if (audioContext.state !== 'closed') {
+      audioContext.close();
+    }
     audioContext = null;
   }
+  analyser = null;
+  dataArray = null;
   if (recordingTabId) {
     chrome.tabs.update(recordingTabId, { muted: false }).catch(() => { });
     recordingTabId = null;
@@ -232,9 +228,7 @@ function cleanupStream() {
 }
 
 function resetProgress() {
-  barFill.style.width = '0%';
-  timeCurrent.textContent = '0:00';
-  timeDuration.textContent = '0:00';
+  // No-op - removed progress bar
 }
 
 function loadConsultations() {
@@ -309,7 +303,17 @@ consultationSelect.addEventListener('change', () => {
     .catch(console.error);
 });
 
+let liveInterval = null;
+let totalOffset = 0;
+const CHUNK_INTERVAL_MS = 10000;
+
 startBtn.addEventListener('click', async () => {
+  const consultationId = consultationSelect.value;
+  if (!consultationId) {
+    alert("Please select a consultation session first.");
+    return;
+  }
+
   setStateProcessing();
   statusEl.textContent = 'Starting capture…';
 
@@ -346,7 +350,6 @@ startBtn.addEventListener('click', async () => {
     }
     mediaStream.getVideoTracks().forEach(track => track.stop());
 
-    // 2. Capture Microphone with Acoustic Echo Cancellation
     micStream = await navigator.mediaDevices.getUserMedia({
       audio: {
         echoCancellation: true,
@@ -355,7 +358,6 @@ startBtn.addEventListener('click', async () => {
       }
     });
 
-    // 3. Mute to prevent physical iteration, pipe to internal audio renderer
     recordingTabId = tab.id;
     await chrome.tabs.update(recordingTabId, { muted: true });
 
@@ -364,38 +366,121 @@ startBtn.addEventListener('click', async () => {
     liveAudio.volume = 1;
     liveAudio.play();
 
-    // 4. Record the specific streams independently!
-    tabRecordedChunks = [];
-    micRecordedChunks = [];
-    tabBlob = null;
-    micBlob = null;
+    let currentChunkOffset = 0;
+    let pendingTabBlob = null;
+    let pendingMicBlob = null;
+    let chunkHasAudio = false; // Flag to track if the current interval has speech
 
-    if (tabBlobUrl) { URL.revokeObjectURL(tabBlobUrl); tabBlobUrl = null; }
-    if (micBlobUrl) { URL.revokeObjectURL(micBlobUrl); micBlobUrl = null; }
-    transcribeBtn.disabled = true;
+    // Functions to handle the chunking cycles
+    const startNewChunk = () => {
+      // Use localized arrays for this specific chunk
+      const localTabChunks = [];
+      const localMicChunks = [];
 
-    // Start Tab Recorder
-    mediaRecorderTab = new MediaRecorder(mediaStream, { mimeType: 'audio/webm' });
-    mediaRecorderTab.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) tabRecordedChunks.push(e.data);
-    };
-    mediaRecorderTab.onstop = () => {
-      tabBlob = new Blob(tabRecordedChunks, { type: 'audio/webm' });
-      checkBlobsReady();
+      const recorderTab = new MediaRecorder(mediaStream, { mimeType: 'audio/webm' });
+      const recorderMic = new MediaRecorder(micStream, { mimeType: 'audio/webm' });
+
+      recorderTab.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) localTabChunks.push(e.data);
+      };
+      recorderMic.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) localMicChunks.push(e.data);
+      };
+
+      // Capture the current offset for THIS specific chunk
+      const offsetAtStart = currentChunkOffset;
+
+      recorderTab.onstop = async () => {
+        const tBlob = new Blob(localTabChunks, { type: 'audio/webm' });
+        checkAndSend(tBlob, 'tab', offsetAtStart);
+      };
+      recorderMic.onstop = async () => {
+        const mBlob = new Blob(localMicChunks, { type: 'audio/webm' });
+        checkAndSend(mBlob, 'mic', offsetAtStart);
+      };
+
+      recorderTab.start();
+      recorderMic.start();
+
+      return { recorderTab, recorderMic };
     };
 
-    // Start Mic Recorder
-    mediaRecorderMic = new MediaRecorder(micStream, { mimeType: 'audio/webm' });
-    mediaRecorderMic.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) micRecordedChunks.push(e.data);
-    };
-    mediaRecorderMic.onstop = () => {
-      micBlob = new Blob(micRecordedChunks, { type: 'audio/webm' });
-      checkBlobsReady();
+    const checkAndSend = async (blob, source, offset) => {
+      if (source === 'tab') pendingTabBlob = blob;
+      if (source === 'mic') pendingMicBlob = blob;
+
+      if (pendingTabBlob && pendingMicBlob) {
+        const t = pendingTabBlob;
+        const m = pendingMicBlob;
+        pendingTabBlob = null;
+        pendingMicBlob = null;
+
+        console.log(`Sending chunk to backend with offset: ${offset}`);
+        await sendChunkToBackend(t, m, consultationId, offset);
+      }
     };
 
-    mediaRecorderTab.start();
-    mediaRecorderMic.start();
+    // Silence detection setup
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioContext.createMediaStreamSource(micStream);
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    source.connect(analyser);
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    const getVolume = () => {
+      analyser.getByteFrequencyData(dataArray);
+      let values = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        values += dataArray[i];
+      }
+      const volume = values / dataArray.length;
+      // If volume is above threshold, mark the chunk as having audio
+      if (volume > 5) chunkHasAudio = true;
+      return volume;
+    };
+
+    const waitForSilenceAndCycle = () => {
+      const SILENCE_THRESHOLD = 8; // Adjust based on testing
+      const checkSilence = () => {
+        const volume = getVolume();
+        // console.log('Current volume:', volume);
+
+        if (volume < SILENCE_THRESHOLD) {
+          console.log('Silence detected, cycling recorders...');
+          // 1. Stop the current ones
+          if (activeRecorders.recorderTab.state === 'recording') activeRecorders.recorderTab.stop();
+          if (activeRecorders.recorderMic.state === 'recording') activeRecorders.recorderMic.stop();
+
+          // 2. Increment offset BEFORE starting the next one
+          // Note: The actual chunk might be slightly longer than 10s now
+          // For simplicity, we keep the increment but ideally we'd use performance.now()
+          currentChunkOffset += (Date.now() - lastCycleTime) / 1000;
+          lastCycleTime = Date.now();
+
+          // 3. Start the next cycle
+          const wasSufficientlyAudible = chunkHasAudio;
+          chunkHasAudio = false; // Reset for next chunk
+          activeRecorders = startNewChunk();
+          activeRecorders.wasAudible = wasSufficientlyAudible;
+        } else {
+          // Still speaking, wait 500ms and check again
+          setTimeout(checkSilence, 500);
+        }
+      };
+      checkSilence();
+    };
+
+    // Keep track of the ACTIVE recorders so we can stop them in the interval
+    let lastCycleTime = Date.now();
+    let activeRecorders = startNewChunk();
+    activeRecorders.wasAudible = false; // Initialize for the first chunk
+
+    // Loop interval
+    liveInterval = setInterval(() => {
+      console.log('Interval reached, waiting for a pause to cycle...');
+      waitForSilenceAndCycle();
+    }, CHUNK_INTERVAL_MS);
 
     setStateRecording();
     resetProgress();
@@ -406,62 +491,12 @@ startBtn.addEventListener('click', async () => {
   }
 });
 
-function checkBlobsReady() {
-  if (tabBlob && micBlob) {
-    cleanupStream(); // Stream cleanup done after both blobs are ready
-    tabBlobUrl = URL.createObjectURL(tabBlob);
-    micBlobUrl = URL.createObjectURL(micBlob);
-
-    audioEl.src = tabBlobUrl;
-    // Note: We use the tab audio duration to represent the whole clip since they start/stop together
-    transcribeBtn.disabled = false;
-    setStateReady();
-  }
-}
-
-stopBtn.addEventListener('click', () => {
-  let isRecording = false;
-  if (mediaRecorderTab && mediaRecorderTab.state !== 'inactive') {
-    mediaRecorderTab.stop();
-    isRecording = true;
-  }
-  if (mediaRecorderMic && mediaRecorderMic.state !== 'inactive') {
-    mediaRecorderMic.stop();
-    isRecording = true;
-  }
-  if (isRecording) {
-    setStateProcessing();
-    statusEl.textContent = 'Stopping capture and finalising audio…';
-  }
-});
-
-playBtn.addEventListener('click', () => {
-  if (tabBlobUrl) {
-    audioEl.currentTime = 0;
-    audioEl.play();
-  }
-});
-
-transcribeBtn.addEventListener('click', async () => {
-  const consultationId = consultationSelect.value;
-  if (!consultationId) {
-    alert("Please select a consultation session first.");
-    return;
-  }
-
-  if (!tabBlob || !micBlob) {
-    alert("Audio is not fully recorded yet.");
-    return;
-  }
-
-  transcribeBtn.disabled = true;
-  const originalText = transcribeBtn.innerHTML;
-  transcribeBtn.innerHTML = '<span class="btn-icon">⏳</span> Transcribing...';
-
+async function sendChunkToBackend(tabBlob, micBlob, consultationId, offset) {
   const formData = new FormData();
-  formData.append('audio_file', tabBlob, 'tab_recording.webm');
-  formData.append('mic_file', micBlob, 'mic_recording.webm');
+  formData.append('audio_file', tabBlob, 'tab_chunk.webm');
+  formData.append('mic_file', micBlob, 'mic_chunk.webm');
   formData.append('consultation_id', consultationId);
+  formData.append('offset', offset);
 
   try {
     const res = await fetch('http://localhost:8000/transcripts/upload', {
@@ -470,67 +505,43 @@ transcribeBtn.addEventListener('click', async () => {
       credentials: 'include'
     });
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || 'Upload failed');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        data.forEach(segment => addSegmentToTranscript(segment));
+      } else {
+        addSegmentToTranscript(data);
+      }
     }
-
-    const data = await res.json();
-    transcriptBox.style.display = 'flex';
-
-    if (Array.isArray(data)) {
-      data.forEach(segment => {
-        const entry = document.createElement('div');
-        entry.className = 'transcript-entry';
-        let timeStr = formatTime(segment.start_time || 0);
-        entry.innerHTML = `
-              <div class="transcript-speaker">${segment.speaker || 'Speaker'} <span style="color:var(--text-muted); font-weight:normal;">[${timeStr}]</span></div>
-              <div class="transcript-text">${segment.text}</div>
-            `;
-        transcriptBox.appendChild(entry);
-      })
-    } else {
-      const entry = document.createElement('div');
-      entry.className = 'transcript-entry';
-      let timeStr = formatTime(data.start_time || 0);
-      entry.innerHTML = `
-          <div class="transcript-speaker">${data.speaker || 'Speaker'} <span style="color:var(--text-muted); font-weight:normal;">[${timeStr}]</span></div>
-          <div class="transcript-text">${data.text}</div>
-        `;
-      transcriptBox.appendChild(entry);
-    }
-    transcriptBox.scrollTop = transcriptBox.scrollHeight;
-
   } catch (e) {
-    console.error('Transcription error:', e);
-    alert('Transcription error: ' + e.message);
-  } finally {
-    transcribeBtn.disabled = false;
-    transcribeBtn.innerHTML = originalText;
+    console.error('Live chunk error:', e);
   }
+}
+
+function addSegmentToTranscript(segment) {
+  transcriptBox.style.display = 'flex';
+  const entry = document.createElement('div');
+  entry.className = 'transcript-entry';
+  let timeStr = formatTime(segment.start_time || 0);
+  entry.innerHTML = `
+    <div class="transcript-speaker">${segment.speaker || 'Speaker'} <span style="color:var(--text-muted); font-weight:normal;">[${timeStr}]</span></div>
+    <div class="transcript-text">${segment.text}</div>
+  `;
+  transcriptBox.appendChild(entry);
+  transcriptBox.scrollTop = transcriptBox.scrollHeight;
+}
+
+stopBtn.addEventListener('click', () => {
+  if (liveInterval) {
+    clearInterval(liveInterval);
+    liveInterval = null;
+  }
+
+  if (mediaRecorderTab && mediaRecorderTab.state !== 'inactive') mediaRecorderTab.stop();
+  if (mediaRecorderMic && mediaRecorderMic.state !== 'inactive') mediaRecorderMic.stop();
+
+  setStateIdle('Capture stopped.');
+  cleanupStream();
 });
 
-// Update progress bar and times
-audioEl.addEventListener('loadedmetadata', () => {
-  timeDuration.textContent = formatTime(audioEl.duration);
-});
-
-audioEl.addEventListener('timeupdate', () => {
-  const current = audioEl.currentTime || 0;
-  const duration = audioEl.duration || 0;
-  timeCurrent.textContent = formatTime(current);
-  timeDuration.textContent = formatTime(duration);
-
-  const pct = duration ? (current / duration) * 100 : 0;
-  barFill.style.width = `${pct}%`;
-});
-
-// Click-to-seek
-bar.addEventListener('click', (event) => {
-  if (!audioEl.src || !isFinite(audioEl.duration)) return;
-
-  const rect = bar.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const ratio = Math.min(Math.max(x / rect.width, 0), 1);
-  audioEl.currentTime = ratio * audioEl.duration;
-});
+// End of file
