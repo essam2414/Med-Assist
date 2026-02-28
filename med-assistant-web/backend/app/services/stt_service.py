@@ -1,51 +1,84 @@
 import os
-import assemblyai as aai
+from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Set up AssemblyAI client with the API key from environment
-aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
+# Initialize the OpenAI Client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def transcribe_audio(file_path: str) -> list[dict]:
+import asyncio
+
+async def transcribe_audio_async(file_path: str, speaker_name: str = None) -> list[dict]:
     """
-    Takes an audio file path, sends it to AssemblyAI for transcription with 
-    speaker diarization enabled (max 2 speakers), and returns a list of dictionaries 
-    containing speaker labels, text, and timestamps.
+    Takes an audio file path, sends it to OpenAI Whisper asynchronously for fast and accurate transcription,
+    and returns a list of dictionaries containing speaker labels, text, and timestamps.
     """
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Audio file not found at {file_path}")
 
-    # Configure transcription options for diarization
-    config = aai.TranscriptionConfig(
-        speaker_labels=True,
-        speakers_expected=2,
-        speech_models=["universal-2"]
-    )
+    # Use Whisper to transcribe the audio asynchronously 
+    try:
+        def _transcribe():
+            with open(file_path, "rb") as audio_file:
+                return client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file,
+                    response_format="verbose_json",
+                    timestamp_granularities=["word"]
+                )
+        transcript = await asyncio.to_thread(_transcribe)
+    except Exception as e:
+        raise Exception(f"OpenAI Whisper Transcription failed: {str(e)}")
+            
+    # Process the audio by discrete segments for proper chronological interleaving
+    segments_output = []
     
-    transcriber = aai.Transcriber()
-    transcript = transcriber.transcribe(file_path, config=config)
-    
-    if transcript.status == aai.TranscriptStatus.error:
-        raise Exception(f"AssemblyAI Transcription failed: {transcript.error}")
+    if hasattr(transcript, 'words') and transcript.words:
+        current_sentence = []
+        current_start = None
+        last_end = None
         
-    # Process the utterances (speaker segments)
-    segments = []
-    if transcript.utterances:
-        for utterance in transcript.utterances:
-            segments.append({
-                "speaker": f"Speaker {utterance.speaker}", # 'Speaker A', 'Speaker B'
-                "text": utterance.text,
-                "start_time": utterance.start / 1000.0, # Convert ms to seconds
-                "end_time": utterance.end / 1000.0
+        for word_info in transcript.words:
+            # Type hinting mapping for standard OpenAI word object structure
+            word = word_info.word
+            start = word_info.start
+            end = word_info.end
+            
+            if current_start is None:
+                current_start = start
+                
+            # If there's a significant pause (e.g. > 0.8 seconds) between words,
+            # or the previous word ended in a sentence terminating punctuation, 
+            # we consider it a new sentence boundary.
+            if last_end is not None and (start - last_end > 0.8 or current_sentence[-1].endswith(('.', '?', '!'))):
+                segments_output.append({
+                    "speaker": speaker_name or "Speaker A",
+                    "text": " ".join(current_sentence).strip(),
+                    "start_time": current_start,
+                    "end_time": last_end
+                })
+                current_sentence = []
+                current_start = start
+                
+            current_sentence.append(word.strip())
+            last_end = end
+            
+        # Append the final sentence if it exists
+        if current_sentence:
+            segments_output.append({
+                "speaker": speaker_name or "Speaker A",
+                "text": " ".join(current_sentence).strip(),
+                "start_time": current_start,
+                "end_time": last_end
             })
     else:
-        # Fallback if no specific utterances are detected
-        segments.append({
-            "speaker": "Speaker A",
+        # Fallback if no specific segments are detected
+        segments_output.append({
+            "speaker": speaker_name or "Speaker A",
             "text": transcript.text,
             "start_time": 0.0,
-            "end_time": getattr(transcript, 'audio_duration', 0.0)
+            "end_time": transcript.duration if hasattr(transcript, 'duration') else 0.0
         })
         
-    return segments
+    return segments_output

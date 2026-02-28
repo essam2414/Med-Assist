@@ -67,3 +67,48 @@ export async function createConsultation(title) {
   if (!res.ok) throw new Error("Failed to create consultation");
   return res.json();
 }
+
+export async function deleteConsultation(id) {
+  const res = await fetch(`${API_URL}/consultations/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) throw new Error("Failed to delete consultation");
+  return res.json();
+}
+
+export async function fetchActiveConsultation() {
+  const res = await fetch(`${API_URL}/consultations/active`, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) throw new Error("Failed to load active consultation");
+  return res.json();
+}
+
+export async function updateConsultationStatus(id, status) {
+  const res = await fetch(`${API_URL}/consultations/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ status }),
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) throw new Error("Failed to update consultation");
+  return res.json();
+}

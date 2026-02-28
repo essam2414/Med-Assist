@@ -370,6 +370,108 @@
       color: var(--text);
       line-height: 1.4;
     }
+
+    /* Permissions Style */
+    .perms-wrapper {
+      position: relative;
+    }
+
+    .perms-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 2px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.8);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      font-weight: bold;
+    }
+
+    .perms-icon.granted {
+      color: #22c55e;
+      /* Green when granted */
+      border-color: rgba(34, 197, 94, 0.5);
+      background: rgba(34, 197, 94, 0.15);
+    }
+
+    .perms-icon.missing {
+      color: #ef4444;
+      /* Red when missing */
+      border-color: rgba(239, 68, 68, 0.5);
+      background: rgba(239, 68, 68, 0.15);
+    }
+
+    .perms-popup {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      width: 240px;
+      background: #1e293b;
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      text-align: center;
+    }
+
+    .perms-popup.active {
+      display: flex;
+    }
+
+    .perms-channel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .perms-channel-status {
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .perms-status-granted {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+    }
+
+    .perms-status-missing {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    .manage-perms-btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 8px;
+    }
+
+    .manage-perms-btn.bg-green {
+      background-color: #10b981;
+      color: white;
+      border: none;
+    }
+
+    .manage-perms-btn.bg-red {
+      background-color: #ef4444;
+      color: white;
+      border: none;
+    }
   </style>
 </head>
 
@@ -391,9 +493,36 @@
         <div class="title">Med Consult Assistant</div>
         <div class="subtitle">Chrome tab audio capture · PoC</div>
       </div>
-      <div class="status-pill">
-        <div class="status-dot idle" id="status-dot"></div>
-        <span class="status-label" id="status-label">Idle</span>
+
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="perms-wrapper">
+          <div class="perms-icon missing" id="perms-icon" title="Check Permissions">!</div>
+          <div class="perms-popup" id="perms-popup">
+            <div style="font-weight: 600; font-size: 13px; color: var(--text);">Permission Status</div>
+
+            <div class="perms-channel">
+              <span style="display: flex; align-items: center; gap: 4px;">🎤 System Audio</span>
+              <span id="mic-status" class="perms-channel-status perms-status-missing">Missing</span>
+            </div>
+
+            <div class="perms-channel">
+              <span style="display: flex; align-items: center; gap: 4px;">🎧 Tab Audio</span>
+              <span id="tab-status" class="perms-channel-status perms-status-missing">Pending</span>
+            </div>
+
+            <p style="font-size: 10px; color: var(--text-muted); margin: 0;">Microphone access is required for
+              background capture.</p>
+
+            <button class="btn btn-primary manage-perms-btn" id="manage-perms">
+              Manage Permissions
+            </button>
+          </div>
+        </div>
+
+        <div class="status-pill">
+          <div class="status-dot idle" id="status-dot"></div>
+          <span class="status-label" id="status-label">Idle</span>
+        </div>
       </div>
     </div>
 
@@ -463,13 +592,25 @@
 
       <audio id="player"></audio>
 
-      <div class="transcript-box" id="transcript-box" style="display: none;">
-        <!-- Transcripts will appear here -->
-      </div>
 
       <div class="hint">
         Tip: Start capture on the active Google Meet / telehealth tab, then
         stop once the consultation ends.
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 4px;">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Transcripts</div>
+          <div class="card-caption">
+            Transcripts for the selected consultation.
+          </div>
+        </div>
+      </div>
+      <div id="transcripts-container"
+        style="max-height: 150px; overflow-y: auto; font-size: 12px; color: var(--text); display: flex; flex-direction: column; gap: 6px; padding-top: 6px;">
+        <div style="color: var(--text-muted); font-style: italic;">No transcripts found.</div>
       </div>
     </div>
 

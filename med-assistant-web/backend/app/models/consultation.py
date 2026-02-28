@@ -19,5 +19,5 @@ class Consultation(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     ended_at = Column(DateTime, nullable=True)
 
-    transcripts = relationship("TranscriptEntry", back_populates="consultation")
-    insights = relationship("AIInsight", back_populates="consultation", uselist=False)
+    transcripts = relationship("TranscriptEntry", back_populates="consultation", cascade="all, delete-orphan")
+    insights = relationship("AIInsight", back_populates="consultation", uselist=False, cascade="all, delete-orphan")

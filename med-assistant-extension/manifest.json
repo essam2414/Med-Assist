@@ -8,7 +8,8 @@
     "tabCapture",
     "tabs",
     "activeTab",
-    "cookies"
+    "cookies",
+    "offscreen"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -22,5 +23,9 @@
   },
   "side_panel": {
     "default_path": "panel.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
   }
 }
