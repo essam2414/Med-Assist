@@ -305,7 +305,8 @@ consultationSelect.addEventListener('change', () => {
 
 let liveInterval = null;
 let totalOffset = 0;
-const CHUNK_INTERVAL_MS = 10000;
+const CHUNK_INTERVAL_MS = 6000;
+const MAX_CHUNK_DURATION = 10000; // Force update after 10s even if still talking
 
 startBtn.addEventListener('click', async () => {
   const consultationId = consultationSelect.value;
@@ -441,31 +442,54 @@ startBtn.addEventListener('click', async () => {
     };
 
     const waitForSilenceAndCycle = () => {
-      const SILENCE_THRESHOLD = 8; // Adjust based on testing
+      const SILENCE_THRESHOLD = 8;
+      let silenceStart = null;
+      const SILENCE_DURATION_NEEDED = 700; // Reduced to 700ms for snappiness
+      const intervalStartTime = Date.now();
+
+      const doCycle = () => {
+        // 1. Stop the current ones
+        if (activeRecorders.recorderTab.state === 'recording') activeRecorders.recorderTab.stop();
+        if (activeRecorders.recorderMic.state === 'recording') activeRecorders.recorderMic.stop();
+
+        // 2. Increment offset 
+        currentChunkOffset += (Date.now() - lastCycleTime) / 1000;
+        lastCycleTime = Date.now();
+
+        // 3. Start the next cycle
+        const wasSufficientlyAudible = chunkHasAudio;
+        chunkHasAudio = false;
+        activeRecorders = startNewChunk();
+        activeRecorders.wasAudible = wasSufficientlyAudible;
+      };
+
       const checkSilence = () => {
         const volume = getVolume();
-        // console.log('Current volume:', volume);
+        const elapsedSinceInterval = Date.now() - intervalStartTime;
+
+        // HARD LIMIT: If we've been waiting too long (e.g. they are a fast speaker),
+        // we force a cycle regardless of silence to keep the transcript coming.
+        if (elapsedSinceInterval >= (MAX_CHUNK_DURATION - CHUNK_INTERVAL_MS)) {
+          console.log('Hard limit reached, forcing transcription update...');
+          doCycle();
+          return;
+        }
 
         if (volume < SILENCE_THRESHOLD) {
-          console.log('Silence detected, cycling recorders...');
-          // 1. Stop the current ones
-          if (activeRecorders.recorderTab.state === 'recording') activeRecorders.recorderTab.stop();
-          if (activeRecorders.recorderMic.state === 'recording') activeRecorders.recorderMic.stop();
+          if (!silenceStart) silenceStart = Date.now();
 
-          // 2. Increment offset BEFORE starting the next one
-          // Note: The actual chunk might be slightly longer than 10s now
-          // For simplicity, we keep the increment but ideally we'd use performance.now()
-          currentChunkOffset += (Date.now() - lastCycleTime) / 1000;
-          lastCycleTime = Date.now();
-
-          // 3. Start the next cycle
-          const wasSufficientlyAudible = chunkHasAudio;
-          chunkHasAudio = false; // Reset for next chunk
-          activeRecorders = startNewChunk();
-          activeRecorders.wasAudible = wasSufficientlyAudible;
+          const silenceDuration = Date.now() - silenceStart;
+          if (silenceDuration >= SILENCE_DURATION_NEEDED) {
+            console.log('Sustained silence detected, cycling recorders...');
+            doCycle();
+          } else {
+            // Silence started but not long enough yet
+            setTimeout(checkSilence, 100);
+          }
         } else {
-          // Still speaking, wait 500ms and check again
-          setTimeout(checkSilence, 500);
+          // They started talking again, reset the silence timer
+          silenceStart = null;
+          setTimeout(checkSilence, 100);
         }
       };
       checkSilence();
