@@ -717,6 +717,19 @@ function App() {
   );
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchCurrentUser()
+        .then(setUser)
+        .catch((err) => {
+          if (err.message === "unauthorized") {
+            handleLogout();
+          }
+        });
+    }
+  }, [isLoggedIn]);
 
   const handleLogin = () => {
     setIsLoggedIn(true);
@@ -748,6 +761,7 @@ function App() {
         onLogout={handleLogout}
         isCollapsed={!isSidebarOpen}
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        user={user}
       />
       <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", height: "100%" }}>
         {activeTab === "dashboard" && <Dashboard onLogout={handleLogout} />}
