@@ -5,7 +5,10 @@ from datetime import datetime
 
 from app.deps import get_db, get_current_user
 from app.models.patient import Patient as PatientModel
-from app.schemas.patient import Patient, PatientCreate
+from app.models.consultation import Consultation
+from app.models.transcript import TranscriptEntry
+from app.models.insight import AIInsight
+from app.schemas.patient import Patient, PatientCreate, PatientUpdate
 from app.models.user import User
 
 router = APIRouter(prefix="/patients", tags=["patients"])
@@ -66,3 +69,56 @@ def get_patient(
     if not p:
         raise HTTPException(status_code=404, detail="Patient not found")
     return p
+
+@router.patch("/{patient_id}", response_model=Patient)
+def update_patient(
+    patient_id: int,
+    payload: PatientUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    p = (
+        db.query(PatientModel)
+        .filter(
+            PatientModel.id == patient_id,
+            PatientModel.doctor_id == current_user.id,
+        )
+        .first()
+    )
+    if not p:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
+    update_data = payload.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(p, key, value)
+    
+    db.commit()
+    db.refresh(p)
+    return p
+
+@router.delete("/{patient_id}")
+def delete_patient(
+    patient_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    p = (
+        db.query(PatientModel)
+        .filter(
+            PatientModel.id == patient_id,
+            PatientModel.doctor_id == current_user.id,
+        )
+        .first()
+    )
+    if not p:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
+    cons = db.query(Consultation).filter(Consultation.patient_id == p.id).all()
+    for c in cons:
+        db.query(TranscriptEntry).filter(TranscriptEntry.consultation_id == c.id).delete()
+        db.query(AIInsight).filter(AIInsight.consultation_id == c.id).delete()
+        db.delete(c)
+        
+    db.delete(p)
+    db.commit()
+    return {"status": "ok"}

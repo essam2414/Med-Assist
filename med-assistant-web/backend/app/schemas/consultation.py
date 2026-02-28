@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional, List
 from app.schemas.transcript import TranscriptEntry
 from app.schemas.insight import AIInsight
+from app.schemas.patient import Patient
 
 
 class ConsultationBase(BaseModel):
@@ -21,6 +22,7 @@ class Consultation(ConsultationBase):
   
   transcripts: List[TranscriptEntry] = []
   insights: Optional[AIInsight] = None
+  patient: Optional[Patient] = None
 
   class Config:
     from_attributes = True
