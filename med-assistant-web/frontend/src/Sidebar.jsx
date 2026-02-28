@@ -86,8 +86,8 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed
                 boxSizing: 'border-box'
             }}>
                 {!isCollapsed && (
-                    <div style={{ fontWeight: 700, fontSize: '18px', whiteSpace: 'nowrap' }}>
-                        <span className="text-gradient">Med</span> Assistant
+                    <div style={{ fontWeight: 700, fontSize: '22px', whiteSpace: 'nowrap' }}>
+                        <span className="text-gradient">Med</span> Assist
                     </div>
                 )}
                 <button
