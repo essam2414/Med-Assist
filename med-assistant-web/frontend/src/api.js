@@ -16,12 +16,45 @@ export async function login(email, password) {
   return res.json(); // { access_token, token_type }
 }
 
+export async function signup(name, email, password) {
+  const res = await fetch(`${API_URL}/auth/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, password }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    const detail = data.detail || "Signup failed";
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
 export async function logout() {
   const res = await fetch(`${API_URL}/auth/logout`, {
     method: "POST",
     credentials: "include",
   });
   return res.json().catch(() => ({}));
+}
+
+export async function changePassword(current_password, new_password) {
+  const res = await fetch(`${API_URL}/auth/change-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ current_password, new_password }),
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to change password");
+  }
+  return res.json();
 }
 
 export async function fetchCurrentUser() {

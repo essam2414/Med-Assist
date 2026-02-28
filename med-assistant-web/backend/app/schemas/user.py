@@ -23,3 +23,8 @@ class UserOut(UserBase):
 
     class Config:
         from_attributes = True
+
+
+class UserChangePassword(BaseModel):
+    current_password: str
+    new_password: str

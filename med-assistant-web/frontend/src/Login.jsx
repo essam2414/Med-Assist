@@ -1,10 +1,13 @@
 // frontend/src/Login.jsx
 import { useState } from "react";
-import { login } from "./api";
+import { login, signup } from "./api";
 
 export default function Login({ onLogin }) {
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -13,10 +16,21 @@ export default function Login({ onLogin }) {
     setError("");
     setLoading(true);
     try {
-      await login(email, password);
-      onLogin();
+      if (isRegistering) {
+        if (password !== confirmPassword) {
+          setError("Passwords do not match");
+          setLoading(false);
+          return;
+        }
+        await signup(name, email, password);
+        await login(email, password);
+        onLogin();
+      } else {
+        await login(email, password);
+        onLogin();
+      }
     } catch (err) {
-      setError("Incorrect email or password. Please try again.");
+      setError(err.message || "An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -62,11 +76,48 @@ export default function Login({ onLogin }) {
               margin: 0,
             }}
           >
-            Welcome back. Please sign in to your account.
+            {isRegistering ? "Create your new account." : "Welcome back. Please sign in to your account."}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ width: "100%", display: "flex", flexDirection: "column", gap: "20px" }} className="animate-fade-in stagger-1">
+          {isRegistering && (
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "#cbd5e1",
+                  marginBottom: "8px",
+                }}
+              >
+                Full Name
+              </label>
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Dr. John Doe"
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(148, 163, 184, 0.2)",
+                  backgroundColor: "rgba(15, 23, 42, 0.6)",
+                  color: "#f8fafc",
+                  padding: "12px 16px",
+                  fontSize: "14px",
+                  outline: "none",
+                  transition: "border-color 0.2s",
+                }}
+                onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
+                onBlur={(e) => e.target.style.borderColor = "rgba(148, 163, 184, 0.2)"}
+              />
+            </div>
+          )}
+
           <div>
             <label
               style={{
@@ -137,6 +188,43 @@ export default function Login({ onLogin }) {
             />
           </div>
 
+          {isRegistering && (
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: "#cbd5e1",
+                  marginBottom: "8px",
+                }}
+              >
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(148, 163, 184, 0.2)",
+                  backgroundColor: "rgba(15, 23, 42, 0.6)",
+                  color: "#f8fafc",
+                  padding: "12px 16px",
+                  fontSize: "14px",
+                  outline: "none",
+                  transition: "border-color 0.2s",
+                }}
+                onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
+                onBlur={(e) => e.target.style.borderColor = "rgba(148, 163, 184, 0.2)"}
+              />
+            </div>
+          )}
+
           {error && (
             <div
               className="animate-fade-in"
@@ -172,9 +260,35 @@ export default function Login({ onLogin }) {
               boxShadow: "0 4px 14px 0 rgba(59, 130, 246, 0.39)",
             }}
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? (isRegistering ? "Creating account..." : "Signing in...") : (isRegistering ? "Create account" : "Sign in")}
           </button>
         </form>
+
+        <div style={{ marginTop: "24px", textAlign: "center", fontSize: "14px", color: "#cbd5e1" }}>
+          {isRegistering ? (
+            <>
+              Already have an account?{" "}
+              <button
+                type="button"
+                onClick={() => { setIsRegistering(false); setError(""); }}
+                style={{ background: "none", border: "none", color: "#3b82f6", cursor: "pointer", padding: 0, fontSize: "14px", fontWeight: 500 }}
+              >
+                Sign in
+              </button>
+            </>
+          ) : (
+            <>
+              Don't have an account?{" "}
+              <button
+                type="button"
+                onClick={() => { setIsRegistering(true); setError(""); }}
+                style={{ background: "none", border: "none", color: "#3b82f6", cursor: "pointer", padding: 0, fontSize: "14px", fontWeight: 500 }}
+              >
+                Sign up
+              </button>
+            </>
+          )}
+        </div>
 
         <p
           className="animate-fade-in stagger-2"
