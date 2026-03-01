@@ -1227,6 +1227,12 @@ function AskAI() {
     try {
       const response = await sendChatMessage(targetSessionId, userMessage.content);
       setMessages([...newMessages, response]);
+
+      if (messages.length === 0) {
+        setSessions(prev => prev.map(s =>
+          s.id === targetSessionId ? { ...s, title: input.substring(0, 30) + (input.length > 30 ? "..." : "") } : s
+        ));
+      }
     } catch (err) {
       console.error(err);
       setMessages([...newMessages, { role: "assistant", content: "Sorry, I encountered an error answering your question." }]);
