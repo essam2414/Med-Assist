@@ -315,9 +315,9 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "24px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "24px", height: "calc(100vh - 200px)", minHeight: "600px" }}>
           {/* Left Column: Summary & Patient Details */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "24px", height: "100%", minHeight: 0 }}>
 
             {updatedC.patient && (
               <div className="glass-panel" style={{ padding: "24px" }}>
@@ -345,12 +345,12 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
               </div>
             )}
 
-            <div className="glass-panel" style={{ padding: "24px", flex: 1, display: "flex", flexDirection: "column" }}>
+            <div className="glass-panel" style={{ padding: "24px", flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
               <h3 style={{ margin: "0 0 20px 0", fontSize: "16px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 Transcript Moments ({updatedC.transcripts?.length || 0})
               </h3>
 
-              <div style={{ maxHeight: "calc(67.5vh - 60px)", overflowY: "auto", paddingRight: "12px", marginRight: "-12px" }} className="custom-scrollbar">
+              <div style={{ flex: 1, overflowY: "auto", paddingRight: "12px", marginRight: "-12px", minHeight: 0 }} className="custom-scrollbar">
                 {updatedC.transcripts && updatedC.transcripts.length > 0 ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     {[...updatedC.transcripts].sort((a, b) => a.start_time - b.start_time).map((t) => (
@@ -377,7 +377,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
           </div>
 
           {/* Right Column: Transcripts & Bot Control */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "24px", height: "100%", minHeight: 0 }}>
             <div className="glass-panel" style={{ padding: "16px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: (updatedC.recall_bot_id || botError) ? "12px" : "0" }}>
                 <h3 style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "6px" }}>
@@ -526,12 +526,12 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
               {botError && <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '8px' }}>{botError}</div>}
             </div>
 
-            <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column" }}>
+            <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
               <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "8px" }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                 AI Summary & Insights
               </h3>
-              <div style={{ padding: "16px", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "10px", border: "1px solid rgba(148, 163, 184, 0.1)", flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: "450px", maxHeight: "70vh" }}>
+              <div style={{ padding: "16px", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "10px", border: "1px solid rgba(148, 163, 184, 0.1)", flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0 }}>
                 {updatedC.insights ? (
                   <div style={{ color: "#f1f5f9", lineHeight: "1.6", fontSize: "15px", whiteSpace: "pre-wrap", overflowWrap: "anywhere", wordBreak: "break-word" }}>
                     {updatedC.insights.summary}
