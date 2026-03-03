@@ -1,8 +1,9 @@
 import os
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from openai import OpenAI
 from typing import List
+
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 from app.deps import get_current_user, get_db
 from app.models.user import User
@@ -10,9 +11,9 @@ from app.models.chat import ChatSession, ChatMessage
 from app.schemas.chat import (
     ChatSessionResp, ChatSessionCreate, ChatSendRequest, ChatMessageResp
 )
+from app.services.rag import get_chat_agent_executor, SYSTEM_PROMPT
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @router.get("/sessions", response_model=List[ChatSessionResp])
 def list_sessions(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -61,17 +62,29 @@ def send_message(session_id: int, request: ChatSendRequest, db: Session = Depend
     # Reload session messages
     db.refresh(session)
     
-    # Format messages for OpenAI completion API
-    messages_for_api = [
-        {"role": msg.role, "content": msg.content} for msg in session.messages
-    ]
+    current_title = session.title.lower() if session.title else ""
+    if current_title in ["new chat", "new conversation", ""] or not current_title:
+        user_messages = [msg for msg in session.messages if msg.role == "user"]
+        if len(user_messages) == 1:
+            session.title = request.message[:30] + ("..." if len(request.message) > 30 else "")
+            db.commit()
+            db.refresh(session)
+    
+    # Format messages for LangChain Agent
+    chat_history = [SystemMessage(content=SYSTEM_PROMPT)]
+    # Skip the very last message in session.messages (which is the one just added above)
+    for msg in session.messages[:-1]:
+        if msg.role == "user":
+            chat_history.append(HumanMessage(content=msg.content))
+        else:
+            chat_history.append(AIMessage(content=msg.content))
     
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=messages_for_api
-        )
-        reply_content = response.choices[0].message.content
+        agent_executor = get_chat_agent_executor(db)
+        
+        messages = chat_history + [HumanMessage(content=request.message)]
+        response = agent_executor.invoke({"messages": messages})
+        reply_content = response["messages"][-1].content
         
         # Save assistant message
         assistant_msg = ChatMessage(session_id=session.id, role="assistant", content=reply_content)

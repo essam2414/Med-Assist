@@ -11,6 +11,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedConsultation, setSelectedConsultation] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (focusedConsultationId && consultations.length > 0) {
@@ -552,6 +553,14 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
 
 
   // List View
+  const filteredConsultations = consultations.filter(c => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    const titleMatch = c.title?.toLowerCase().includes(q) || false;
+    const patientMatch = c.patient?.name?.toLowerCase().includes(q) || (c.patient?.display_id?.toLowerCase().includes(q) || false);
+    return titleMatch || patientMatch;
+  });
+
   return (
     <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }} className="animate-fade-in">
@@ -592,7 +601,19 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
       </div>
 
       <div className="glass-panel animate-fade-in stagger-1" style={{ padding: "32px" }}>
-        <h2 style={{ fontSize: "20px", fontWeight: 600, margin: "0 0 24px 0", color: "#f8fafc" }}>All Consultations</h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+          <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "#f8fafc" }}>All Consultations</h2>
+          <div style={{ display: "flex", alignItems: "center", position: "relative" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: "10px" }}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input
+              type="text"
+              placeholder="Search by title or patient..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ padding: "8px 12px 8px 34px", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.2)", backgroundColor: "rgba(15, 23, 42, 0.4)", color: "#f8fafc", outline: "none", width: "250px", fontSize: "14px" }}
+            />
+          </div>
+        </div>
 
         {error && (
           <div style={{ padding: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", color: "#ef4444", marginBottom: "24px", fontSize: "14px" }}>
@@ -606,9 +627,13 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
           <div style={{ textAlign: "center", padding: "64px", border: "1px dashed rgba(148, 163, 184, 0.2)", borderRadius: "12px", color: "#64748b" }}>
             No consultations found. Start by creating a new one.
           </div>
+        ) : filteredConsultations.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "64px", border: "1px dashed rgba(148, 163, 184, 0.2)", borderRadius: "12px", color: "#64748b" }}>
+            No consultations match your search.
+          </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: "20px" }}>
-            {consultations.map((c, index) => (
+            {filteredConsultations.map((c, index) => (
               <div
                 key={c.id}
                 className="animate-fade-in glass-panel"
@@ -1061,7 +1086,7 @@ function Patients({ onLogout, onNavigateToConsultation }) {
                 </h3>
                 <div style={{ padding: "12px", backgroundColor: "rgba(0,0,0,0.2)", borderRadius: "8px", fontSize: "14px", display: "flex", flexDirection: "column", gap: "6px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#94a3b8" }}>ID:</span> <span style={{ color: "#e2e8f0", fontWeight: 500 }}>{p.display_id}</span></div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#94a3b8" }}>Created:</span> <span style={{ color: "#e2e8f0" }}>{new Date(p.created_at).toLocaleDateString()}</span></div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#94a3b8" }}>Gender:</span> <span style={{ color: "#e2e8f0" }}>{p.gender || "N/A"}</span></div>
                 </div>
               </div>
             ))}
@@ -1227,6 +1252,12 @@ function AskAI() {
     try {
       const response = await sendChatMessage(targetSessionId, userMessage.content);
       setMessages([...newMessages, response]);
+
+      if (messages.length === 0) {
+        setSessions(prev => prev.map(s =>
+          s.id === targetSessionId ? { ...s, title: input.substring(0, 30) + (input.length > 30 ? "..." : "") } : s
+        ));
+      }
     } catch (err) {
       console.error(err);
       setMessages([...newMessages, { role: "assistant", content: "Sorry, I encountered an error answering your question." }]);
