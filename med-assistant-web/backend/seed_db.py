@@ -23,7 +23,6 @@ if not admin_user:
     db.add(admin_user)
     db.commit()
     db.refresh(admin_user)
-    print(f"Created admin user: {admin_user.email}")
 else:
     print(f"Found existing admin user: {admin_user.email}")
 
@@ -33,8 +32,10 @@ for p in existing_patients:
     db.delete(p)
 db.commit()
 
-# Topic 1: Hypertension
-transcript_htn = [
+# --- Dialogue Templates ---
+
+# Patient 1: Hypertension History
+c1_1 = [
     ("doctor", "Good morning. How have you been feeling since our last visit?"),
     ("patient", "Good morning, Doctor. I've been doing alright mostly. Still getting used to the new medication."),
     ("doctor", "I see. Have you experienced any dizziness or headaches lately?"),
@@ -45,149 +46,284 @@ transcript_htn = [
     ("patient", "Okay, sounds good."),
     ("doctor", "Relax your arm here... just going to pump this up."),
     ("patient", "It always feels so tight."),
-    ("doctor", "Almost done. Alright, it's reading at 135 over 85. That's actually a significant improvement from last time."),
+    ("doctor", "Almost done. Alright, it's reading at 135 over 85. That's a significant improvement from last time."),
     ("patient", "Oh, that's a relief. Last time it was in the 150s, right?"),
-    ("doctor", "Exactly. The medication is definitely doing its job, but we'd still like it slightly lower over time. How has your diet been?"),
-    ("patient", "I've been trying to cut back on salt. No more canned soups, and I stopped adding table salt to my meals."),
-    ("doctor", "That's excellent to hear. Dietary changes play a huge role. What about exercise?"),
-    ("patient", "I started walking for about thirty minutes every evening after dinner."),
-    ("doctor", "Perfect. A brisk walk daily is fantastic for your cardiovascular health. Have you noticed any fatigue during those walks?"),
-    ("patient", "Not really. Only if I try to push the pace too much, I get a little out of breath."),
-    ("doctor", "That's completely normal. Just pace yourself. Now, regarding that dizziness upon standing... since your blood pressure is responding well, I don't want to lower the dose just yet. I recommend getting up slowly from a seated or lying position."),
-    ("patient", "I can do that. If it gets worse, should I call your office?"),
-    ("doctor", "Yes, absolutely. If you feel faint or the dizziness lasts more than a few moments, give us a call right away."),
-    ("patient", "Okay, I will."),
-    ("doctor", "I'd like to run a standard metabolic panel just to check your kidney function and electrolytes, as the medication can sometimes affect those levels."),
+    ("doctor", "Exactly. The medication is doing its job, but we'd still like it slightly lower over time. How has your diet been?"),
+    ("patient", "I've been trying to cut back on salt. No more canned soups or table salt."),
+    ("doctor", "That's excellent to hear. Let's run a standard metabolic panel just to check your kidney function and electrolytes."),
     ("patient", "Sure. Can I do the blood test today?"),
-    ("doctor", "Yes, you can head down to the lab on the first floor right after we finish here. No fasting required for this one."),
-    ("patient", "That's convenient."),
-    ("doctor", "So, the plan is: continue the medication at the current dose, keep up the low-sodium diet and daily walks, and remember to stand up slowly. We'll review the lab results, and if anything is off, I'll contact you."),
-    ("patient", "Sounds like a plan. When should I come back to see you?"),
-    ("doctor", "Let's schedule a follow-up in three months time to check your progress again. Of course, reach out sooner if you have any concerns."),
-    ("patient", "Thank you, Doctor. I'll get that scheduled at the front desk."),
-    ("doctor", "You're welcome. Have a good rest of your day, and I'll see you in three months.")
+    ("doctor", "Yes, head down to the lab straight after. We will review the results soon.")
 ]
 
-# Topic 2: Asthma 
-transcript_asthma = [
-    ("doctor", "Hello there. I see you're in today because your asthma has been acting up. Tell me more about what's been going on."),
+c1_2 = [
+    ("doctor", "Hi there. I see you're coming in for some back pain today?"),
+    ("patient", "Yes, my lower back has been killing me for the last four days."),
+    ("doctor", "I'm sorry to hear that. Did you lift something heavy or twist it awkwardly?"),
+    ("patient", "I was helping my friend move some furniture over the weekend. Afterwards, it just started tightening up."),
+    ("doctor", "Is the pain staying in your lower back, or does it shoot down your legs?"),
+    ("patient", "It's mostly just intense aching right in the center of my lower back. Doesn't go into my legs."),
+    ("doctor", "Any numbness or tingling in your feet, or changes in your bowel or bladder habits?"),
+    ("patient", "No, nothing like that. Just the muscle pain."),
+    ("doctor", "That's good, it suggests it's primarily a muscular strain. Let's have you stand up and bend forward as far as you can."),
+    ("patient", "Ouch, yeah, I can only go about halfway down before it pulls."),
+    ("doctor", "Okay, take it easy. Lie down on the table here. I'm going to raise your straight leg... any pain there?"),
+    ("patient", "Just a little tightness in the hamstring, but not the sharp back pain."),
+    ("doctor", "Alright. Based on the exam, this is an acute lumbar sprain. I'd like you to use a heating pad, try some gentle stretching, and take Ibuprofen."),
+    ("patient", "Okay, heat and Ibuprofen. Should I rest in bed?"),
+    ("doctor", "Actually, prolonged bed rest is worse for it. Try to stay as active as you can tolerate without overdoing it."),
+    ("patient", "Got it. How long will this take to heal?"),
+    ("doctor", "Usually, these strains resolve in about a week or two. Let me know if it worsens.")
+]
+
+c1_3 = [
+    ("doctor", "Hello. You mentioned you've been having trouble sleeping lately?"),
+    ("patient", "Yes, for the past month, I just can't seem to fall asleep. My mind keeps racing."),
+    ("doctor", "I'm sorry, that can be very exhausting. Are you under a lot of stress right now?"),
+    ("patient", "Yes, work has been extremely demanding lately. We're launching a new project."),
+    ("doctor", "Stress is a very common trigger for insomnia. How much caffeine are you drinking during the day?"),
+    ("patient", "Probably three or four cups of coffee. I need it to stay awake since I'm not sleeping well."),
+    ("doctor", "It's a difficult cycle. Caffeine stays in your system for hours and can make falling asleep even harder. I suggest cutting off caffeine by 2 PM."),
+    ("patient", "That's going to be tough, but I can try. What about screen time before bed?"),
+    ("doctor", "That's another big factor. The blue light from phones and laptops suppresses melatonin. Try to turn off all screens at least an hour before you want to sleep."),
+    ("patient", "I usually read on my tablet in bed. Maybe I should switch to a paper book."),
+    ("doctor", "A paper book with a warm reading light would be much better. Also, try to establish a relaxing wind-down routine."),
+    ("patient", "Like taking a warm bath or listening to calm music?"),
+    ("doctor", "Exactly. Let's try these sleep hygiene adjustments for two weeks. If you're still struggling, we can discuss short-term sleep aids."),
+    ("patient", "Okay, I'll commit to the changes. I really just want a good night's rest.")
+]
+
+# Patient 2: Asthma
+c2_1 = [
+    ("doctor", "Hello there. I see you're in today because your asthma has been acting up?"),
     ("patient", "Hi Doctor. Yes, over the last two weeks, I've been getting quite wheezy, especially at night."),
-    ("doctor", "I'm sorry to hear that. How often are you waking up with shortness of breath or coughing?"),
+    ("doctor", "How often are you waking up with shortness of breath or coughing?"),
     ("patient", "It's been about three or four times a week lately. It's really affecting my sleep."),
-    ("doctor", "That's definitely concerning and indicates your asthma isn't well-controlled right now. Have you been using your rescue inhaler more frequently?"),
+    ("doctor", "Have you been using your rescue inhaler more frequently?"),
     ("patient", "Yes, I've had to use it almost every day. Sometimes twice a day."),
-    ("doctor", "Okay. And what about your daily controller inhaler? Have you been taking that consistently?"),
-    ("patient", "To be honest, I ran out about a month ago and kept forgetting to get a refill since I was feeling fine at the time."),
-    ("doctor", "I see. That would explain the flare-up. The controller medication reduces the underlying inflammation in your airways. Without it, you become much more susceptible to triggers."),
-    ("patient", "Yeah, I realize that now. Plus, the weather has been getting colder, and I think that's triggering it too."),
-    ("doctor", "Cold air is a very common trigger. Have you had any signs of a respiratory infection? Like a fever, sore throat, or colored phlegm?"),
-    ("patient", "No, none of that. Just the tight chest and wheezing."),
-    ("doctor", "Alright. Let me have a listen to your lungs. Take a deep breath in... and out. Through your mouth, please."),
+    ("doctor", "And what about your daily controller inhaler? Have you been taking that consistently?"),
+    ("patient", "To be honest, I ran out about a month ago and kept forgetting to get a refill."),
+    ("doctor", "That would explain the flare-up. Let me listen to your lungs. Deep breath in and out..."),
     ("patient", "[takes a deep breath]"),
-    ("doctor", "And another one... Good. One more on the back here... Okay. There's definitely some expiratory wheezing bilaterally, which confirms the bronchospasm."),
-    ("patient", "I could hear myself whistling earlier."),
-    ("doctor", "Let's get you back on track. I'm going to send a prescription for your controller inhaler, Fluticasone, right now. You need to take two puffs twice a day, every single day, whether you feel symptoms or not."),
-    ("patient", "Okay, I won't forget this time."),
-    ("doctor", "Additionally, because you're having an acute flare-up, I'm going to prescribe a short five-day course of an oral steroid, Prednisone. This will hit the inflammation hard and quickly calm your airways down."),
-    ("patient", "Will that make me jittery? I remember taking steroids once before and feeling very restless."),
-    ("doctor", "It can, unfortunately. It might also increase your appetite and make it hard to sleep, which is why I recommend taking the whole daily dose in the morning with food."),
-    ("patient", "Understood. Mornings with food."),
-    ("doctor", "Exactly. And continue using your Albuterol rescue inhaler as needed for immediate relief, but if you find you're still needing it every day by the end of the week, I want you back here."),
-    ("patient", "Okay, I will. But hopefully the new medication kicks in fast."),
-    ("doctor", "It should. Do you use a spacer with your inhalers?"),
-    ("patient", "No, I just spray it directly into my mouth."),
-    ("doctor", "I highly recommend using a spacer. It ensures the medication actually gets into your lungs rather than hitting the back of your throat. I'll write a script for one of those as well."),
-    ("patient", "Oh, okay. I'll try that out. How do you use it?"),
-    ("doctor", "You attach the inhaler to the spacer, press the canister once, and then take a slow, deep breath in from the mouthpiece, holding it for ten seconds before exhaling."),
-    ("patient", "That sounds simple enough."),
-    ("doctor", "So, start the controller daily, take the five-day steroid course in the mornings, use the spacer, and keep the rescue inhaler on hand. Make a follow-up appointment for two weeks from now so we can reassess."),
-    ("patient", "Sounds like a comprehensive plan. Thank you, Doctor."),
-    ("doctor", "Anytime. Feel better, and don't hesitate to go to urgent care if you experience severe shortness of breath that the rescue inhaler doesn't fix.")
+    ("doctor", "There's definitely some expiratory wheezing. I'm going to prescribe a short five-day course of Prednisone and get you back on your controller inhaler."),
+    ("patient", "Okay, I'll make sure to pick up the refill today."),
+    ("doctor", "Remember to take the steroid with food in the morning. And please use a spacer with your inhaler for better delivery."),
+    ("patient", "Will do, thank you Doctor.")
 ]
 
-# Topic 3: Knee Pain
-transcript_knee = [
+c2_2 = [
+    ("doctor", "Hi. You're here for a skin check today? You noticed a mole changing?"),
+    ("patient", "Yes, there's a mole on my left shoulder that seems to have gotten darker and maybe a bit larger over the last few months."),
+    ("doctor", "Let's definitely take a look. Can you point it out for me?"),
+    ("patient", "Right here, just below the shoulder blade."),
+    ("doctor", "Okay, I'm going to use my dermatoscope to get a magnified view of it. Hold still..."),
+    ("patient", "Does it look concerning?"),
+    ("doctor", "The borders are a little irregular, and there is some variation in the pigment. It's not definitively dangerous, but given the changes you've noticed, I'd like to do a punch biopsy to be safe."),
+    ("patient", "A biopsy? Will that hurt?"),
+    ("doctor", "I'll numb the area completely with a small injection of lidocaine first. You shouldn't feel anything other than a little pressure."),
+    ("patient", "Okay, let's go ahead with it then."),
+    ("doctor", "I'll get the tray set up. We'll send the sample to pathology, and it usually takes about a week to get results back."),
+    ("patient", "Will it leave a scar?"),
+    ("doctor", "It will leave a very small, round scar. I'll put a single stitch in it to help it heal nicely."),
+    ("patient", "Okay, getting results in a week sounds fine.")
+]
+
+c2_3 = [
+    ("doctor", "Welcome back. How have you been doing with the changing seasons?"),
+    ("patient", "Terrible, actually. My allergies are worse than ever this spring."),
+    ("doctor", "I'm sorry to hear that. What are your main symptoms right now?"),
+    ("patient", "My nose is constantly runny and congested, my eyes water non-stop, and I've been sneezing all morning."),
+    ("doctor", "Are you taking any over-the-counter antihistamines?"),
+    ("patient", "I tried taking some standard Claritin, but it doesn't seem to touch it. Plus, it makes my mouth dry."),
+    ("doctor", "Since the oral antihistamine isn't enough, we should try a steroid nasal spray like Flonase. It targets the inflammation directly in your nasal passages."),
+    ("patient", "I haven't tried a nasal spray before. Do you use it every day?"),
+    ("doctor", "Yes, and consistency is key. It takes a few days of daily use to see the full effect. One spray per nostril every morning."),
+    ("patient", "I can do that. What about my eyes?"),
+    ("doctor", "There are over-the-counter antihistamine eye drops, like Zaditor, that work very quickly for the itching and watering. Try those when your eyes flare up."),
+    ("patient", "Great, I'll stop at the pharmacy. Oh, will the nasal spray affect my asthma?"),
+    ("doctor", "No, it shouldn't negatively impact your asthma at all. In fact, controlling severe post-nasal drip can sometimes help asthma."),
+    ("patient", "That's good to know. Thank you.")
+]
+
+# Patient 3: Osteoarthritis
+c3_1 = [
     ("doctor", "Hi there. What brings you into the clinic today?"),
     ("patient", "Hello. I've been having some significant pain in my right knee for the past month or so."),
-    ("doctor", "I'm sorry to hear that. Can you point to exactly where it hurts?"),
+    ("doctor", "Can you point to exactly where it hurts?"),
     ("patient", "It's mostly on the inside part of the knee, right around here."),
-    ("doctor", "Okay, the medial aspect. Did you suffer any specific injury, like a twist, a fall, or a sports impact?"),
-    ("patient", "No, nothing like that. It just sort of started gradually. At first it was an ache, but it's gotten sharper."),
     ("doctor", "When is the pain at its worst?"),
-    ("patient", "Definitely when I go up or down stairs. Also, if I've been sitting for a long time, it's very stiff and hurts to stand up and take the first few steps."),
-    ("doctor", "That stiffness after resting—does it usually improve after you've been moving for a few minutes?"),
-    ("patient", "Yes, exactly. It loosens up after a bit, but then if I walk for too long, it starts aching again."),
-    ("doctor", "Has the knee been swelling or locking up on you? Or giving way?" ),
-    ("patient", "It swells occasionally by the end of the day, but it hasn't locked up or given way."),
-    ("doctor", "Alright, let's take a look. Hop up on the examination table for me, please."),
-    ("patient", "Okay."),
-    ("doctor", "I'm going to manipulate your leg a bit. Let me know if anything causes sharp pain. Just relax your leg... There's a little bit of fluid buildup here. Does it hurt when I press on the joint line right here?"),
+    ("patient", "Definitely when I go up or down stairs, or after I've been sitting for a long time."),
+    ("doctor", "Let's take a look. I'm going to manipulate your leg a bit. Let me know if anything causes sharp pain... Does it hurt when I press on the joint line here?"),
     ("patient", "Ouch, yes. Right there."),
-    ("doctor", "Now I'm going to gently bend and straighten the knee... And let's test the ligaments. Pushing inward... pushing outward. Any pain there?"),
-    ("patient", "No, that feels fine."),
-    ("doctor", "Okay, the ligaments feel stable. And the meniscus test... turning the foot... does that cause a catch or pop?"),
-    ("patient", "No catch, just a dull ache."),
-    ("doctor", "Based on your symptoms and the exam, the medial joint line tenderness and the pain with stairs and stiffness after rest, this sounds a lot like early osteoarthritis of the knee."),
-    ("patient", "Arthritis? But I'm not that old... am I?"),
-    ("doctor", "Age is a factor, but wear and tear can happen to anyone over time. The cartilage that cushions the joint starts to thin out. It's very common."),
-    ("patient", "Is there anything that can be done for it? Or do I just have to live with it?"),
-    ("doctor", "There's a lot we can do to manage the symptoms and slow the progression. First, I'm going to order some X-rays of both knees while you're standing up. That will let us actually see the spacing between the bones and confirm the diagnosis."),
-    ("patient", "Okay, X-rays sound like a good idea."),
-    ("doctor", "In the meantime, I want you to manage the pain using Ibuprofen. Taking it with food will reduce stomach upset. It's an anti-inflammatory, so it will help with both the pain and the swelling."),
-    ("patient", "Alright, I have some at home."),
-    ("doctor", "Beyond medication, physical therapy is excellent for this. Strengthening the quadriceps muscles takes a lot of the load off the knee joint itself."),
-    ("patient", "I can do physical therapy. Would a knee brace help?"),
-    ("doctor", "An over-the-counter compression sleeve might offer some symptomatic relief and a feeling of support, but PT is the long-term solution."),
-    ("patient", "Understood. Should I stop exercising? I usually do the treadmill."),
-    ("doctor", "I don't want you to stop exercising, but I do suggest switching to lower-impact activities for a while. Try an exercise bike, swimming, or an elliptical machine instead of walking on an incline or running."),
-    ("patient", "Okay, I'll switch to the bike at the gym."),
-    ("doctor", "Let's get those X-rays done, start the Ibuprofen and physical therapy. Schedule a follow-up in four weeks to review the X-ray results and see how the knee is feeling with the interventions."),
-    ("patient", "Great. Where do I get the X-ray?"),
-    ("doctor", "They can do it right here in the imaging department down the hall. I'll put the order in now."),
-    ("patient", "Thank you, Doctor. I really appreciate it.")
+    ("doctor", "Based on your symptoms and the exam, this sounds a lot like early osteoarthritis of the knee. I'm going to order some X-rays to confirm."),
+    ("patient", "Arthritis? Is there anything that can be done for it?"),
+    ("doctor", "Yes, we can manage it. Start with Ibuprofen, and I want to refer you to physical therapy to strengthen the surrounding muscles."),
+    ("patient", "Okay. How long is physical therapy?"),
+    ("doctor", "Usually twice a week for about six weeks. We'll see how you progress.")
 ]
 
-consultation_templates = [
-    {"title": "Follow-up on Blood Pressure", "transcript": transcript_htn},
-    {"title": "Asthma Checkup", "transcript": transcript_asthma},
-    {"title": "Knee Pain Consultation", "transcript": transcript_knee}
+c3_2 = [
+    ("doctor", "Hello. The nurse mentioned you're experiencing some pain when urinating?"),
+    ("patient", "Yes, since yesterday morning, it's been burning a lot, and I feel like I have to go to the bathroom constantly."),
+    ("doctor", "Any fever, chills, or back pain?"),
+    ("patient", "No fever, but my lower stomach feels a bit achy and heavy."),
+    ("doctor", "Okay. Based on those symptoms, it sounds very much like an uncomplicated Urinary Tract Infection (UTI). We'll test the urine sample you provided just now to confirm."),
+    ("patient", "Will I need antibiotics?"),
+    ("doctor", "Yes, let's get you started on a short course of antibiotics—Macrobid for five days. You should start feeling relief within 24 to 48 hours."),
+    ("patient", "That would be wonderful. It's very uncomfortable."),
+    ("doctor", "I'll also prescribe some Phenazopyridine. It's a medication that directly soothes the lining of your bladder to reduce the burning while the antibiotic kicks in. Just be warned, it will turn your urine bright orange."),
+    ("patient", "Oh, good to know! I'll pick both of those up today."),
+    ("doctor", "Drink plenty of water to help flush the bacteria out. If you develop a fever or severe back pain, go to the urgent care."),
+    ("patient", "I will keep that in mind. Thank you.")
 ]
 
-patients_data = [
-    {"name": "John Doe", "gender": "Male", "key_history": "Hypertension, Type 2 Diabetes"},
-    {"name": "Jane Smith", "gender": "Female", "key_history": "Asthma, Migraines"},
-    {"name": "Alice Johnson", "gender": "Female", "key_history": "Osteoarthritis, General wellness checkups"},
+c3_3 = [
+    ("doctor", "Good to see you for your annual physical. How have things been overall?"),
+    ("patient", "Pretty good, Doctor. The knee physical therapy really helped, so I'm staying fairly active."),
+    ("doctor", "That's fantastic. I see your weight is stable, and your vitals today look perfect. Have you noticed any changes in your appetite, energy levels, or mood?"),
+    ("patient", "No, energy is good. I eat fairly well, try to stick to a Mediterranean diet."),
+    ("doctor", "Excellent choice. We'll run the standard annual bloodwork—checking cholesterol, blood sugar, and liver and kidney function. I don't anticipate any issues given your healthy lifestyle."),
+    ("patient", "Sounds reassuring."),
+    ("doctor", "Since we are heading into October, it's also time for the seasonal flu shot. Are you okay getting that today?"),
+    ("patient", "Yes, absolutely. Best to get it out of the way."),
+    ("doctor", "Agreed. The nurse will be right in to administer the vaccine and draw your blood. Any other concerns before I let them in?"),
+    ("patient", "I was wondering if I should be taking a calcium or vitamin D supplement for my bones?"),
+    ("doctor", "We will check your Vitamin D level in the bloodwork today. If it's low, I'll recommend a dose. Otherwise, you likely get enough from your diet and sunlight."),
+    ("patient", "Perfect, let's wait on the blood test then. Thanks for everything!")
 ]
 
-def generate_10_min_transcript(consultation_id, transcript_lines):
+# Patient 4: Type 2 Diabetes
+c4_1 = [
+    ("doctor", "Hello. We have your recent lab work back, including your HbA1c. Let's discuss."),
+    ("patient", "I've been a bit worried about it. I admit I slipped up on my diet over the holidays."),
+    ("doctor", "Your HbA1c is at 8.2% today. We'd ideally like to see it below 7%. It indicates your average blood sugar has been running high."),
+    ("patient", "I knew it wouldn't be great. I've noticed I'm thirstier than usual too."),
+    ("doctor", "The increased thirst is a direct symptom of high blood sugar. We need to tighten control to prevent long-term complications. I'd like to increase the dose of your Metformin."),
+    ("patient", "Will the higher dose upset my stomach? Remember it did when I first started it."),
+    ("doctor", "It might cause some mild GI upset initially. Taking it right in the middle of a large meal usually helps mitigate that significantly."),
+    ("patient", "Okay, I'll make sure to take it with dinner."),
+    ("doctor", "Alongside the medication adjustment, we really need to get back to the basics with your diet. Reducing refined carbohydrates and watching portion sizes."),
+    ("patient", "I know, I need to stop snacking on bread and chips in the evening."),
+    ("doctor", "Let's schedule a follow-up in three months to recheck the A1c and see how the new dose is working."),
+    ("patient", "Sounds like a plan. I'll get back on track.")
+]
+
+c4_2 = [
+    ("doctor", "Today is your comprehensive diabetic foot exam. Have you noticed any tingling, numbness, or pain in your feet?"),
+    ("patient", "Sometimes at night, I get a slight tingling in my toes, but it usually goes away if I shake my feet out."),
+    ("doctor", "Alright, take your shoes and socks off for me. I'm going to check the pulses in your feet first... good, circulation is strong on both sides."),
+    ("patient", "That's good to hear. I try to walk every day to keep the blood flowing."),
+    ("doctor", "Now I'm going to use this monofilament—it's like a stiff piece of plastic—to check your sensation. Close your eyes and tell me when you feel it poking your foot."),
+    ("patient", "Okay."),
+    ("doctor", "[pokes foot] Do you feel this?"),
+    ("patient", "Yes."),
+    ("doctor", "[pokes another spot] And this?"),
+    ("patient", "Yes."),
+    ("doctor", "[pokes heel] And here?"),
+    ("patient", "I... think so? It's very faint."),
+    ("doctor", "Okay. You have slightly diminished sensation on your heels, which aligns with the nighttime tingling. This is early peripheral neuropathy. It's crucial that you inspect your feet every single day for any cuts or blisters, since you might not feel them if they happen."),
+    ("patient", "I will start checking them every night. Should I use a mirror?"),
+    ("doctor", "Yes, a mirror makes it much easier to see the bottom of your feet. And make sure your shoes fit well and don't rub."),
+    ("patient", "Got it. I'll be careful.")
+]
+
+c4_3 = [
+    ("doctor", "We discussed last time that adjusting your diet would be a priority. How is that going?"),
+    ("patient", "It's going okay, but I find myself confused at the grocery store. It's hard to know what's actually healthy versus just marketing."),
+    ("doctor", "That's very common, nutrition labels can be tricky. Because you're highly motivated, I want to refer you to a registered dietician who specializes in diabetes management."),
+    ("patient", "That sounds like exactly what I need. What will they do?"),
+    ("doctor", "They will sit down with you, look at what you typically like to eat, and help you build a realistic meal plan. They focus on portion control, balancing macros, and reading those complicated labels."),
+    ("patient", "Will my insurance cover it?"),
+    ("doctor", "Most insurances cover diabetic education fully. The front desk will help ensure it's approved before your first visit."),
+    ("patient", "Oh, excellent. I really struggle with finding good snacks that won't spike my sugar."),
+    ("doctor", "The dietician will give you a big list of great options. In the meantime, try to pair carbohydrates with protein or fat—like having an apple with peanut butter, rather than just an apple by itself. It slows the sugar absorption."),
+    ("patient", "That makes sense. Thank you, I'm looking forward to the referral.")
+]
+
+# Patient 5: Migraines
+c5_1 = [
+    ("doctor", "Good morning. You're here to discuss your migraines? Tell me how frequently you're getting them now."),
+    ("patient", "Good morning. Yes, they've gotten much more frequent. I'm having about six to eight bad migraines a month now."),
+    ("doctor", "That's definitely stepping into the chronic territory. Are they affecting your ability to work?"),
+    ("patient", "Absolutely. I've had to call out sick twice this month because I couldn't look at a computer screen without throwing up."),
+    ("doctor", "I'm sorry, that sounds debilitating. The sumatriptan we prescribed for when you get a migraine—is that still helping?"),
+    ("patient", "It helps take the edge off if I take it immediately, but because I get them so often, I feel like I'm taking too much medication."),
+    ("doctor", "You're right to be concerned about that; overuse can cause rebound headaches. Because you are having more than four migraine days a month, it's time to start a preventative medication rather than just treating them as they happen."),
+    ("patient", "A preventative? Like something I take every day?"),
+    ("doctor", "Exactly. I'd like to start you on Topiramate. It's taken daily and can significantly reduce the frequency and severity of your migraines over time."),
+    ("patient", "Are there side effects?"),
+    ("doctor", "Some people experience tingling in their fingers or toes, and it can sometimes cause a little cognitive haziness or word-finding difficulty. We'll start at a very low dose to minimize that."),
+    ("patient", "I'm willing to try it if it means fewer migraines."),
+    ("doctor", "Great. Start with 25mg at night for a week, then we'll slowly increase it. We'll reevaluate in one month.")
+]
+
+c5_2 = [
+    ("doctor", "Hello. Let's talk about the stomach issues you've been having."),
+    ("patient", "Hi Doctor. Yes, I've had this awful burning sensation in my chest, mostly after I eat dinner and lay down."),
+    ("doctor", "Sounds like classic heartburn or acid reflux. Do you ever get a sour or bitter taste in the back of your throat?"),
+    ("patient", "Yes, definitely. Sometimes it makes me cough a bit at night too."),
+    ("doctor", "That nighttime cough is very typical of GERD—Gastroesophageal Reflux Disease. What time are you eating dinner?"),
+    ("patient", "Usually quite late after I get home, around 8:00 PM. Then I might go to bed around 10:00 PM."),
+    ("doctor", "Laying down that soon after eating allows the stomach acid to easily flow back up the esophagus. Try to have your last meal at least three hours before going to bed."),
+    ("patient", "Three hours... okay, I'll need to adjust my schedule, maybe eat at work before leaving."),
+    ("doctor", "That would be highly beneficial. I'm also going to prescribe Omeprazole, a proton-pump inhibitor. You'll take it once a day every morning, 30 minutes before breakfast."),
+    ("patient", "Will this cure it?"),
+    ("doctor", "It will drastically reduce the acid production so your esophagus can heal from the irritation. Try it for four weeks, keep adjusting your eating times, and avoid spicy foods and caffeine late in the day."),
+    ("patient", "Understood. I'll get the prescription today.")
+]
+
+c5_3 = [
+    ("doctor", "So, you are having some pain in your right shoulder? Let me take a look."),
+    ("patient", "Yes, it aches constantly, but it gets really sharp when I try to lift my arm above my head, like putting a shirt on."),
+    ("doctor", "Let's do a few range-of-motion tests. Slowly raise your arms out to the sides for me, like an airplane..."),
+    ("patient", "Ouch... right there, about halfway up, it catches and hurts."),
+    ("doctor", "Okay, you can put it down. Now tuck your elbow to your side and push outward against my hand..."),
+    ("patient", "That hurts a bit too, deep inside the shoulder."),
+    ("doctor", "That reproduces pain consistent with rotator cuff tendinitis or perhaps a tiny impingement. Has your job involved a lot of overhead lifting recently?"),
+    ("patient", "Actually, I've been painting my entire house for the last two weekends. A lot of rolling the ceiling."),
+    ("doctor", "That repetitive overhead motion is the classic culprit. The tendons get inflamed and pinched under the bone."),
+    ("patient", "Do I need a Cortisone shot or surgery?"),
+    ("doctor", "Not yet. You need to rest the shoulder for a few weeks—no overhead work. Ice it for 20 minutes twice a day, and I'll show you some pendulum exercises to keep the joint mobile without straining the tendon."),
+    ("patient", "Okay, no more painting for a while. Will it heal on its own?"),
+    ("doctor", "With rest and anti-inflammatories like Naproxen, it usually heals well. If it's not significantly better in three weeks, we will get an MRI and consider physical therapy or an injection."),
+    ("patient", "Alright, I'll rest it and do the ice. Thank you.")
+]
+
+topics = [
+    [("Follow-up on Blood Pressure", c1_1), ("Back Pain Evaluation", c1_2), ("Insomnia and Stress Management", c1_3)],
+    [("Asthma Flare-up Checkup", c2_1), ("Routine Skin Mole Check", c2_2), ("Seasonal Allergies", c2_3)],
+    [("Knee Pain Consultation", c3_1), ("Suspected UTI", c3_2), ("Annual Physical and Flu Shot", c3_3)],
+    [("HbA1c Review", c4_1), ("Diabetic Foot Exam", c4_2), ("Dietician Referral", c4_3)],
+    [("Chronic Migraine Consultation", c5_1), ("Acid Reflux Symptoms", c5_2), ("Right Shoulder Pain", c5_3)]
+]
+
+patients_meta = [
+    {"name": "Arthur Pendelton", "gender": "Male", "key_history": "Hypertension, Occasional back pain"},
+    {"name": "Beatrice Lowe", "gender": "Female", "key_history": "Asthma, History of atypical moles"},
+    {"name": "Cedric Diggens", "gender": "Male", "key_history": "Osteoarthritis in knee, General wellness"},
+    {"name": "Diana Rossing", "gender": "Female", "key_history": "Type 2 Diabetes, neuropathy concerns"},
+    {"name": "Ethan Vance", "gender": "Male", "key_history": "Chronic Migraines, GERD"}
+]
+
+def generate_timed_transcript(consultation_id, transcript_lines):
     entries = []
     current_time = 0.0
     
-    # We want the total duration to be exactly 10 minutes (600 seconds)
-    # The number of lines is len(transcript_lines), let's say roughly 30-34.
-    # We need to distribute 600 seconds among these lines.
-    # An average block per line would be 600 / len(transcript_lines) = ~18 seconds.
-    
-    target_duration = 600.0 
+    # Randomly target duration between 15 to 20 minutes (900 to 1200 seconds)
+    target_duration = random.uniform(900.0, 1200.0) 
     average_duration_per_line = target_duration / len(transcript_lines)
     
     for speaker, text in transcript_lines:
-        # Calculate speaking duration: roughly 2-3 words per second
         words = len(text.split())
         speaking_duration = (words / 2.5) + random.uniform(1.0, 2.0)
         
-        # Calculate pause duration to pad out the time so it averages out correctly
-        # We ensure pause isn't negative
         pause_duration = average_duration_per_line - speaking_duration
         if pause_duration < 1.0:
-            # If the speaker spoke a really long time, reduce pause but keep it realistic
-            pause_duration = random.uniform(1.0, 3.0)
+            pause_duration = random.uniform(2.0, 4.0)
             
-        # Add some random jitter to make it imperfect / realistic
-        jitter = random.uniform(-2.0, 2.0)
+        jitter = random.uniform(-3.0, 3.0)
         pause_duration += jitter
         if pause_duration < 0.5:
-            pause_duration = 0.5
+            pause_duration = random.uniform(0.5, 2.0)
             
         end_time = current_time + speaking_duration
         
@@ -201,45 +337,42 @@ def generate_10_min_transcript(consultation_id, transcript_lines):
         
         current_time = end_time + pause_duration
         
-    # the last entry doesn't need a pause, but the total time should now be very close to 600.
-    
     return entries
 
-for i, p_data in enumerate(patients_data):
+for i, p_meta in enumerate(patients_meta):
     patient = Patient(
         doctor_id=admin_user.id,
         display_id=f"PT-{random.randint(1000, 9999)}",
-        name=p_data["name"],
-        date_of_birth=datetime(1970 + i * 5, 1, 1).date(),
-        gender=p_data["gender"],
-        key_history=p_data["key_history"]
+        name=p_meta["name"],
+        date_of_birth=datetime(1960 + i * 5, 1, 1).date(),
+        gender=p_meta["gender"],
+        key_history=p_meta["key_history"]
     )
     db.add(patient)
     db.commit()
     db.refresh(patient)
     
-    # 2 consultations per patient
-    for j in range(2):
-        # Pick a topic that matches their history for realism, or random if 2nd visit
-        topic = consultation_templates[i] if j == 0 else random.choice(consultation_templates)
-        
+    # 3 consultations per patient
+    patient_topics = topics[i]
+    for j in range(3):
+        title, dialogue = patient_topics[j]
         consultation = Consultation(
             doctor_id=admin_user.id,
             patient_id=patient.id,
-            title=topic["title"],
+            title=title,
             status="completed",
-            created_at=datetime.now(timezone.utc) - timedelta(days=random.randint(1, 30))
+            created_at=datetime.now(timezone.utc) - timedelta(days=random.randint(1, 90))
         )
         db.add(consultation)
         db.commit()
         db.refresh(consultation)
         
-        transcript_entries = generate_10_min_transcript(consultation.id, topic["transcript"])
-        # Actually set the consultation end time effectively
+        transcript_entries = generate_timed_transcript(consultation.id, dialogue)
+        
         last_entry = transcript_entries[-1]
         consultation.ended_at = consultation.created_at + timedelta(seconds=float(last_entry.end_time))
         
         db.bulk_save_objects(transcript_entries)
         db.commit()
 
-print("Successfully seeded the database with coherent ~10-minute mock transcripts.")
+print("Successfully seeded the database with 5 patients, each having 3 distinct, realistic 15-20 min consultations.")
