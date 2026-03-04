@@ -9,7 +9,7 @@ from app.models.transcript import TranscriptEntry
 from app.models.insight import AIInsight
 from app.schemas.consultation import Consultation, ConsultationCreate
 from app.models.user import User
-from app.services.recall_service import recall_service
+from app.services.vexa_service import vexa_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ def create_consultation(
 
 
 @router.get("/", response_model=List[Consultation])
-def list_consultations(
+async def list_consultations(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -51,7 +51,29 @@ def list_consultations(
         .filter(ConsultationModel.doctor_id == current_user.id)
         .order_by(ConsultationModel.created_at.desc())
     )
-    return list(qs)
+    consultations = list(qs)
+    
+    # Sync transcripts for active consultations
+    for c in consultations:
+        if c.status == "draft" and c.recall_bot_id:
+            await vexa_service.sync_transcripts(c, db)
+            
+    # Refresh the instances heavily joined if any synced
+    if any(c.status == "draft" and c.recall_bot_id for c in consultations):
+        # easiest just to requery the active ones or the whole list so transcripts are loaded
+        qs = (
+            db.query(ConsultationModel)
+            .options(
+                joinedload(ConsultationModel.transcripts), 
+                joinedload(ConsultationModel.insights),
+                joinedload(ConsultationModel.patient)
+            )
+            .filter(ConsultationModel.doctor_id == current_user.id)
+            .order_by(ConsultationModel.created_at.desc())
+        )
+        return list(qs)
+
+    return consultations
 @router.delete("/{consultation_id}")
 def delete_consultation(
     consultation_id: int,
@@ -100,9 +122,10 @@ async def update_consultation(
             c.ended_at = datetime.utcnow()
             if c.recall_bot_id:
                 try:
-                    await recall_service.leave_call(c.recall_bot_id)
+                    await vexa_service.leave_call(c.recall_bot_id)
                 except Exception as e:
                     logger.warning(f"Failed to leave call for bot {c.recall_bot_id}: {e}")
+                # We optionally clear recall_bot_id to show disconnected, or keep it to link to Vexa
                 c.recall_bot_id = None
     
     db.commit()
@@ -111,7 +134,7 @@ async def update_consultation(
 
 
 @router.get("/active")
-def get_active_consultation(
+async def get_active_consultation(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -129,4 +152,7 @@ def get_active_consultation(
         .order_by(ConsultationModel.created_at.desc())
         .first()
     )
+    if c and c.recall_bot_id:
+        await vexa_service.sync_transcripts(c, db)
+        db.refresh(c)
     return c
