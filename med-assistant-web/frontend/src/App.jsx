@@ -5,7 +5,7 @@ import { fetchConsultations, createConsultation, deleteConsultation, logout, fet
 import Sidebar from "./Sidebar";
 import MicPermission from "./MicPermission";
 
-function Consultations({ onLogout, focusedConsultationId, setFocusedConsultationId }) {
+function Consultations({ onLogout, focusedConsultationId, setFocusedConsultationId, onBack, backLabel }) {
   const [view, setView] = useState("list"); // "list", "create", "detail"
   const [consultations, setConsultations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -271,8 +271,8 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
 
     return (
       <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box", animation: "fadeIn 0.3s ease" }}>
-        <button onClick={() => setView("list")} style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
-          <span>←</span> Back to all consultations
+        <button onClick={onBack ? onBack : () => setView("list")} style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
+          <span>←</span> {backLabel || "Back to all consultations"}
         </button>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "40px" }}>
@@ -702,7 +702,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
   );
 }
 
-function Patients({ onLogout, onNavigateToConsultation }) {
+function Patients({ onLogout, onNavigateToConsultation, focusedPatientId, setFocusedPatientId }) {
   const [view, setView] = useState("list");
   const [patients, setPatients] = useState([]);
   const [consultations, setConsultations] = useState([]);
@@ -733,9 +733,21 @@ function Patients({ onLogout, onNavigateToConsultation }) {
     return () => clearInterval(intervalId);
   }, []);
 
+  useEffect(() => {
+    if (focusedPatientId && patients.length > 0) {
+      const target = patients.find(p => p.id === focusedPatientId);
+      if (target) {
+        setSelectedPatient(target);
+        setView("detail");
+        if (setFocusedPatientId) setFocusedPatientId(null);
+      }
+    }
+  }, [focusedPatientId, patients, setFocusedPatientId]);
+
   const handleViewDetail = (patient) => {
     setSelectedPatient(patient);
     setView("detail");
+    if (setFocusedPatientId) setFocusedPatientId(patient.id);
   };
 
   const filteredPatients = patients.filter(p =>
@@ -897,7 +909,7 @@ function Patients({ onLogout, onNavigateToConsultation }) {
                 key={c.id}
                 className="animate-fade-in glass-panel hover-bg"
                 style={{ animationDelay: `${(index % 5) * 0.1}s`, padding: "16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "transform 0.2s ease", border: "1px solid rgba(148, 163, 184, 0.1)", backgroundColor: "rgba(30, 41, 59, 0.4)" }}
-                onClick={() => onNavigateToConsultation(c.id)}
+                onClick={() => onNavigateToConsultation(c.id, p.id)}
               >
                 <div>
                   <div style={{ fontWeight: 600, color: "#f1f5f9", fontSize: "16px" }}>{c.title}</div>
@@ -1945,9 +1957,22 @@ function App() {
     document.cookie.includes("logged_in=1")
   );
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [refreshKey, setRefreshKey] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [user, setUser] = useState(null);
   const [focusedConsultationId, setFocusedConsultationId] = useState(null);
+  const [focusedPatientId, setFocusedPatientId] = useState(null);
+  const [backToTab, setBackToTab] = useState(null);
+
+  const handleTabChange = (tab) => {
+    if (tab === activeTab) {
+      setRefreshKey(prev => prev + 1);
+      setFocusedConsultationId(null);
+      setFocusedPatientId(null);
+      setBackToTab(null);
+    }
+    setActiveTab(tab);
+  };
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -1988,20 +2013,46 @@ function App() {
     <div style={{ display: "flex", width: "100%", height: "100vh", overflow: "hidden", margin: 0, padding: 0 }}>
       <Sidebar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         onLogout={handleLogout}
         isCollapsed={!isSidebarOpen}
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         user={user}
-        onNavigateToConsultation={(id) => { setFocusedConsultationId(id); setActiveTab("consultations"); }}
+        onNavigateToConsultation={(id) => { setFocusedConsultationId(id); setBackToTab(null); handleTabChange("consultations"); }}
       />
       <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", height: "100%" }}>
-        {activeTab === "dashboard" && <Dashboard onLogout={handleLogout} />}
-        {activeTab === "consultations" && <Consultations onLogout={handleLogout} focusedConsultationId={focusedConsultationId} setFocusedConsultationId={setFocusedConsultationId} />}
-        {activeTab === "patients" && <Patients onLogout={handleLogout} onNavigateToConsultation={(id) => { setFocusedConsultationId(id); setActiveTab("consultations"); }} />}
-        {activeTab === "ai-insights" && <AIAnalytics />}
-        {activeTab === "ask-ai" && <AskAI />}
-        {activeTab === "settings" && <Settings onLogout={handleLogout} />}
+        {activeTab === "dashboard" && <Dashboard key={`dashboard-${refreshKey}`} onLogout={handleLogout} />}
+        {activeTab === "consultations" && (
+          <Consultations
+            key={`consultations-${refreshKey}`}
+            onLogout={handleLogout}
+            focusedConsultationId={focusedConsultationId}
+            setFocusedConsultationId={setFocusedConsultationId}
+            onBack={backToTab ? () => {
+              const target = backToTab;
+              setBackToTab(null);
+              handleTabChange(target);
+            } : null}
+            backLabel={backToTab === 'patients' ? "Back to Patient Profile" : null}
+          />
+        )}
+        {activeTab === "patients" && (
+          <Patients
+            key={`patients-${refreshKey}`}
+            onLogout={handleLogout}
+            focusedPatientId={focusedPatientId}
+            setFocusedPatientId={setFocusedPatientId}
+            onNavigateToConsultation={(id, patientId) => {
+              setFocusedConsultationId(id);
+              if (patientId) setFocusedPatientId(patientId);
+              setBackToTab("patients");
+              setActiveTab("consultations");
+            }}
+          />
+        )}
+        {activeTab === "ai-insights" && <AIAnalytics key={`ai-insights-${refreshKey}`} />}
+        {activeTab === "ask-ai" && <AskAI key={`ask-ai-${refreshKey}`} />}
+        {activeTab === "settings" && <Settings key={`settings-${refreshKey}`} onLogout={handleLogout} />}
       </div>
     </div>
   );
