@@ -73,7 +73,9 @@ def send_message(session_id: int, request: ChatSendRequest, db: Session = Depend
     # Format messages for LangChain Agent
     chat_history = [SystemMessage(content=SYSTEM_PROMPT)]
     # Skip the very last message in session.messages (which is the one just added above)
-    for msg in session.messages[:-1]:
+    # Limit to the last 6 messages to prevent context bloat for local models
+    recent_messages = session.messages[:-1][-6:]
+    for msg in recent_messages:
         if msg.role == "user":
             chat_history.append(HumanMessage(content=msg.content))
         else:
