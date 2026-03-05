@@ -383,7 +383,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: (updatedC.recall_bot_id || botError) ? "12px" : "0" }}>
                 <h3 style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "6px" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 0 0-10 10v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7a10 10 0 0 0-10-10z" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
-                  Recall Bot
+                  Meeting Bot
                   <div className="tooltip-container" style={{ position: "relative", display: "inline-flex", alignItems: "center", cursor: "help" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#64748b" }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
                     <div className="tooltip-text" style={{
