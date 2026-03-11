@@ -23,6 +23,17 @@ def migrate():
             print("Migration successful.")
         else:
             print("Column recall_bot_id already exists.")
+
+        # Check users table for specialty
+        cursor.execute("PRAGMA table_info(users)")
+        user_columns = [column[1] for column in cursor.fetchall()]
+        if "specialty" not in user_columns:
+            print("Adding specialty column to users table...")
+            cursor.execute("ALTER TABLE users ADD COLUMN specialty TEXT")
+            conn.commit()
+            print("Migration successful.")
+        else:
+            print("Column specialty already exists.")
             
     except Exception as e:
         print(f"Migration failed: {e}")

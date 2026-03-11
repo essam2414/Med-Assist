@@ -1,7 +1,7 @@
 // frontend/src/App.jsx
 import { useEffect, useState, useRef } from "react";
 import Login from "./Login";
-import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount, joinMeetingWithBot, disconnectBot, updateConsultationStatus } from "./api";
+import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount, joinMeetingWithBot, disconnectBot, updateConsultationStatus, updateUserProfile } from "./api";
 import Sidebar from "./Sidebar";
 import MicPermission from "./MicPermission";
 
@@ -1501,12 +1501,40 @@ function Settings({ onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [profileName, setProfileName] = useState("");
+  const [profileSpecialty, setProfileSpecialty] = useState("");
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState("");
+  const [profileError, setProfileError] = useState("");
+
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
+
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    setProfileError("");
+    setProfileSuccess("");
+    try {
+      const updated = await updateUserProfile({ name: profileName, specialty: profileSpecialty });
+      setUser(updated);
+      setProfileSuccess("Profile updated successfully!");
+      setIsEditingProfile(false);
+    } catch (err) {
+      if (err.message === "unauthorized") {
+        if (onLogout) onLogout();
+      } else {
+        setProfileError(err.message || "Failed to update profile");
+      }
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -1536,7 +1564,11 @@ function Settings({ onLogout }) {
 
   useEffect(() => {
     fetchCurrentUser()
-      .then(setUser)
+      .then((data) => {
+        setUser(data);
+        setProfileName(data.name || "");
+        setProfileSpecialty(data.specialty || "");
+      })
       .catch((err) => {
         if (err.message === "unauthorized") {
           if (onLogout) onLogout();
@@ -1568,37 +1600,137 @@ function Settings({ onLogout }) {
           </div>
         ) : user ? (
           <div>
-            <h2 style={{ fontSize: "20px", fontWeight: 600, margin: "0 0 24px 0", color: "#f8fafc" }}>Profile Information</h2>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+              <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "#f8fafc" }}>Profile Information</h2>
+              {!isEditingProfile && (
+                <button
+                  onClick={() => setIsEditingProfile(true)}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: "6px",
+                    background: "rgba(59, 130, 246, 0.1)",
+                    border: "1px solid rgba(59, 130, 246, 0.2)",
+                    color: "#3b82f6",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    cursor: "pointer"
+                  }}
+                >
+                  Edit Profile
+                </button>
+              )}
+            </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px", maxWidth: "600px" }}>
+            <form onSubmit={handleProfileUpdate} style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px", maxWidth: "600px" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Full Name</label>
-                <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px" }}>
-                  {user.name}
-                </div>
+                {isEditingProfile ? (
+                  <input
+                    type="text"
+                    value={profileName}
+                    onChange={(e) => setProfileName(e.target.value)}
+                    style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px", outline: "none" }}
+                    placeholder="Enter your name"
+                  />
+                ) : (
+                  <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.1)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px" }}>
+                    {user.name}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Specialisation</label>
+                {isEditingProfile ? (
+                  <input
+                    type="text"
+                    value={profileSpecialty}
+                    onChange={(e) => setProfileSpecialty(e.target.value)}
+                    style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px", outline: "none" }}
+                    placeholder="e.g. Cardiologist, GP, etc."
+                  />
+                ) : (
+                  <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.1)", borderRadius: "8px", color: user.specialty ? "#f1f5f9" : "#64748b", fontSize: "15px", fontStyle: user.specialty ? "normal" : "italic" }}>
+                    {user.specialty || "No specialisation set"}
+                  </div>
+                )}
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Email Address</label>
-                <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px" }}>
-                  {user.email}
+                <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.2)", border: "1px solid rgba(148, 163, 184, 0.1)", borderRadius: "8px", color: "#94a3b8", fontSize: "15px" }}>
+                  {user.email} (Email cannot be changed)
                 </div>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Role</label>
-                <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px", textTransform: "capitalize" }}>
+                <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.2)", border: "1px solid rgba(148, 163, 184, 0.1)", borderRadius: "8px", color: "#94a3b8", fontSize: "15px", textTransform: "capitalize" }}>
                   {user.role}
                 </div>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Account Created</label>
-                <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px" }}>
+                <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.2)", border: "1px solid rgba(148, 163, 184, 0.1)", borderRadius: "8px", color: "#94a3b8", fontSize: "15px" }}>
                   {new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                 </div>
               </div>
-            </div>
+
+              {isEditingProfile && (
+                <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
+                  <button
+                    type="submit"
+                    disabled={profileSaving}
+                    style={{
+                      background: "var(--primary-gradient)",
+                      border: "none",
+                      padding: "10px 24px",
+                      borderRadius: "8px",
+                      color: "white",
+                      fontWeight: 600,
+                      fontSize: "14px",
+                      cursor: profileSaving ? "default" : "pointer",
+                      boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)",
+                      opacity: profileSaving ? 0.7 : 1
+                    }}
+                  >
+                    {profileSaving ? "Saving..." : "Save Changes"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingProfile(false);
+                      setProfileName(user.name);
+                      setProfileSpecialty(user.specialty || "");
+                    }}
+                    style={{
+                      background: "transparent",
+                      border: "1px solid rgba(148, 163, 184, 0.3)",
+                      padding: "10px 24px",
+                      borderRadius: "8px",
+                      color: "#94a3b8",
+                      fontWeight: 600,
+                      fontSize: "14px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+
+              {profileSuccess && (
+                <div style={{ marginTop: "12px", padding: "10px", backgroundColor: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "6px", color: "#34d399", fontSize: "13px" }}>
+                  {profileSuccess}
+                </div>
+              )}
+              {profileError && (
+                <div style={{ marginTop: "12px", padding: "10px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "6px", color: "#ef4444", fontSize: "13px" }}>
+                  {profileError}
+                </div>
+              )}
+            </form>
 
             <h2 style={{ fontSize: "20px", fontWeight: 600, margin: "32px 0 24px 0", color: "#f8fafc" }}>Change Password</h2>
             <form onSubmit={handlePasswordChange} style={{ display: "flex", flexDirection: "column", gap: "16px", maxWidth: "600px" }}>
