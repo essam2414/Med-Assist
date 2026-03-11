@@ -4,6 +4,7 @@ import Login from "./Login";
 import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount, joinMeetingWithBot, disconnectBot, updateConsultationStatus, updateUserProfile } from "./api";
 import Sidebar from "./Sidebar";
 import MicPermission from "./MicPermission";
+import LandingPage from "./LandingPage";
 
 function Consultations({ onLogout, focusedConsultationId, setFocusedConsultationId, onBack, backLabel }) {
   const [view, setView] = useState("list"); // "list", "create", "detail"
@@ -2095,6 +2096,7 @@ function App() {
   const [focusedConsultationId, setFocusedConsultationId] = useState(null);
   const [focusedPatientId, setFocusedPatientId] = useState(null);
   const [backToTab, setBackToTab] = useState(null);
+  const [showLogin, setShowLogin] = useState(window.location.pathname === "/login");
 
   const handleTabChange = (tab) => {
     if (tab === activeTab) {
@@ -2138,7 +2140,25 @@ function App() {
   }
 
   if (!isLoggedIn) {
-    return <Login onLogin={handleLogin} />;
+    if (showLogin || window.location.pathname === "/login") {
+      return (
+        <Login
+          onLogin={handleLogin}
+          onBack={() => {
+            window.history.pushState({}, '', '/');
+            setShowLogin(false);
+          }}
+        />
+      );
+    }
+    return (
+      <LandingPage
+        onSignInClick={() => {
+          window.history.pushState({}, '', '/login');
+          setShowLogin(true);
+        }}
+      />
+    );
   }
 
   return (

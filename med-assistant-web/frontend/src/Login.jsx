@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { login, signup } from "./api";
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, onBack }) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -35,7 +35,6 @@ export default function Login({ onLogin }) {
       setLoading(false);
     }
   };
-
   return (
     <div
       style={{
@@ -44,8 +43,45 @@ export default function Login({ onLogin }) {
         alignItems: "center",
         justifyContent: "center",
         padding: "16px",
+        position: "relative"
       }}
     >
+      {onBack && (
+        <button
+          onClick={onBack}
+          style={{
+            position: "absolute",
+            top: "24px",
+            left: "24px",
+            background: "rgba(30, 41, 59, 0.5)",
+            border: "1px solid rgba(148, 163, 184, 0.2)",
+            borderRadius: "8px",
+            color: "#e2e8f0",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "8px 16px",
+            fontSize: "14px",
+            fontWeight: 500,
+            transition: "all 0.2s ease",
+            backdropFilter: "blur(8px)",
+            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(30, 41, 59, 0.8)";
+            e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)";
+            e.currentTarget.style.transform = "translateY(-1px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(30, 41, 59, 0.5)";
+            e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.2)";
+            e.currentTarget.style.transform = "translateY(0)";
+          }}
+        >
+          <span>←</span> Back
+        </button>
+      )}
       <div
         className="glass-panel animate-fade-in"
         style={{
@@ -67,7 +103,7 @@ export default function Login({ onLogin }) {
               letterSpacing: "-0.02em",
             }}
           >
-            Med Consult AI
+            MedAssist
           </h1>
           <p
             style={{
