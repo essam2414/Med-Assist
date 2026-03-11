@@ -143,7 +143,7 @@ export default function LandingPage({ onSignInClick }) {
             </section>
 
             {/* Features Outline */}
-            <section className="section bg-subtle reveal">
+            <section className="section bg-glass reveal">
                 <div className="section-container">
                     <h2 className="section-title">What the assistant can do</h2>
                     <div className="features-grid">
@@ -188,7 +188,7 @@ export default function LandingPage({ onSignInClick }) {
             </section>
 
             {/* About Project */}
-            <section className="section section-small reveal">
+            <section className="section section-small bg-glass reveal">
                 <div className="section-container about-box">
                     <h2 className="section-title">About this project</h2>
                     <p>This application is a proof‑of‑concept exploring how AI can assist clinicians with consultation documentation and patient history review. It is not a replacement for clinical judgement and is not yet integrated with live electronic medical record systems.</p>
