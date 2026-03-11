@@ -2098,6 +2098,14 @@ function App() {
   const [backToTab, setBackToTab] = useState(null);
   const [showLogin, setShowLogin] = useState(window.location.pathname === "/login");
 
+  useEffect(() => {
+    const handlePopState = () => {
+      setShowLogin(window.location.pathname === "/login");
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const handleTabChange = (tab) => {
     if (tab === activeTab) {
       setRefreshKey(prev => prev + 1);
