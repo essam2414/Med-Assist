@@ -1,7 +1,7 @@
 // frontend/src/App.jsx
 import { useEffect, useState, useRef } from "react";
 import Login from "./Login";
-import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount, joinMeetingWithBot, disconnectBot, updateConsultationStatus, updateUserProfile } from "./api";
+import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount, joinMeetingWithBot, disconnectBot, updateConsultationStatus, updateUserProfile, checkServerStatus } from "./api";
 import Sidebar from "./Sidebar";
 import MicPermission from "./MicPermission";
 import LandingPage from "./LandingPage";
@@ -1985,15 +1985,20 @@ function Settings({ onLogout }) {
 }
 
 
-function Dashboard({ onLogout, user }) {
+function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNavigateToPatient }) {
   const [consultations, setConsultations] = useState([]);
+  const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [expandedId, setExpandedId] = useState(null);
+  const [isServerActive, setIsServerActive] = useState(null); // null: checking, true: active, false: inactive
 
   const loadData = () => {
-    fetchConsultations()
-      .then(setConsultations)
+    Promise.all([fetchConsultations(), fetchPatients()])
+      .then(([consData, patData]) => {
+        setConsultations(consData);
+        setPatients(patData);
+      })
       .catch((err) => {
         if (err.message === "unauthorized") {
           onLogout();
@@ -2004,12 +2009,23 @@ function Dashboard({ onLogout, user }) {
       .finally(() => setLoading(false));
   };
 
+  const checkStatus = () => {
+    checkServerStatus()
+      .then((data) => {
+        if (data.status === "ok") setIsServerActive(true);
+        else setIsServerActive(false);
+      })
+      .catch(() => setIsServerActive(false));
+  };
+
   useEffect(() => {
     loadData();
+    checkStatus();
 
     // Poll for updates every 3 seconds
     const intervalId = setInterval(() => {
       loadData();
+      checkStatus();
     }, 3000);
     const handleStatusChanged = () => loadData();
     window.addEventListener('consultationStatusChanged', handleStatusChanged);
@@ -2020,13 +2036,9 @@ function Dashboard({ onLogout, user }) {
     };
   }, [onLogout]);
 
-  // Calculate stats for the welcome summary
-  const totalConsultations = consultations.length;
-  const totalTranscripts = consultations.reduce(
-    (acc, c) => acc + (c.transcripts?.length || 0),
-    0
-  );
-  const totalInsights = consultations.filter((c) => c.insights).length;
+  const activeConsultation = consultations.find(c => c.status === 'draft');
+  const recentConsultations = consultations.slice(0, 3);
+  const recentPatients = patients.slice(0, 3);
 
   const handleToggleExpand = (id) => {
     setExpandedId((prevId) => (prevId === id ? null : id));
@@ -2055,168 +2067,185 @@ function Dashboard({ onLogout, user }) {
   return (
     <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }} className="animate-fade-in">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "32px" }} className="animate-fade-in">
         <div>
           <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0" }}>
-            Welcome back <span className="text-gradient">{user?.name || "Doctor"}</span>
+            Welcome back, <span className="text-gradient">{user?.name || "Doctor"}</span>
           </h1>
           <p style={{ color: "#94a3b8", margin: 0, fontSize: "16px" }}>
-            Here is an overview of your recent patient consultations.
+            Here is your daily medical overview.
           </p>
         </div>
-      </div>
 
-      {/* Stats Overview */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "24px", marginBottom: "40px" }} className="animate-fade-in stagger-1">
-        <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "8px" }}>
-          <div style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Consultations</div>
-          <div style={{ fontSize: "36px", fontWeight: 700, color: "#f8fafc" }}>{loading ? "-" : totalConsultations}</div>
-        </div>
-        <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "8px" }}>
-          <div style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Transcript Moments</div>
-          <div style={{ fontSize: "36px", fontWeight: 700, color: "#f8fafc" }}>{loading ? "-" : totalTranscripts}</div>
-        </div>
-        <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "8px" }}>
-          <div style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Insights Generated</div>
-          <div style={{ fontSize: "36px", fontWeight: 700, color: "#f8fafc" }}>{loading ? "-" : totalInsights}</div>
+        {/* Server Status Label */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px", borderRadius: "12px", border: "1px solid", backgroundColor: isServerActive === true ? "rgba(16, 185, 129, 0.1)" : isServerActive === false ? "rgba(239, 68, 68, 0.1)" : "rgba(148, 163, 184, 0.1)", borderColor: isServerActive === true ? "rgba(16, 185, 129, 0.3)" : isServerActive === false ? "rgba(239, 68, 68, 0.3)" : "rgba(148, 163, 184, 0.2)", transition: "all 0.3s ease" }}>
+          <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: isServerActive === true ? "#10b981" : isServerActive === false ? "#ef4444" : "#94a3b8", boxShadow: isServerActive === true ? "0 0 8px #10b981" : isServerActive === false ? "0 0 8px #ef4444" : "none" }}></div>
+          <span style={{ fontSize: "13px", fontWeight: 600, color: isServerActive === true ? "#34d399" : isServerActive === false ? "#ef4444" : "#94a3b8", textTransform: "uppercase", letterSpacing: "0.02em" }}>
+            {isServerActive === true ? "Server Active" : isServerActive === false ? "Server Inactive" : "Checking Status..."}
+          </span>
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: "24px" }} className="animate-fade-in stagger-2">
-        <div className="glass-panel" style={{ padding: "32px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
-            <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "#f8fafc" }}>Recent Consultations</h2>
+      {error && (
+        <div style={{ padding: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", color: "#ef4444", marginBottom: "24px", fontSize: "14px" }}>
+          {error}
+        </div>
+      )}
+
+      {/* Main Action Card */}
+      <div className="animate-fade-in stagger-1" style={{ marginBottom: "40px" }}>
+        {loading ? (
+          <div className="glass-panel" style={{ padding: "32px", textAlign: "center", color: "#64748b" }}>Loading dashboard...</div>
+        ) : activeConsultation ? (
+          <div
+            className="glass-panel"
+            style={{ padding: "32px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", borderLeft: "4px solid #3b82f6", flexWrap: "wrap", gap: "24px" }}
+            onClick={() => onNavigateToConsultation(activeConsultation.id)}
+          >
+            <div>
+              <div style={{ fontSize: "14px", color: "#60a5fa", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#3b82f6", boxShadow: "0 0 8px #3b82f6" }}></span>
+                Active Consultation
+              </div>
+              <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#f8fafc", margin: 0 }}>{activeConsultation.title}</h2>
+              <p style={{ color: "#94a3b8", marginTop: "8px", marginBottom: 0 }}>
+                Patient: {activeConsultation.patient?.name || "Anonymous"}
+              </p>
+            </div>
+            <div>
+              <button style={{ padding: "12px 24px", backgroundColor: "#3b82f6", color: "white", border: "none", borderRadius: "8px", fontWeight: 600, cursor: "pointer", fontSize: "16px" }}>
+                Resume Session
+              </button>
+            </div>
           </div>
-
-          {error && (
-            <div style={{ padding: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", color: "#ef4444", marginBottom: "24px", fontSize: "14px" }}>
-              {error}
+        ) : (
+          <div
+            className="glass-panel"
+            style={{ padding: "32px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", border: "1px dashed rgba(59, 130, 246, 0.4)", backgroundColor: "rgba(59, 130, 246, 0.05)", flexWrap: "wrap", gap: "24px" }}
+            onClick={() => onNavigate("consultations")}
+          >
+            <div>
+              <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#f8fafc", margin: "0 0 8px 0" }}>Ready for your next patient?</h2>
+              <p style={{ color: "#94a3b8", margin: 0 }}>Create a new consultation to start recording insights.</p>
             </div>
-          )}
-
-          {loading ? (
-            <div style={{ textAlign: "center", padding: "48px", color: "#64748b" }}>Loading your data...</div>
-          ) : consultations.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "64px", border: "1px dashed rgba(148, 163, 184, 0.2)", borderRadius: "12px", color: "#64748b" }}>
-              No recent consultations found.
+            <div>
+              <button style={{ padding: "12px 24px", backgroundColor: "#3b82f6", color: "white", border: "none", borderRadius: "8px", fontWeight: 600, cursor: "pointer", fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
+                New Consultation
+              </button>
             </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {consultations.map((c, index) => (
-                <div key={c.id} className="animate-fade-in" style={{ animationDelay: `${(index % 5 + 3) * 0.1}s` }}>
-                  <div
-                    onClick={() => handleToggleExpand(c.id)}
-                    style={{
-                      padding: "20px",
-                      backgroundColor: "rgba(30, 41, 59, 0.4)",
-                      border: "1px solid rgba(148, 163, 184, 0.1)",
-                      borderRadius: expandedId === c.id ? "12px 12px 0 0" : "12px",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                      gap: "16px",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease"
-                    }}
-                  >
-                    <div>
-                      <h3 style={{ margin: "0 0 6px 0", fontSize: "16px", fontWeight: 600, color: "#f1f5f9" }}>{c.title}</h3>
-                      <div style={{ display: "flex", gap: "16px", fontSize: "13px", color: "#94a3b8" }}>
-                        <span>Started: {new Date(c.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
-                      </div>
+          </div>
+        )}
+      </div>
+
+      {/* Two Small Lists */}
+      {!loading && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }} className="animate-fade-in stagger-2">
+          {/* Recent Consultations */}
+          <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column" }}>
+            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#f8fafc", margin: "0 0 20px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+              Recent Consultations
+            </h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
+              {recentConsultations.length > 0 ? recentConsultations.map(c => (
+                <div
+                  key={c.id}
+                  onClick={() => onNavigateToConsultation(c.id)}
+                  style={{
+                    height: "82px",
+                    padding: "12px 16px",
+                    backgroundColor: "rgba(15, 23, 42, 0.4)",
+                    borderRadius: "12px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    border: "1px solid rgba(148, 163, 184, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "16px",
+                    boxSizing: "border-box"
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(30, 41, 59, 0.6)"; e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.3)"; e.currentTarget.style.transform = "translateX(4px)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.4)"; e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.1)"; e.currentTarget.style.transform = "translateX(0)"; }}
+                >
+                  <div style={{ width: "40px", height: "40px", borderRadius: "10px", backgroundColor: "rgba(59, 130, 246, 0.1)", color: "#60a5fa", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
+                      <span style={{ fontWeight: 600, color: "#e2e8f0", fontSize: "15px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.title}</span>
+                      <span style={{ fontSize: "11px", color: "#64748b", flexShrink: 0, fontWeight: 500 }}>{new Date(c.created_at).toLocaleDateString()}</span>
                     </div>
-
-                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                      {c.transcripts?.length > 0 ? (
-                        <span style={{ padding: "4px 10px", backgroundColor: "rgba(59, 130, 246, 0.1)", color: "#60a5fa", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(59, 130, 246, 0.2)" }}>
-                          {c.transcripts.length} Moments
-                        </span>
-                      ) : (
-                        <span style={{ padding: "4px 10px", backgroundColor: "rgba(148, 163, 184, 0.05)", color: "#64748b", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(148, 163, 184, 0.1)" }}>
-                          No Recording
-                        </span>
-                      )}
-
-                      {c.insights ? (
-                        <span style={{ padding: "4px 10px", backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#34d399", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(16, 185, 129, 0.2)" }}>
-                          Insight Ready
-                        </span>
-                      ) : (
-                        <span style={{ padding: "4px 10px", backgroundColor: "rgba(148, 163, 184, 0.05)", color: "#64748b", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(148, 163, 184, 0.1)" }}>
-                          Processing
-                        </span>
-                      )}
-
-                      {c.status === 'draft' && (
-                        <button
-                          onClick={(e) => handleFinish(e, c.id)}
-                          style={{
-                            padding: "4px 12px",
-                            backgroundColor: "rgba(16, 185, 129, 0.15)",
-                            color: "#34d399",
-                            borderRadius: "6px",
-                            fontSize: "12px",
-                            fontWeight: 700,
-                            border: "1px solid rgba(16, 185, 129, 0.3)",
-                            cursor: "pointer",
-                            transition: "all 0.2s ease",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.02em"
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.25)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.15)"; }}
-                        >
-                          End Session
-                        </button>
-                      )}
-
-                      <span style={{ marginLeft: "8px", color: "#94a3b8", transform: expandedId === c.id ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>
-                        ▼
-                      </span>
+                    <div style={{ fontSize: "13px", color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {c.patient?.name ? `Patient: ${c.patient.name}` : "Anonymous Session"}
                     </div>
                   </div>
-
-                  {expandedId === c.id && (
-                    <div style={{
-                      padding: "20px",
-                      backgroundColor: "rgba(15, 23, 42, 0.6)",
-                      border: "1px solid rgba(148, 163, 184, 0.1)",
-                      borderTop: "none",
-                      borderRadius: "0 0 12px 12px",
-                    }}>
-                      <h4 style={{ margin: "0 0 16px 0", fontSize: "14px", fontWeight: 600, color: "#e2e8f0" }}>Transcripts</h4>
-                      {c.transcripts && c.transcripts.length > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                          {[...c.transcripts].sort((a, b) => a.start_time - b.start_time).map((t) => (
-                            <div key={t.id} style={{ display: "flex", gap: "12px", fontSize: "14px" }}>
-                              <div style={{ color: "#3b82f6", fontWeight: 500, minWidth: "80px" }}>
-                                {t.speaker}
-                                <div style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "normal" }}>
-                                  [{formatTime(t.start_time)}]
-                                </div>
-                              </div>
-                              <div style={{ color: "#f8fafc", lineHeight: "1.5", flex: 1, backgroundColor: "rgba(255,255,255,0.02)", padding: "10px 14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)" }}>
-                                {t.text}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div style={{ color: "#94a3b8", fontSize: "14px", fontStyle: "italic" }}>
-                          No transcripts available for this consultation.
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
-              ))}
+              )) : (
+                <div style={{ padding: "24px", textAlign: "center", color: "#64748b", border: "1px dashed rgba(148, 163, 184, 0.2)", borderRadius: "8px" }}>No recent consultations</div>
+              )}
             </div>
-          )}
+            <button
+              onClick={() => onNavigate("consultations")}
+              style={{ padding: "12px", width: "100%", marginTop: "16px", backgroundColor: "transparent", border: "1px solid rgba(148, 163, 184, 0.2)", color: "#e2e8f0", borderRadius: "8px", cursor: "pointer", fontWeight: 500 }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)"}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+            >
+              View All Consultations
+            </button>
+          </div>
+
+          {/* Recent Patients */}
+          <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column" }}>
+            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#f8fafc", margin: "0 0 20px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              Recently Viewed Patients
+            </h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
+              {recentPatients.length > 0 ? recentPatients.map(p => (
+                <div
+                  key={p.id}
+                  onClick={() => onNavigateToPatient(p.id)}
+                  style={{
+                    height: "82px",
+                    padding: "12px 16px",
+                    backgroundColor: "rgba(15, 23, 42, 0.4)",
+                    borderRadius: "12px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    border: "1px solid rgba(148, 163, 184, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "16px",
+                    boxSizing: "border-box"
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(30, 41, 59, 0.6)"; e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.3)"; e.currentTarget.style.transform = "translateX(4px)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.4)"; e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.1)"; e.currentTarget.style.transform = "translateX(0)"; }}
+                >
+                  <div style={{ width: "40px", height: "40px", borderRadius: "10px", backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#34d399", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, flexShrink: 0, fontSize: "16px" }}>
+                    {p.name.charAt(0)}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, color: "#e2e8f0", fontSize: "15px", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+                    <div style={{ fontSize: "13px", color: "#94a3b8" }}>ID: {p.display_id}</div>
+                  </div>
+                </div>
+              )) : (
+                <div style={{ padding: "24px", textAlign: "center", color: "#64748b", border: "1px dashed rgba(148, 163, 184, 0.2)", borderRadius: "8px" }}>No recent patients</div>
+              )}
+            </div>
+            <button
+              onClick={() => onNavigate("patients")}
+              style={{ padding: "12px", width: "100%", marginTop: "16px", backgroundColor: "transparent", border: "1px solid rgba(148, 163, 184, 0.2)", color: "#e2e8f0", borderRadius: "8px", cursor: "pointer", fontWeight: 500 }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)"}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+            >
+              View All Patients
+            </button>
+          </div>
         </div>
-      </div>
-    </div >
+      )}
+    </div>
   );
 }
 
@@ -2313,10 +2342,19 @@ function App() {
         isCollapsed={!isSidebarOpen}
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         user={user}
-        onNavigateToConsultation={(id) => { setFocusedConsultationId(id); setBackToTab(null); handleTabChange("consultations"); }}
+        onNavigateToConsultation={(id) => { setFocusedConsultationId(id); setBackToTab(null); setActiveTab("consultations"); }}
       />
       <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", height: "100%" }}>
-        {activeTab === "dashboard" && <Dashboard key={`dashboard-${refreshKey}`} onLogout={handleLogout} user={user} />}
+        {activeTab === "dashboard" && (
+          <Dashboard
+            key={`dashboard-${refreshKey}`}
+            onLogout={handleLogout}
+            user={user}
+            onNavigate={(tab) => handleTabChange(tab)}
+            onNavigateToConsultation={(id) => { setFocusedConsultationId(id); setActiveTab("consultations"); }}
+            onNavigateToPatient={(id) => { setFocusedPatientId(id); setActiveTab("patients"); }}
+          />
+        )}
         {activeTab === "consultations" && (
           <Consultations
             key={`consultations-${refreshKey}`}

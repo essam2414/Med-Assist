@@ -40,7 +40,23 @@ app.include_router(recall_router)
 
 @app.get("/health", tags=["health"])
 async def health_check():
-    return {"status": "ok"}
+    import httpx
+    from app.services.vexa_service import vexa_service
+    
+    vexa_status = "inactive"
+    try:
+        async with httpx.AsyncClient() as client:
+            # If the port is listening and responds, even with 404, the server is "up"
+            # We use an endpoint that won't take too long but clearly confirms the server is alive
+            resp = await client.get(f"{vexa_service.gateway_base_url}/", timeout=1.0)
+            vexa_status = "active"
+    except Exception:
+        vexa_status = "inactive"
+
+    if vexa_status == "inactive":
+        return {"status": "error", "vexa": "inactive"}
+        
+    return {"status": "ok", "vexa": "active"}
 
 # DB session dependency you can use in routes
 def get_db():

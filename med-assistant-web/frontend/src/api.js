@@ -348,3 +348,8 @@ export async function disconnectBot(consultation_id) {
   }
   return res.json();
 }
+export async function checkServerStatus() {
+  const res = await fetch(`${API_URL}/health`);
+  if (!res.ok) throw new Error("Server error");
+  return res.json();
+}
