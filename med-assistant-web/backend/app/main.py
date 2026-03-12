@@ -43,20 +43,34 @@ async def health_check():
     import httpx
     from app.services.vexa_service import vexa_service
     
-    vexa_status = "inactive"
-    try:
-        async with httpx.AsyncClient() as client:
-            # If the port is listening and responds, even with 404, the server is "up"
-            # We use an endpoint that won't take too long but clearly confirms the server is alive
-            resp = await client.get(f"{vexa_service.gateway_base_url}/", timeout=1.0)
-            vexa_status = "active"
-    except Exception:
-        vexa_status = "inactive"
+    gateway_status = "inactive"
+    collector_status = "inactive"
+    
+    async with httpx.AsyncClient() as client:
+        # Check Gateway
+        try:
+            await client.get(f"{vexa_service.gateway_base_url}/", timeout=1.0)
+            gateway_status = "active"
+        except Exception:
+            gateway_status = "inactive"
+            
+        # Check Collector
+        try:
+            await client.get(f"{vexa_service.collector_base_url}/", timeout=1.0)
+            collector_status = "active"
+        except Exception:
+            collector_status = "inactive"
 
-    if vexa_status == "inactive":
-        return {"status": "error", "vexa": "inactive"}
-        
-    return {"status": "ok", "vexa": "active"}
+    overall_status = "ok" if (gateway_status == "active" and collector_status == "active") else "error"
+    
+    return {
+        "status": overall_status,
+        "services": {
+            "main_backend": "active",
+            "vexa_gateway": gateway_status,
+            "vexa_collector": collector_status
+        }
+    }
 
 # DB session dependency you can use in routes
 def get_db():

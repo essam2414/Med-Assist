@@ -1991,7 +1991,10 @@ function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNav
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [expandedId, setExpandedId] = useState(null);
-  const [isServerActive, setIsServerActive] = useState(null); // null: checking, true: active, false: inactive
+  const [isServerActive, setIsServerActive] = useState(null);
+  const [serverDetails, setServerDetails] = useState(null);
+  const [showStatusDetails, setShowStatusDetails] = useState(false);
+  const statusDetailsRef = useRef(null);
 
   const loadData = () => {
     Promise.all([fetchConsultations(), fetchPatients()])
@@ -2012,10 +2015,18 @@ function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNav
   const checkStatus = () => {
     checkServerStatus()
       .then((data) => {
+        setServerDetails(data.services || null);
         if (data.status === "ok") setIsServerActive(true);
         else setIsServerActive(false);
       })
-      .catch(() => setIsServerActive(false));
+      .catch(() => {
+        setIsServerActive(false);
+        setServerDetails({
+          main_backend: "inactive",
+          vexa_gateway: "inactive",
+          vexa_collector: "inactive"
+        });
+      });
   };
 
   useEffect(() => {
@@ -2035,6 +2046,24 @@ function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNav
       window.removeEventListener('consultationStatusChanged', handleStatusChanged);
     };
   }, [onLogout]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (statusDetailsRef.current && !statusDetailsRef.current.contains(event.target)) {
+        setShowStatusDetails(false);
+      }
+    };
+
+    if (showStatusDetails) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showStatusDetails]);
 
   const activeConsultation = consultations.find(c => c.status === 'draft');
   const recentConsultations = consultations.slice(0, 3);
@@ -2067,7 +2096,7 @@ function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNav
   return (
     <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "32px" }} className="animate-fade-in">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "32px", position: "relative", zIndex: 100 }} className="animate-fade-in">
         <div>
           <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0" }}>
             Welcome back, <span className="text-gradient">{user?.name || "Doctor"}</span>
@@ -2078,11 +2107,74 @@ function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNav
         </div>
 
         {/* Server Status Label */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px", borderRadius: "12px", border: "1px solid", backgroundColor: isServerActive === true ? "rgba(16, 185, 129, 0.1)" : isServerActive === false ? "rgba(239, 68, 68, 0.1)" : "rgba(148, 163, 184, 0.1)", borderColor: isServerActive === true ? "rgba(16, 185, 129, 0.3)" : isServerActive === false ? "rgba(239, 68, 68, 0.3)" : "rgba(148, 163, 184, 0.2)", transition: "all 0.3s ease" }}>
-          <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: isServerActive === true ? "#10b981" : isServerActive === false ? "#ef4444" : "#94a3b8", boxShadow: isServerActive === true ? "0 0 8px #10b981" : isServerActive === false ? "0 0 8px #ef4444" : "none" }}></div>
-          <span style={{ fontSize: "13px", fontWeight: 600, color: isServerActive === true ? "#34d399" : isServerActive === false ? "#ef4444" : "#94a3b8", textTransform: "uppercase", letterSpacing: "0.02em" }}>
-            {isServerActive === true ? "Server Active" : isServerActive === false ? "Server Inactive" : "Checking Status..."}
-          </span>
+        <div style={{ position: "relative" }} ref={statusDetailsRef}>
+          <div
+            onClick={() => setShowStatusDetails(!showStatusDetails)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 16px",
+              borderRadius: "12px",
+              border: "1px solid",
+              backgroundColor: isServerActive === true ? "rgba(16, 185, 129, 0.1)" : isServerActive === false ? "rgba(239, 68, 68, 0.1)" : "rgba(148, 163, 184, 0.1)",
+              borderColor: isServerActive === true ? "rgba(16, 185, 129, 0.3)" : isServerActive === false ? "rgba(239, 68, 68, 0.3)" : "rgba(148, 163, 184, 0.2)",
+              transition: "all 0.3s ease",
+              cursor: "pointer",
+              userSelect: "none"
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isServerActive === true ? "rgba(16, 185, 129, 0.15)" : isServerActive === false ? "rgba(239, 68, 68, 0.15)" : "rgba(148, 163, 184, 0.15)"}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isServerActive === true ? "rgba(16, 185, 129, 0.1)" : isServerActive === false ? "rgba(239, 68, 68, 0.1)" : "rgba(148, 163, 184, 0.1)"}
+          >
+            <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: isServerActive === true ? "#10b981" : isServerActive === false ? "#ef4444" : "#94a3b8", boxShadow: isServerActive === true ? "0 0 8px #10b981" : isServerActive === false ? "0 0 8px #ef4444" : "none" }}></div>
+            <span style={{ fontSize: "13px", fontWeight: 600, color: isServerActive === true ? "#34d399" : isServerActive === false ? "#ef4444" : "#94a3b8", textTransform: "uppercase", letterSpacing: "0.02em" }}>
+              {isServerActive === true ? "Server Active" : isServerActive === false ? "Server Inactive" : "Checking Status..."}
+            </span>
+            <svg
+              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+              style={{ marginLeft: "4px", transition: "transform 0.3s ease", transform: showStatusDetails ? "rotate(180deg)" : "rotate(0deg)", color: isServerActive === true ? "#34d399" : isServerActive === false ? "#ef4444" : "#94a3b8" }}
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </div>
+
+          {/* Expanded Details Dropdown */}
+          {showStatusDetails && serverDetails && (
+            <div
+              style={{
+                position: "absolute",
+                top: "calc(100% + 12px)",
+                right: 0,
+                width: "240px",
+                padding: "20px",
+                zIndex: 1000,
+                background: "#1e293b", // Fully opaque background
+                borderRadius: "16px",
+                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)",
+                border: "1px solid rgba(148, 163, 184, 0.2)",
+                animation: "fadeIn 0.2s ease-out"
+              }}
+            >
+              <h4 style={{ margin: "0 0 12px 0", fontSize: "12px", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Infrastructure Status</h4>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {[
+                  { id: 'main_backend', label: 'Main Backend' },
+                  { id: 'vexa_gateway', label: 'Vexa Gateway' },
+                  { id: 'vexa_collector', label: 'Vexa Collector' }
+                ].map(service => (
+                  <div key={service.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: "13px", color: "#e2e8f0" }}>{service.label}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <div style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: serverDetails[service.id] === 'active' ? "#10b981" : "#ef4444" }}></div>
+                      <span style={{ fontSize: "11px", fontWeight: 600, color: serverDetails[service.id] === 'active' ? "#34d399" : "#ef4444", textTransform: "capitalize" }}>
+                        {serverDetails[service.id] || 'unknown'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
