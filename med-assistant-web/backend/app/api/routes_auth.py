@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
 from app import models, deps
-from app.schemas.user import UserCreate, UserLogin, UserOut, UserChangePassword
+from app.schemas.user import UserCreate, UserLogin, UserOut, UserChangePassword, UserUpdate
 from app.auth import hash_password, verify_password, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -103,6 +103,30 @@ def change_password(
     user.hashed_password = hash_password(data.new_password)
     db.commit()
     return {"message": "Password changed successfully"}
+
+
+@router.patch("/me", response_model=UserOut)
+def update_profile(
+    data: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.user.User = Depends(deps.get_current_user)
+):
+    user = db.query(models.user.User).filter(models.user.User.id == current_user.id).first()
+    
+    if data.name is not None:
+        user.name = data.name
+    if data.specialty is not None:
+        user.specialty = data.specialty
+    if data.email is not None:
+        # Check if email is already taken
+        existing = db.query(models.user.User).filter(models.user.User.email == data.email, models.user.User.id != user.id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already taken")
+        user.email = data.email
+        
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 @router.delete("/me")

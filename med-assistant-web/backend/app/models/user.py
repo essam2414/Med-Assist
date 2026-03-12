@@ -14,6 +14,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     role = Column(String, default="doctor", index=True)  # "doctor", "admin", etc.
     hashed_password = Column(String, nullable=False)
+    specialty = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     consultations = relationship("Consultation", back_populates="doctor", cascade="all, delete-orphan")

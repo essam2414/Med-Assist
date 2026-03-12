@@ -44,7 +44,7 @@ function MicPermission() {
                 width: "90%"
             }}>
                 <h2 style={{ margin: "0 0 1rem 0", fontSize: "1.5rem", fontWeight: 600 }}>
-                    Med Consult Assistant
+                    MedAssist
                 </h2>
                 <p style={{ color: "#cbd5e1", marginBottom: "1.5rem", lineHeight: "1.5" }}>
                     The Chrome extension needs microphone access to mix your voice with the consultation audio.

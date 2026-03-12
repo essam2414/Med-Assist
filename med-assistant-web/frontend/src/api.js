@@ -86,6 +86,25 @@ export async function fetchCurrentUser() {
   return res.json();
 }
 
+export async function updateUserProfile(data) {
+  const res = await fetch(`${API_URL}/auth/me`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to update profile");
+  }
+  return res.json();
+}
+
 export async function fetchConsultations() {
   const res = await fetch(`${API_URL}/consultations`, {
     headers: {
@@ -327,5 +346,10 @@ export async function disconnectBot(consultation_id) {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.detail || "Failed to disconnect bot");
   }
+  return res.json();
+}
+export async function checkServerStatus() {
+  const res = await fetch(`${API_URL}/health`);
+  if (!res.ok) throw new Error("Server error");
   return res.json();
 }

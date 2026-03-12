@@ -40,7 +40,37 @@ app.include_router(recall_router)
 
 @app.get("/health", tags=["health"])
 async def health_check():
-    return {"status": "ok"}
+    import httpx
+    from app.services.vexa_service import vexa_service
+    
+    gateway_status = "inactive"
+    collector_status = "inactive"
+    
+    async with httpx.AsyncClient() as client:
+        # Check Gateway
+        try:
+            await client.get(f"{vexa_service.gateway_base_url}/", timeout=1.0)
+            gateway_status = "active"
+        except Exception:
+            gateway_status = "inactive"
+            
+        # Check Collector
+        try:
+            await client.get(f"{vexa_service.collector_base_url}/", timeout=1.0)
+            collector_status = "active"
+        except Exception:
+            collector_status = "inactive"
+
+    overall_status = "ok" if (gateway_status == "active" and collector_status == "active") else "error"
+    
+    return {
+        "status": overall_status,
+        "services": {
+            "main_backend": "active",
+            "vexa_gateway": gateway_status,
+            "vexa_collector": collector_status
+        }
+    }
 
 # DB session dependency you can use in routes
 def get_db():

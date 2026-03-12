@@ -1,11 +1,12 @@
 // frontend/src/App.jsx
 import { useEffect, useState, useRef } from "react";
 import Login from "./Login";
-import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount, joinMeetingWithBot, disconnectBot, updateConsultationStatus } from "./api";
+import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount, joinMeetingWithBot, disconnectBot, updateConsultationStatus, updateUserProfile, checkServerStatus } from "./api";
 import Sidebar from "./Sidebar";
 import MicPermission from "./MicPermission";
+import LandingPage from "./LandingPage";
 
-function Consultations({ onLogout, focusedConsultationId, setFocusedConsultationId }) {
+function Consultations({ onLogout, focusedConsultationId, setFocusedConsultationId, onBack, backLabel }) {
   const [view, setView] = useState("list"); // "list", "create", "detail"
   const [consultations, setConsultations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -271,8 +272,8 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
 
     return (
       <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box", animation: "fadeIn 0.3s ease" }}>
-        <button onClick={() => setView("list")} style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
-          <span>←</span> Back to all consultations
+        <button onClick={onBack ? onBack : () => setView("list")} style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
+          <span>←</span> {backLabel || "Back to all consultations"}
         </button>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "40px" }}>
@@ -383,7 +384,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: (updatedC.recall_bot_id || botError) ? "12px" : "0" }}>
                 <h3 style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "6px" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 0 0-10 10v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7a10 10 0 0 0-10-10z" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
-                  Recall Bot
+                  Meeting Bot
                   <div className="tooltip-container" style={{ position: "relative", display: "inline-flex", alignItems: "center", cursor: "help" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#64748b" }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
                     <div className="tooltip-text" style={{
@@ -632,69 +633,101 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
             No consultations match your search.
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: "20px" }}>
-            {filteredConsultations.map((c, index) => (
-              <div
-                key={c.id}
-                className="animate-fade-in glass-panel"
-                style={{
-                  animationDelay: `${(index % 5) * 0.1}s`,
-                  padding: "24px",
-                  cursor: "pointer",
-                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                  border: "1px solid rgba(148, 163, 184, 0.1)",
-                  backgroundColor: "rgba(30, 41, 59, 0.4)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "16px"
-                }}
-                onClick={() => handleViewDetail(c)}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.4)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.1)"; }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
-                  <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 600, color: "#f1f5f9" }}>{c.title}</h3>
-                  <span style={{
-                    padding: "2px 8px",
-                    backgroundColor: c.status === 'completed' ? "rgba(16, 185, 129, 0.1)" : "rgba(59, 130, 246, 0.1)",
-                    color: c.status === 'completed' ? "#34d399" : "#60a5fa",
-                    borderRadius: "4px",
-                    fontSize: "11px",
-                    textTransform: "uppercase",
-                    fontWeight: 700,
-                    border: `1px solid ${c.status === 'completed' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)'}`
-                  }}>
-                    {c.status === 'completed' ? 'Finished' : 'Active'}
-                  </span>
-                </div>
-                <div style={{ fontSize: "13px", color: "#94a3b8", display: "flex", gap: "8px", alignItems: "center" }}>
-                  <span>{new Date(c.created_at).toLocaleDateString()}</span>
-                  {(c.transcripts?.length > 0 || c.insights) && <span>•</span>}
-                  {c.transcripts?.length > 0 && <span style={{ color: "#60a5fa" }}>{c.transcripts.length} Moments</span>}
-                  {c.insights && <span style={{ color: "#34d399" }}>Has Insights</span>}
-                </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: "24px" }}>
+            {filteredConsultations.map((c, index) => {
+              const isAnonymous = !c.patient;
+              const patientDisplay = isAnonymous ? "Anonymous" : (c.patient.name || "Unknown Patient");
+              const isCompleted = c.status === 'completed';
 
-                {c.patient ? (
-                  <div style={{ padding: "12px", backgroundColor: "rgba(0,0,0,0.2)", borderRadius: "8px", fontSize: "14px", display: "flex", flexDirection: "column", gap: "4px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "#94a3b8" }}>Patient ID:</span>
-                      <span style={{ color: "#e2e8f0", fontWeight: 500 }}>{c.patient.display_id}</span>
+              return (
+                <div
+                  key={c.id}
+                  className="animate-fade-in glass-panel consultation-card"
+                  style={{
+                    animationDelay: `${(index % 5) * 0.1}s`,
+                    padding: "0",
+                    cursor: "pointer",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    border: "1px solid rgba(148, 163, 184, 0.15)",
+                    backgroundColor: "rgba(30, 41, 59, 0.4)",
+                    display: "flex",
+                    flexDirection: "column",
+                    overflow: "hidden"
+                  }}
+                  onClick={() => handleViewDetail(c)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.4)";
+                    e.currentTarget.style.boxShadow = "0 12px 24px -10px rgba(59, 130, 246, 0.2)";
+                    e.currentTarget.querySelector('.consult-footer-text').style.color = "#60a5fa";
+                    e.currentTarget.querySelector('.consult-footer-icon').style.transform = "translateX(4px)";
+                    e.currentTarget.querySelector('.consult-footer-icon').style.color = "#60a5fa";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.15)";
+                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.querySelector('.consult-footer-text').style.color = "#94a3b8";
+                    e.currentTarget.querySelector('.consult-footer-icon').style.transform = "translateX(0)";
+                    e.currentTarget.querySelector('.consult-footer-icon').style.color = "#94a3b8";
+                  }}
+                >
+                  <div style={{ padding: "24px 24px 16px 24px", borderBottom: "1px solid rgba(148, 163, 184, 0.05)" }}>
+                    <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "8px", fontWeight: 500, display: "flex", alignItems: "center", gap: "6px" }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                      {new Date(c.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </div>
-                    {c.patient.name && (
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{ color: "#94a3b8" }}>Name:</span>
-                        <span style={{ color: "#e2e8f0" }}>{c.patient.name}</span>
+                    <h3 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "#f8fafc", lineHeight: "1.3" }}>{c.title}</h3>
+                  </div>
+
+                  <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "12px", backgroundColor: "rgba(15, 23, 42, 0.15)", flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                      <span style={{ color: "#e2e8f0", fontSize: "14px", fontWeight: 500 }}>
+                        {patientDisplay}
+                        {!isAnonymous && (
+                          <span style={{ color: "#64748b", fontWeight: 400, marginLeft: "8px" }}>
+                            ID: {c.patient.display_id}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    {c.insights && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", padding: "8px 12px", backgroundColor: "rgba(52, 211, 153, 0.05)", borderRadius: "8px", border: "1px solid rgba(52, 211, 153, 0.1)" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                        <span style={{ color: "#34d399", fontWeight: 600 }}>AI Insights Generated</span>
                       </div>
                     )}
                   </div>
-                ) : (
-                  <div style={{ padding: "12px", backgroundColor: "rgba(0,0,0,0.2)", borderRadius: "8px", fontSize: "14px", color: "#64748b", fontStyle: "italic", textAlign: "center" }}>
-                    No patient assigned
-                  </div>
-                )}
 
-              </div>
-            ))}
+                  <div style={{
+                    padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center",
+                    borderTop: "1px solid rgba(148, 163, 184, 0.1)", backgroundColor: "rgba(15, 23, 42, 0.3)"
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <span className="consult-footer-text" style={{ fontSize: "13px", fontWeight: 600, color: "#94a3b8", transition: "color 0.2s ease" }}>
+                        View Details
+                      </span>
+                      <svg className="consult-footer-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "all 0.2s ease", color: "#94a3b8" }}>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                      </svg>
+                    </div>
+
+                    <span style={{
+                      fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px",
+                      padding: "2px 8px", borderRadius: "4px",
+                      backgroundColor: isCompleted ? "rgba(16, 185, 129, 0.1)" : "rgba(234, 179, 8, 0.1)",
+                      color: isCompleted ? "#34d399" : "#facc15",
+                      border: `1px solid ${isCompleted ? 'rgba(16, 185, 129, 0.2)' : 'rgba(234, 179, 8, 0.2)'}`
+                    }}>
+                      {isCompleted ? 'Completed' : 'Active'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -702,7 +735,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
   );
 }
 
-function Patients({ onLogout, onNavigateToConsultation }) {
+function Patients({ onLogout, onNavigateToConsultation, focusedPatientId, setFocusedPatientId }) {
   const [view, setView] = useState("list");
   const [patients, setPatients] = useState([]);
   const [consultations, setConsultations] = useState([]);
@@ -733,9 +766,21 @@ function Patients({ onLogout, onNavigateToConsultation }) {
     return () => clearInterval(intervalId);
   }, []);
 
+  useEffect(() => {
+    if (focusedPatientId && patients.length > 0) {
+      const target = patients.find(p => p.id === focusedPatientId);
+      if (target) {
+        setSelectedPatient(target);
+        setView("detail");
+        if (setFocusedPatientId) setFocusedPatientId(null);
+      }
+    }
+  }, [focusedPatientId, patients, setFocusedPatientId]);
+
   const handleViewDetail = (patient) => {
     setSelectedPatient(patient);
     setView("detail");
+    if (setFocusedPatientId) setFocusedPatientId(patient.id);
   };
 
   const filteredPatients = patients.filter(p =>
@@ -797,7 +842,7 @@ function Patients({ onLogout, onNavigateToConsultation }) {
     const p = selectedPatient;
     const patientConsultations = consultations
       .filter(c => c.patient && c.patient.id === p.id)
-      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     return (
       <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box", animation: "fadeIn 0.3s ease" }}>
@@ -897,7 +942,7 @@ function Patients({ onLogout, onNavigateToConsultation }) {
                 key={c.id}
                 className="animate-fade-in glass-panel hover-bg"
                 style={{ animationDelay: `${(index % 5) * 0.1}s`, padding: "16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "transform 0.2s ease", border: "1px solid rgba(148, 163, 184, 0.1)", backgroundColor: "rgba(30, 41, 59, 0.4)" }}
-                onClick={() => onNavigateToConsultation(c.id)}
+                onClick={() => onNavigateToConsultation(c.id, p.id)}
               >
                 <div>
                   <div style={{ fontWeight: 600, color: "#f1f5f9", fontSize: "16px" }}>{c.title}</div>
@@ -1060,36 +1105,98 @@ function Patients({ onLogout, onNavigateToConsultation }) {
         ) : filteredPatients.length === 0 ? (
           <div style={{ textAlign: "center", padding: "48px", border: "1px dashed rgba(148, 163, 184, 0.2)", borderRadius: "12px", color: "#64748b" }}>No patients found.</div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "20px" }}>
-            {filteredPatients.map((p, index) => (
-              <div
-                key={p.id}
-                className="animate-fade-in glass-panel"
-                style={{
-                  animationDelay: `${(index % 5) * 0.1}s`,
-                  padding: "24px",
-                  cursor: "pointer",
-                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                  border: "1px solid rgba(148, 163, 184, 0.1)",
-                  backgroundColor: "rgba(30, 41, 59, 0.4)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "12px"
-                }}
-                onClick={() => handleViewDetail(p)}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.4)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.1)"; }}
-              >
-                <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 600, color: "#f1f5f9", display: "flex", alignItems: "center", gap: "8px" }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                  {p.name || p.display_id}
-                </h3>
-                <div style={{ padding: "12px", backgroundColor: "rgba(0,0,0,0.2)", borderRadius: "8px", fontSize: "14px", display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#94a3b8" }}>ID:</span> <span style={{ color: "#e2e8f0", fontWeight: 500 }}>{p.display_id}</span></div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "#94a3b8" }}>Gender:</span> <span style={{ color: "#e2e8f0" }}>{p.gender || "N/A"}</span></div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "24px" }}>
+            {filteredPatients.map((p, index) => {
+              const initials = (p.name || p.display_id || "?").substring(0, 2).toUpperCase();
+
+              return (
+                <div
+                  key={p.id}
+                  className="animate-fade-in glass-panel patient-card"
+                  style={{
+                    animationDelay: `${(index % 5) * 0.1}s`,
+                    padding: "0",
+                    cursor: "pointer",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    border: "1px solid rgba(148, 163, 184, 0.15)",
+                    backgroundColor: "rgba(30, 41, 59, 0.4)",
+                    display: "flex",
+                    flexDirection: "column",
+                    overflow: "hidden"
+                  }}
+                  onClick={() => handleViewDetail(p)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.4)";
+                    e.currentTarget.style.boxShadow = "0 12px 24px -10px rgba(59, 130, 246, 0.2)";
+                    e.currentTarget.querySelector('.patient-footer-text').style.color = "#60a5fa";
+                    e.currentTarget.querySelector('.patient-footer-icon').style.transform = "translateX(4px)";
+                    e.currentTarget.querySelector('.patient-footer-icon').style.color = "#60a5fa";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.15)";
+                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.querySelector('.patient-footer-text').style.color = "#94a3b8";
+                    e.currentTarget.querySelector('.patient-footer-icon').style.transform = "translateX(0)";
+                    e.currentTarget.querySelector('.patient-footer-icon').style.color = "#94a3b8";
+                  }}
+                >
+                  <div style={{ padding: "20px", display: "flex", alignItems: "center", gap: "16px", borderBottom: "1px solid rgba(148, 163, 184, 0.1)" }}>
+                    <div style={{
+                      width: "48px", height: "48px", borderRadius: "12px", flexShrink: 0,
+                      background: "linear-gradient(135deg, rgba(59,130,246,0.2) 0%, rgba(139,92,246,0.2) 100%)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "#60a5fa", fontWeight: 700, fontSize: "16px", letterSpacing: "1px",
+                      border: "1px solid rgba(59, 130, 246, 0.1)"
+                    }}>
+                      {initials}
+                    </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <h3 style={{ margin: "0 0 4px 0", fontSize: "18px", fontWeight: 600, color: "#f8fafc", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {p.name || "Unknown Name"}
+                      </h3>
+                      <div style={{ fontSize: "13px", color: "#94a3b8", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                        {p.display_id}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: "20px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", backgroundColor: "rgba(15, 23, 42, 0.2)", flex: 1 }}>
+                    <div>
+                      <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px", fontWeight: 600 }}>Gender</div>
+                      <div style={{ color: "#e2e8f0", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
+                        {p.gender === 'Male' && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="14" r="5" /><line x1="13.5" y1="10.5" x2="20" y2="4" /><polyline points="16 4 20 4 20 8" /></svg>}
+                        {p.gender === 'Female' && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f472b6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="10" r="5" /><line x1="12" y1="15" x2="12" y2="22" /><line x1="9" y1="19" x2="15" y2="19" /></svg>}
+                        {(!p.gender || (p.gender !== 'Male' && p.gender !== 'Female')) && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>}
+                        {p.gender || "Not specified"}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px", fontWeight: 600 }}>Date of Birth</div>
+                      <div style={{ color: "#e2e8f0", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                        {p.date_of_birth || "Unknown"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center",
+                    borderTop: "1px solid rgba(148, 163, 184, 0.1)", backgroundColor: "rgba(15, 23, 42, 0.4)"
+                  }}>
+                    <span className="patient-footer-text" style={{ fontSize: "13px", fontWeight: 600, color: "#94a3b8", transition: "color 0.2s ease" }}>
+                      View Clinical Record
+                    </span>
+                    <svg className="patient-footer-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "all 0.2s ease", color: "#94a3b8" }}>
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -1488,6 +1595,14 @@ function Settings({ onLogout }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("profile"); // "profile", "security", "danger"
+
+  const [profileName, setProfileName] = useState("");
+  const [profileSpecialty, setProfileSpecialty] = useState("");
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState("");
+  const [profileError, setProfileError] = useState("");
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -1495,6 +1610,27 @@ function Settings({ onLogout }) {
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
+
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    setProfileError("");
+    setProfileSuccess("");
+    try {
+      const updated = await updateUserProfile({ name: profileName, specialty: profileSpecialty });
+      setUser(updated);
+      setProfileSuccess("Profile updated successfully!");
+      setIsEditingProfile(false);
+    } catch (err) {
+      if (err.message === "unauthorized") {
+        if (onLogout) onLogout();
+      } else {
+        setProfileError(err.message || "Failed to update profile");
+      }
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -1524,7 +1660,11 @@ function Settings({ onLogout }) {
 
   useEffect(() => {
     fetchCurrentUser()
-      .then(setUser)
+      .then((data) => {
+        setUser(data);
+        setProfileName(data.name || "");
+        setProfileSpecialty(data.specialty || "");
+      })
       .catch((err) => {
         if (err.message === "unauthorized") {
           if (onLogout) onLogout();
@@ -1537,183 +1677,331 @@ function Settings({ onLogout }) {
 
   return (
     <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }} className="animate-fade-in">
-        <div>
-          <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0" }}>
-            Settings
-          </h1>
-          <p style={{ color: "#94a3b8", margin: 0, fontSize: "16px" }}>
-            Manage your account and preferences.
-          </p>
-        </div>
+      <div style={{ marginBottom: "40px" }} className="animate-fade-in">
+        <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0" }}>
+          Settings
+        </h1>
+        <p style={{ color: "#94a3b8", margin: 0, fontSize: "16px" }}>
+          Manage your account and medical practice preferences.
+        </p>
       </div>
-      <div className="glass-panel animate-fade-in stagger-1" style={{ padding: "32px", display: "flex", flexDirection: "column", gap: "24px" }}>
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "48px", color: "#64748b" }}>Loading your data...</div>
-        ) : error ? (
-          <div style={{ padding: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", color: "#ef4444", fontSize: "14px" }}>
-            {error}
+
+      <div className="settings-layout animate-fade-in stagger-1">
+        {/* Sidebar */}
+        <div className="settings-sidebar">
+          <div
+            className={`settings-tab ${activeTab === 'profile' ? 'active' : ''}`}
+            onClick={() => setActiveTab('profile')}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Profile
           </div>
-        ) : user ? (
-          <div>
-            <h2 style={{ fontSize: "20px", fontWeight: 600, margin: "0 0 24px 0", color: "#f8fafc" }}>Profile Information</h2>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px", maxWidth: "600px" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Full Name</label>
-                <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px" }}>
-                  {user.name}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Email Address</label>
-                <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px" }}>
-                  {user.email}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Role</label>
-                <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px", textTransform: "capitalize" }}>
-                  {user.role}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Account Created</label>
-                <div style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px" }}>
-                  {new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
-                </div>
-              </div>
-            </div>
-
-            <h2 style={{ fontSize: "20px", fontWeight: 600, margin: "32px 0 24px 0", color: "#f8fafc" }}>Change Password</h2>
-            <form onSubmit={handlePasswordChange} style={{ display: "flex", flexDirection: "column", gap: "16px", maxWidth: "600px" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Current Password</label>
-                <input
-                  type="password"
-                  required
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="••••••••"
-                  style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px", outline: "none", transition: "border-color 0.2s" }}
-                  onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
-                  onBlur={(e) => e.target.style.borderColor = "rgba(148, 163, 184, 0.2)"}
-                />
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>New Password</label>
-                <input
-                  type="password"
-                  required
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="••••••••"
-                  style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px", outline: "none", transition: "border-color 0.2s" }}
-                  onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
-                  onBlur={(e) => e.target.style.borderColor = "rgba(148, 163, 184, 0.2)"}
-                />
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Confirm New Password</label>
-                <input
-                  type="password"
-                  required
-                  value={confirmNewPassword}
-                  onChange={(e) => setConfirmNewPassword(e.target.value)}
-                  placeholder="••••••••"
-                  style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.4)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "8px", color: "#f1f5f9", fontSize: "15px", outline: "none", transition: "border-color 0.2s" }}
-                  onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
-                  onBlur={(e) => e.target.style.borderColor = "rgba(148, 163, 184, 0.2)"}
-                />
-              </div>
-
-              {passwordError && (
-                <div style={{ padding: "10px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "6px", color: "#ef4444", fontSize: "13px", textAlign: "center" }}>
-                  {passwordError}
-                </div>
-              )}
-              {passwordSuccess && (
-                <div style={{ padding: "10px", backgroundColor: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "6px", color: "#34d399", fontSize: "13px", textAlign: "center" }}>
-                  {passwordSuccess}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={changingPassword || !currentPassword || !newPassword || !confirmNewPassword}
-                style={{
-                  background: "var(--primary-gradient)",
-                  border: "none",
-                  padding: "12px 24px",
-                  borderRadius: "8px",
-                  color: "white",
-                  fontWeight: 600,
-                  fontSize: "15px",
-                  cursor: (changingPassword || !currentPassword || !newPassword || !confirmNewPassword) ? "default" : "pointer",
-                  marginTop: "8px",
-                  opacity: (changingPassword || !currentPassword || !newPassword || !confirmNewPassword) ? 0.6 : 1,
-                  boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)",
-                }}
-              >
-                {changingPassword ? "Updating..." : "Change Password"}
-              </button>
-            </form>
-
-            <h2 style={{ fontSize: "20px", fontWeight: 600, margin: "48px 0 24px 0", color: "#f8fafc" }}>Danger Zone</h2>
-            <div style={{ padding: "24px", backgroundColor: "rgba(239, 68, 68, 0.05)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "24px" }}>
-              <div>
-                <h4 style={{ margin: "0 0 4px 0", color: "#ef4444", fontSize: "16px", fontWeight: 600 }}>Delete Account</h4>
-                <p style={{ margin: 0, color: "#94a3b8", fontSize: "14px" }}>Once you delete your account, there is no going back. Please be certain.</p>
-              </div>
-              <button
-                onClick={async () => {
-                  if (window.confirm("ARE YOU SURE? This will permanently delete your account and all associated data, including consultations and patients. This action cannot be undone.")) {
-                    try {
-                      await deleteAccount();
-                      if (onLogout) onLogout();
-                    } catch (err) {
-                      alert(err.message || "Failed to delete account");
-                    }
-                  }
-                }}
-                style={{
-                  padding: "10px 20px",
-                  backgroundColor: "rgba(239, 68, 68, 0.1)",
-                  color: "#ef4444",
-                  border: "1px solid rgba(239, 68, 68, 0.3)",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.2s ease"
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.2)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)"; }}
-              >
-                Delete Permanently
-              </button>
-            </div>
+          <div
+            className={`settings-tab ${activeTab === 'security' ? 'active' : ''}`}
+            onClick={() => setActiveTab('security')}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Security
           </div>
-        ) : null}
+          <div
+            className={`settings-tab ${activeTab === 'danger' ? 'active' : ''}`}
+            onClick={() => setActiveTab('danger')}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            Danger Zone
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="settings-content">
+          <div className="glass-panel settings-card">
+            {loading ? (
+              <div style={{ textAlign: "center", padding: "48px", color: "#64748b" }}>Loading your data...</div>
+            ) : error ? (
+              <div style={{ padding: "16px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", color: "#ef4444", fontSize: "14px" }}>
+                {error}
+              </div>
+            ) : user ? (
+              <>
+                {activeTab === 'profile' && (
+                  <div className="animate-fade-in">
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
+                      <h2 style={{ fontSize: "22px", fontWeight: 700, margin: 0, color: "#f8fafc" }}>Profile Information</h2>
+                      {!isEditingProfile && (
+                        <button
+                          onClick={() => setIsEditingProfile(true)}
+                          style={{
+                            padding: "8px 20px",
+                            borderRadius: "8px",
+                            background: "rgba(59, 130, 246, 0.1)",
+                            border: "1px solid rgba(59, 130, 246, 0.2)",
+                            color: "#3b82f6",
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            cursor: "pointer"
+                          }}
+                        >
+                          Edit Profile
+                        </button>
+                      )}
+                    </div>
+
+                    <form onSubmit={handleProfileUpdate} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Full Name</label>
+                        {isEditingProfile ? (
+                          <input
+                            type="text"
+                            value={profileName}
+                            onChange={(e) => setProfileName(e.target.value)}
+                            style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.5)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "10px", color: "#f1f5f9", fontSize: "15px", outline: "none" }}
+                            placeholder="Enter your name"
+                          />
+                        ) : (
+                          <div style={{ padding: "14px 16px", backgroundColor: "rgba(15, 23, 42, 0.3)", border: "1px solid rgba(148, 163, 184, 0.1)", borderRadius: "10px", color: "#f1f5f9", fontSize: "15px" }}>
+                            {user.name}
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Medical Specialisation</label>
+                        {isEditingProfile ? (
+                          <input
+                            type="text"
+                            value={profileSpecialty}
+                            onChange={(e) => setProfileSpecialty(e.target.value)}
+                            style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.5)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "10px", color: "#f1f5f9", fontSize: "15px", outline: "none" }}
+                            placeholder="e.g. GP, Cardiologist"
+                          />
+                        ) : (
+                          <div style={{ padding: "14px 16px", backgroundColor: "rgba(15, 23, 42, 0.3)", border: "1px solid rgba(148, 163, 184, 0.1)", borderRadius: "10px", color: user.specialty ? "#f1f5f9" : "#64748b", fontSize: "15px", fontStyle: user.specialty ? "normal" : "italic" }}>
+                            {user.specialty || "No specialisation set"}
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Email Address</label>
+                        <div style={{ padding: "14px 16px", backgroundColor: "rgba(15, 23, 42, 0.2)", border: "1px solid rgba(148, 163, 184, 0.05)", borderRadius: "10px", color: "#64748b", fontSize: "15px" }}>
+                          {user.email}
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>User Role</label>
+                        <div style={{ padding: "14px 16px", backgroundColor: "rgba(15, 23, 42, 0.2)", border: "1px solid rgba(148, 163, 184, 0.05)", borderRadius: "10px", color: "#64748b", fontSize: "15px", textTransform: "capitalize" }}>
+                          {user.role}
+                        </div>
+                      </div>
+
+                      <div style={{ gridColumn: "span 2", display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", paddingTop: "24px", borderTop: "1px solid rgba(148, 163, 184, 0.1)" }}>
+                        <div style={{ fontSize: "13px", color: "#64748b" }}>
+                          Account created on {new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </div>
+
+                        {isEditingProfile && (
+                          <div style={{ display: "flex", gap: "12px" }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsEditingProfile(false);
+                                setProfileName(user.name);
+                                setProfileSpecialty(user.specialty || "");
+                              }}
+                              style={{
+                                background: "transparent",
+                                border: "1px solid rgba(148, 163, 184, 0.3)",
+                                padding: "10px 24px",
+                                borderRadius: "10px",
+                                color: "#94a3b8",
+                                fontWeight: 600,
+                                fontSize: "14px",
+                                cursor: "pointer"
+                              }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={profileSaving}
+                              style={{
+                                background: "var(--primary-gradient)",
+                                border: "none",
+                                padding: "10px 24px",
+                                borderRadius: "10px",
+                                color: "white",
+                                fontWeight: 600,
+                                fontSize: "14px",
+                                cursor: profileSaving ? "default" : "pointer",
+                                boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)",
+                                opacity: profileSaving ? 0.7 : 1
+                              }}
+                            >
+                              {profileSaving ? "Saving..." : "Save Changes"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {profileSuccess && (
+                        <div style={{ gridColumn: "span 2", marginTop: "12px", padding: "12px", backgroundColor: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "10px", color: "#34d399", fontSize: "14px" }}>
+                          {profileSuccess}
+                        </div>
+                      )}
+                      {profileError && (
+                        <div style={{ gridColumn: "span 2", marginTop: "12px", padding: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "10px", color: "#ef4444", fontSize: "14px" }}>
+                          {profileError}
+                        </div>
+                      )}
+                    </form>
+                  </div>
+                )}
+
+                {activeTab === 'security' && (
+                  <div className="animate-fade-in">
+                    <h2 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 32px 0", color: "#f8fafc" }}>Security Settings</h2>
+                    <form onSubmit={handlePasswordChange} style={{ display: "flex", flexDirection: "column", gap: "20px", maxWidth: "500px" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Current Password</label>
+                        <input
+                          type="password"
+                          required
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          placeholder="••••••••"
+                          style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.5)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "10px", color: "#f1f5f9", fontSize: "15px", outline: "none" }}
+                        />
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>New Password</label>
+                        <input
+                          type="password"
+                          required
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="••••••••"
+                          style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.5)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "10px", color: "#f1f5f9", fontSize: "15px", outline: "none" }}
+                        />
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Confirm New Password</label>
+                        <input
+                          type="password"
+                          required
+                          value={confirmNewPassword}
+                          onChange={(e) => setConfirmNewPassword(e.target.value)}
+                          placeholder="••••••••"
+                          style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.5)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "10px", color: "#f1f5f9", fontSize: "15px", outline: "none" }}
+                        />
+                      </div>
+
+                      {passwordError && (
+                        <div style={{ padding: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "10px", color: "#ef4444", fontSize: "14px" }}>
+                          {passwordError}
+                        </div>
+                      )}
+                      {passwordSuccess && (
+                        <div style={{ padding: "12px", backgroundColor: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "10px", color: "#34d399", fontSize: "14px" }}>
+                          {passwordSuccess}
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={changingPassword || !currentPassword || !newPassword || !confirmNewPassword}
+                        style={{
+                          background: "var(--primary-gradient)",
+                          border: "none",
+                          padding: "14px 24px",
+                          borderRadius: "10px",
+                          color: "white",
+                          fontWeight: 700,
+                          fontSize: "15px",
+                          cursor: (changingPassword || !currentPassword || !newPassword || !confirmNewPassword) ? "default" : "pointer",
+                          marginTop: "8px",
+                          opacity: (changingPassword || !currentPassword || !newPassword || !confirmNewPassword) ? 0.6 : 1,
+                          boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)",
+                        }}
+                      >
+                        {changingPassword ? "Updating..." : "Update Password"}
+                      </button>
+                    </form>
+                  </div>
+                )}
+
+                {activeTab === 'danger' && (
+                  <div className="animate-fade-in">
+                    <h2 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 16px 0", color: "#ef4444" }}>Danger Zone</h2>
+                    <p style={{ color: "#94a3b8", marginBottom: "32px", maxWidth: "600px" }}>
+                      Deleting your account is permanent and will result in the immediate and irreversible loss of all your patients, consultations, and transcript data.
+                    </p>
+
+                    <div style={{ padding: "32px", backgroundColor: "rgba(239, 68, 68, 0.05)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "16px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "32px" }}>
+                      <div>
+                        <h4 style={{ margin: "0 0 8px 0", color: "#ef4444", fontSize: "18px", fontWeight: 700 }}>Permanently Delete Account</h4>
+                        <p style={{ margin: 0, color: "#94a3b8", fontSize: "14px" }}>Please be certain before taking this action.</p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (window.confirm("ARE YOU SURE? This will permanently delete your account and all associated data, including consultations and patients. This action cannot be undone.")) {
+                            try {
+                              await deleteAccount();
+                              if (onLogout) onLogout();
+                            } catch (err) {
+                              alert(err.message || "Failed to delete account");
+                            }
+                          }
+                        }}
+                        style={{
+                          padding: "12px 24px",
+                          backgroundColor: "#ef4444",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "10px",
+                          fontSize: "14px",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          transition: "all 0.2s ease",
+                          boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)"
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#dc2626"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#ef4444"; e.currentTarget.style.transform = "translateY(0)"; }}
+                      >
+                        Delete My Account
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : null}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function Dashboard({ onLogout }) {
+
+function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNavigateToPatient }) {
   const [consultations, setConsultations] = useState([]);
+  const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [expandedId, setExpandedId] = useState(null);
+  const [isServerActive, setIsServerActive] = useState(null);
+  const [serverDetails, setServerDetails] = useState(null);
+  const [showStatusDetails, setShowStatusDetails] = useState(false);
+  const statusDetailsRef = useRef(null);
 
   const loadData = () => {
-    fetchConsultations()
-      .then(setConsultations)
+    Promise.all([fetchConsultations(), fetchPatients()])
+      .then(([consData, patData]) => {
+        setConsultations(consData);
+        setPatients(patData);
+      })
       .catch((err) => {
         if (err.message === "unauthorized") {
           onLogout();
@@ -1724,12 +2012,31 @@ function Dashboard({ onLogout }) {
       .finally(() => setLoading(false));
   };
 
+  const checkStatus = () => {
+    checkServerStatus()
+      .then((data) => {
+        setServerDetails(data.services || null);
+        if (data.status === "ok") setIsServerActive(true);
+        else setIsServerActive(false);
+      })
+      .catch(() => {
+        setIsServerActive(false);
+        setServerDetails({
+          main_backend: "inactive",
+          vexa_gateway: "inactive",
+          vexa_collector: "inactive"
+        });
+      });
+  };
+
   useEffect(() => {
     loadData();
+    checkStatus();
 
     // Poll for updates every 3 seconds
     const intervalId = setInterval(() => {
       loadData();
+      checkStatus();
     }, 3000);
     const handleStatusChanged = () => loadData();
     window.addEventListener('consultationStatusChanged', handleStatusChanged);
@@ -1740,13 +2047,27 @@ function Dashboard({ onLogout }) {
     };
   }, [onLogout]);
 
-  // Calculate stats for the welcome summary
-  const totalConsultations = consultations.length;
-  const totalTranscripts = consultations.reduce(
-    (acc, c) => acc + (c.transcripts?.length || 0),
-    0
-  );
-  const totalInsights = consultations.filter((c) => c.insights).length;
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (statusDetailsRef.current && !statusDetailsRef.current.contains(event.target)) {
+        setShowStatusDetails(false);
+      }
+    };
+
+    if (showStatusDetails) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showStatusDetails]);
+
+  const activeConsultation = consultations.find(c => c.status === 'draft');
+  const recentConsultations = consultations.slice(0, 3);
+  const recentPatients = patients.slice(0, 3);
 
   const handleToggleExpand = (id) => {
     setExpandedId((prevId) => (prevId === id ? null : id));
@@ -1775,168 +2096,248 @@ function Dashboard({ onLogout }) {
   return (
     <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }} className="animate-fade-in">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "32px", position: "relative", zIndex: 100 }} className="animate-fade-in">
         <div>
           <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0" }}>
-            Welcome back <span className="text-gradient">Doctor</span>
+            Welcome back, <span className="text-gradient">{user?.name || "Doctor"}</span>
           </h1>
           <p style={{ color: "#94a3b8", margin: 0, fontSize: "16px" }}>
-            Here is an overview of your recent patient consultations.
+            Here is your daily medical overview.
           </p>
         </div>
-      </div>
 
-      {/* Stats Overview */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "24px", marginBottom: "40px" }} className="animate-fade-in stagger-1">
-        <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "8px" }}>
-          <div style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Consultations</div>
-          <div style={{ fontSize: "36px", fontWeight: 700, color: "#f8fafc" }}>{loading ? "-" : totalConsultations}</div>
-        </div>
-        <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "8px" }}>
-          <div style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Transcript Moments</div>
-          <div style={{ fontSize: "36px", fontWeight: 700, color: "#f8fafc" }}>{loading ? "-" : totalTranscripts}</div>
-        </div>
-        <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "8px" }}>
-          <div style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Insights Generated</div>
-          <div style={{ fontSize: "36px", fontWeight: 700, color: "#f8fafc" }}>{loading ? "-" : totalInsights}</div>
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: "24px" }} className="animate-fade-in stagger-2">
-        <div className="glass-panel" style={{ padding: "32px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
-            <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "#f8fafc" }}>Recent Consultations</h2>
+        {/* Server Status Label */}
+        <div style={{ position: "relative" }} ref={statusDetailsRef}>
+          <div
+            onClick={() => setShowStatusDetails(!showStatusDetails)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 16px",
+              borderRadius: "12px",
+              border: "1px solid",
+              backgroundColor: isServerActive === true ? "rgba(16, 185, 129, 0.1)" : isServerActive === false ? "rgba(239, 68, 68, 0.1)" : "rgba(148, 163, 184, 0.1)",
+              borderColor: isServerActive === true ? "rgba(16, 185, 129, 0.3)" : isServerActive === false ? "rgba(239, 68, 68, 0.3)" : "rgba(148, 163, 184, 0.2)",
+              transition: "all 0.3s ease",
+              cursor: "pointer",
+              userSelect: "none"
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isServerActive === true ? "rgba(16, 185, 129, 0.15)" : isServerActive === false ? "rgba(239, 68, 68, 0.15)" : "rgba(148, 163, 184, 0.15)"}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isServerActive === true ? "rgba(16, 185, 129, 0.1)" : isServerActive === false ? "rgba(239, 68, 68, 0.1)" : "rgba(148, 163, 184, 0.1)"}
+          >
+            <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: isServerActive === true ? "#10b981" : isServerActive === false ? "#ef4444" : "#94a3b8", boxShadow: isServerActive === true ? "0 0 8px #10b981" : isServerActive === false ? "0 0 8px #ef4444" : "none" }}></div>
+            <span style={{ fontSize: "13px", fontWeight: 600, color: isServerActive === true ? "#34d399" : isServerActive === false ? "#ef4444" : "#94a3b8", textTransform: "uppercase", letterSpacing: "0.02em" }}>
+              {isServerActive === true ? "Server Active" : isServerActive === false ? "Server Inactive" : "Checking Status..."}
+            </span>
+            <svg
+              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+              style={{ marginLeft: "4px", transition: "transform 0.3s ease", transform: showStatusDetails ? "rotate(180deg)" : "rotate(0deg)", color: isServerActive === true ? "#34d399" : isServerActive === false ? "#ef4444" : "#94a3b8" }}
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
           </div>
 
-          {error && (
-            <div style={{ padding: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", color: "#ef4444", marginBottom: "24px", fontSize: "14px" }}>
-              {error}
-            </div>
-          )}
-
-          {loading ? (
-            <div style={{ textAlign: "center", padding: "48px", color: "#64748b" }}>Loading your data...</div>
-          ) : consultations.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "64px", border: "1px dashed rgba(148, 163, 184, 0.2)", borderRadius: "12px", color: "#64748b" }}>
-              No recent consultations found.
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {consultations.map((c, index) => (
-                <div key={c.id} className="animate-fade-in" style={{ animationDelay: `${(index % 5 + 3) * 0.1}s` }}>
-                  <div
-                    onClick={() => handleToggleExpand(c.id)}
-                    style={{
-                      padding: "20px",
-                      backgroundColor: "rgba(30, 41, 59, 0.4)",
-                      border: "1px solid rgba(148, 163, 184, 0.1)",
-                      borderRadius: expandedId === c.id ? "12px 12px 0 0" : "12px",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                      gap: "16px",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease"
-                    }}
-                  >
-                    <div>
-                      <h3 style={{ margin: "0 0 6px 0", fontSize: "16px", fontWeight: 600, color: "#f1f5f9" }}>{c.title}</h3>
-                      <div style={{ display: "flex", gap: "16px", fontSize: "13px", color: "#94a3b8" }}>
-                        <span>Started: {new Date(c.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
-                      </div>
-                    </div>
-
-                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                      {c.transcripts?.length > 0 ? (
-                        <span style={{ padding: "4px 10px", backgroundColor: "rgba(59, 130, 246, 0.1)", color: "#60a5fa", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(59, 130, 246, 0.2)" }}>
-                          {c.transcripts.length} Moments
-                        </span>
-                      ) : (
-                        <span style={{ padding: "4px 10px", backgroundColor: "rgba(148, 163, 184, 0.05)", color: "#64748b", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(148, 163, 184, 0.1)" }}>
-                          No Recording
-                        </span>
-                      )}
-
-                      {c.insights ? (
-                        <span style={{ padding: "4px 10px", backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#34d399", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(16, 185, 129, 0.2)" }}>
-                          Insight Ready
-                        </span>
-                      ) : (
-                        <span style={{ padding: "4px 10px", backgroundColor: "rgba(148, 163, 184, 0.05)", color: "#64748b", borderRadius: "999px", fontSize: "12px", fontWeight: 500, border: "1px solid rgba(148, 163, 184, 0.1)" }}>
-                          Processing
-                        </span>
-                      )}
-
-                      {c.status === 'draft' && (
-                        <button
-                          onClick={(e) => handleFinish(e, c.id)}
-                          style={{
-                            padding: "4px 12px",
-                            backgroundColor: "rgba(16, 185, 129, 0.15)",
-                            color: "#34d399",
-                            borderRadius: "6px",
-                            fontSize: "12px",
-                            fontWeight: 700,
-                            border: "1px solid rgba(16, 185, 129, 0.3)",
-                            cursor: "pointer",
-                            transition: "all 0.2s ease",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.02em"
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.25)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.15)"; }}
-                        >
-                          End Session
-                        </button>
-                      )}
-
-                      <span style={{ marginLeft: "8px", color: "#94a3b8", transform: expandedId === c.id ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>
-                        ▼
+          {/* Expanded Details Dropdown */}
+          {showStatusDetails && serverDetails && (
+            <div
+              style={{
+                position: "absolute",
+                top: "calc(100% + 12px)",
+                right: 0,
+                width: "240px",
+                padding: "20px",
+                zIndex: 1000,
+                background: "#1e293b", // Fully opaque background
+                borderRadius: "16px",
+                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)",
+                border: "1px solid rgba(148, 163, 184, 0.2)",
+                animation: "fadeIn 0.2s ease-out"
+              }}
+            >
+              <h4 style={{ margin: "0 0 12px 0", fontSize: "12px", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Infrastructure Status</h4>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {[
+                  { id: 'main_backend', label: 'Main Backend' },
+                  { id: 'vexa_gateway', label: 'Vexa Gateway' },
+                  { id: 'vexa_collector', label: 'Vexa Collector' }
+                ].map(service => (
+                  <div key={service.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: "13px", color: "#e2e8f0" }}>{service.label}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <div style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: serverDetails[service.id] === 'active' ? "#10b981" : "#ef4444" }}></div>
+                      <span style={{ fontSize: "11px", fontWeight: 600, color: serverDetails[service.id] === 'active' ? "#34d399" : "#ef4444", textTransform: "capitalize" }}>
+                        {serverDetails[service.id] || 'unknown'}
                       </span>
                     </div>
                   </div>
-
-                  {expandedId === c.id && (
-                    <div style={{
-                      padding: "20px",
-                      backgroundColor: "rgba(15, 23, 42, 0.6)",
-                      border: "1px solid rgba(148, 163, 184, 0.1)",
-                      borderTop: "none",
-                      borderRadius: "0 0 12px 12px",
-                    }}>
-                      <h4 style={{ margin: "0 0 16px 0", fontSize: "14px", fontWeight: 600, color: "#e2e8f0" }}>Transcripts</h4>
-                      {c.transcripts && c.transcripts.length > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                          {[...c.transcripts].sort((a, b) => a.start_time - b.start_time).map((t) => (
-                            <div key={t.id} style={{ display: "flex", gap: "12px", fontSize: "14px" }}>
-                              <div style={{ color: "#3b82f6", fontWeight: 500, minWidth: "80px" }}>
-                                {t.speaker}
-                                <div style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "normal" }}>
-                                  [{formatTime(t.start_time)}]
-                                </div>
-                              </div>
-                              <div style={{ color: "#f8fafc", lineHeight: "1.5", flex: 1, backgroundColor: "rgba(255,255,255,0.02)", padding: "10px 14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)" }}>
-                                {t.text}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div style={{ color: "#94a3b8", fontSize: "14px", fontStyle: "italic" }}>
-                          No transcripts available for this consultation.
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </div>
       </div>
-    </div >
+
+      {error && (
+        <div style={{ padding: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", color: "#ef4444", marginBottom: "24px", fontSize: "14px" }}>
+          {error}
+        </div>
+      )}
+
+      {/* Main Action Card */}
+      <div className="animate-fade-in stagger-1" style={{ marginBottom: "40px" }}>
+        {loading ? (
+          <div className="glass-panel" style={{ padding: "32px", textAlign: "center", color: "#64748b" }}>Loading dashboard...</div>
+        ) : activeConsultation ? (
+          <div
+            className="glass-panel"
+            style={{ padding: "32px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", borderLeft: "4px solid #3b82f6", flexWrap: "wrap", gap: "24px" }}
+            onClick={() => onNavigateToConsultation(activeConsultation.id)}
+          >
+            <div>
+              <div style={{ fontSize: "14px", color: "#60a5fa", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#3b82f6", boxShadow: "0 0 8px #3b82f6" }}></span>
+                Active Consultation
+              </div>
+              <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#f8fafc", margin: 0 }}>{activeConsultation.title}</h2>
+              <p style={{ color: "#94a3b8", marginTop: "8px", marginBottom: 0 }}>
+                Patient: {activeConsultation.patient?.name || "Anonymous"}
+              </p>
+            </div>
+            <div>
+              <button style={{ padding: "12px 24px", backgroundColor: "#3b82f6", color: "white", border: "none", borderRadius: "8px", fontWeight: 600, cursor: "pointer", fontSize: "16px" }}>
+                Resume Session
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div
+            className="glass-panel"
+            style={{ padding: "32px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", border: "1px dashed rgba(59, 130, 246, 0.4)", backgroundColor: "rgba(59, 130, 246, 0.05)", flexWrap: "wrap", gap: "24px" }}
+            onClick={() => onNavigate("consultations")}
+          >
+            <div>
+              <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#f8fafc", margin: "0 0 8px 0" }}>Ready for your next patient?</h2>
+              <p style={{ color: "#94a3b8", margin: 0 }}>Create a new consultation to start recording insights.</p>
+            </div>
+            <div>
+              <button style={{ padding: "12px 24px", backgroundColor: "#3b82f6", color: "white", border: "none", borderRadius: "8px", fontWeight: 600, cursor: "pointer", fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
+                New Consultation
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Two Small Lists */}
+      {!loading && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }} className="animate-fade-in stagger-2">
+          {/* Recent Consultations */}
+          <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column" }}>
+            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#f8fafc", margin: "0 0 20px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+              Recent Consultations
+            </h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
+              {recentConsultations.length > 0 ? recentConsultations.map(c => (
+                <div
+                  key={c.id}
+                  onClick={() => onNavigateToConsultation(c.id)}
+                  style={{
+                    height: "82px",
+                    padding: "12px 16px",
+                    backgroundColor: "rgba(15, 23, 42, 0.4)",
+                    borderRadius: "12px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    border: "1px solid rgba(148, 163, 184, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "16px",
+                    boxSizing: "border-box"
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(30, 41, 59, 0.6)"; e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.3)"; e.currentTarget.style.transform = "translateX(4px)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.4)"; e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.1)"; e.currentTarget.style.transform = "translateX(0)"; }}
+                >
+                  <div style={{ width: "40px", height: "40px", borderRadius: "10px", backgroundColor: "rgba(59, 130, 246, 0.1)", color: "#60a5fa", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
+                      <span style={{ fontWeight: 600, color: "#e2e8f0", fontSize: "15px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.title}</span>
+                      <span style={{ fontSize: "11px", color: "#64748b", flexShrink: 0, fontWeight: 500 }}>{new Date(c.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div style={{ fontSize: "13px", color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {c.patient?.name ? `Patient: ${c.patient.name}` : "Anonymous Session"}
+                    </div>
+                  </div>
+                </div>
+              )) : (
+                <div style={{ padding: "24px", textAlign: "center", color: "#64748b", border: "1px dashed rgba(148, 163, 184, 0.2)", borderRadius: "8px" }}>No recent consultations</div>
+              )}
+            </div>
+            <button
+              onClick={() => onNavigate("consultations")}
+              style={{ padding: "12px", width: "100%", marginTop: "16px", backgroundColor: "transparent", border: "1px solid rgba(148, 163, 184, 0.2)", color: "#e2e8f0", borderRadius: "8px", cursor: "pointer", fontWeight: 500 }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)"}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+            >
+              View All Consultations
+            </button>
+          </div>
+
+          {/* Recent Patients */}
+          <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column" }}>
+            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#f8fafc", margin: "0 0 20px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              Recently Viewed Patients
+            </h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
+              {recentPatients.length > 0 ? recentPatients.map(p => (
+                <div
+                  key={p.id}
+                  onClick={() => onNavigateToPatient(p.id)}
+                  style={{
+                    height: "82px",
+                    padding: "12px 16px",
+                    backgroundColor: "rgba(15, 23, 42, 0.4)",
+                    borderRadius: "12px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    border: "1px solid rgba(148, 163, 184, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "16px",
+                    boxSizing: "border-box"
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(30, 41, 59, 0.6)"; e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.3)"; e.currentTarget.style.transform = "translateX(4px)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.4)"; e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.1)"; e.currentTarget.style.transform = "translateX(0)"; }}
+                >
+                  <div style={{ width: "40px", height: "40px", borderRadius: "10px", backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#34d399", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, flexShrink: 0, fontSize: "16px" }}>
+                    {p.name.charAt(0)}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, color: "#e2e8f0", fontSize: "15px", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+                    <div style={{ fontSize: "13px", color: "#94a3b8" }}>ID: {p.display_id}</div>
+                  </div>
+                </div>
+              )) : (
+                <div style={{ padding: "24px", textAlign: "center", color: "#64748b", border: "1px dashed rgba(148, 163, 184, 0.2)", borderRadius: "8px" }}>No recent patients</div>
+              )}
+            </div>
+            <button
+              onClick={() => onNavigate("patients")}
+              style={{ padding: "12px", width: "100%", marginTop: "16px", backgroundColor: "transparent", border: "1px solid rgba(148, 163, 184, 0.2)", color: "#e2e8f0", borderRadius: "8px", cursor: "pointer", fontWeight: 500 }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)"}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+            >
+              View All Patients
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1945,9 +2346,31 @@ function App() {
     document.cookie.includes("logged_in=1")
   );
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [refreshKey, setRefreshKey] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [user, setUser] = useState(null);
   const [focusedConsultationId, setFocusedConsultationId] = useState(null);
+  const [focusedPatientId, setFocusedPatientId] = useState(null);
+  const [backToTab, setBackToTab] = useState(null);
+  const [showLogin, setShowLogin] = useState(window.location.pathname === "/login");
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setShowLogin(window.location.pathname === "/login");
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const handleTabChange = (tab) => {
+    if (tab === activeTab) {
+      setRefreshKey(prev => prev + 1);
+      setFocusedConsultationId(null);
+      setFocusedPatientId(null);
+      setBackToTab(null);
+    }
+    setActiveTab(tab);
+  };
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -1981,27 +2404,80 @@ function App() {
   }
 
   if (!isLoggedIn) {
-    return <Login onLogin={handleLogin} />;
+    if (showLogin || window.location.pathname === "/login") {
+      return (
+        <Login
+          onLogin={handleLogin}
+          onBack={() => {
+            window.history.pushState({}, '', '/');
+            setShowLogin(false);
+          }}
+        />
+      );
+    }
+    return (
+      <LandingPage
+        onSignInClick={() => {
+          window.history.pushState({}, '', '/login');
+          setShowLogin(true);
+        }}
+      />
+    );
   }
 
   return (
     <div style={{ display: "flex", width: "100%", height: "100vh", overflow: "hidden", margin: 0, padding: 0 }}>
       <Sidebar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         onLogout={handleLogout}
         isCollapsed={!isSidebarOpen}
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         user={user}
-        onNavigateToConsultation={(id) => { setFocusedConsultationId(id); setActiveTab("consultations"); }}
+        onNavigateToConsultation={(id) => { setFocusedConsultationId(id); setBackToTab(null); setActiveTab("consultations"); }}
       />
       <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", height: "100%" }}>
-        {activeTab === "dashboard" && <Dashboard onLogout={handleLogout} />}
-        {activeTab === "consultations" && <Consultations onLogout={handleLogout} focusedConsultationId={focusedConsultationId} setFocusedConsultationId={setFocusedConsultationId} />}
-        {activeTab === "patients" && <Patients onLogout={handleLogout} onNavigateToConsultation={(id) => { setFocusedConsultationId(id); setActiveTab("consultations"); }} />}
-        {activeTab === "ai-insights" && <AIAnalytics />}
-        {activeTab === "ask-ai" && <AskAI />}
-        {activeTab === "settings" && <Settings onLogout={handleLogout} />}
+        {activeTab === "dashboard" && (
+          <Dashboard
+            key={`dashboard-${refreshKey}`}
+            onLogout={handleLogout}
+            user={user}
+            onNavigate={(tab) => handleTabChange(tab)}
+            onNavigateToConsultation={(id) => { setFocusedConsultationId(id); setActiveTab("consultations"); }}
+            onNavigateToPatient={(id) => { setFocusedPatientId(id); setActiveTab("patients"); }}
+          />
+        )}
+        {activeTab === "consultations" && (
+          <Consultations
+            key={`consultations-${refreshKey}`}
+            onLogout={handleLogout}
+            focusedConsultationId={focusedConsultationId}
+            setFocusedConsultationId={setFocusedConsultationId}
+            onBack={backToTab ? () => {
+              const target = backToTab;
+              setBackToTab(null);
+              handleTabChange(target);
+            } : null}
+            backLabel={backToTab === 'patients' ? "Back to Patient Profile" : null}
+          />
+        )}
+        {activeTab === "patients" && (
+          <Patients
+            key={`patients-${refreshKey}`}
+            onLogout={handleLogout}
+            focusedPatientId={focusedPatientId}
+            setFocusedPatientId={setFocusedPatientId}
+            onNavigateToConsultation={(id, patientId) => {
+              setFocusedConsultationId(id);
+              if (patientId) setFocusedPatientId(patientId);
+              setBackToTab("patients");
+              setActiveTab("consultations");
+            }}
+          />
+        )}
+        {activeTab === "ai-insights" && <AIAnalytics key={`ai-insights-${refreshKey}`} />}
+        {activeTab === "ask-ai" && <AskAI key={`ask-ai-${refreshKey}`} />}
+        {activeTab === "settings" && <Settings key={`settings-${refreshKey}`} onLogout={handleLogout} />}
       </div>
     </div>
   );
