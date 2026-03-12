@@ -109,9 +109,10 @@ export default function LandingPage({ onSignInClick }) {
                                 <div className="check-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg></div>
                                 <span>Quickly recall what was said in previous visits.</span>
                             </li>
+
                             <li>
                                 <div className="check-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg></div>
-                                <span>See the main problems and concerns across a patient’s history at a glance.</span>
+                                <span>Receive live AI insights and clinical reminders during the consultation.</span>
                             </li>
                             <li>
                                 <div className="check-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg></div>
@@ -127,8 +128,14 @@ export default function LandingPage({ onSignInClick }) {
                             <div className="mockup-title">AI Summary</div>
                             <div className="mockup-line skeleton"></div>
                             <div className="mockup-line skeleton" style={{ width: '90%' }}></div>
-                            <div className="mockup-line skeleton" style={{ width: '75%' }}></div>
-                            <div className="mockup-title" style={{ marginTop: '20px' }}>Patient History</div>
+
+                            <div className="live-insight-mockup">
+                                <div className="live-badge">Live Insight</div>
+                                <div className="mockup-line skeleton" style={{ width: '85%', height: '8px', background: 'rgba(59, 130, 246, 0.4)' }}></div>
+                                <div className="mockup-line skeleton" style={{ width: '60%', height: '8px', background: 'rgba(59, 130, 246, 0.4)' }}></div>
+                            </div>
+
+                            <div className="mockup-title" style={{ marginTop: '16px' }}>Patient History</div>
                             <div className="history-item">
                                 <div className="marker"></div>
                                 <div className="mockup-line skeleton" style={{ width: '100%' }}></div>
@@ -160,9 +167,10 @@ export default function LandingPage({ onSignInClick }) {
                             <h4>Automatic summaries of each consultation for your review.</h4>
                         </div>
                         <div className="feature-item">
-                            <div className="f-icon">⏱️</div>
-                            <h4>Simple timeline of a patient’s past consultations and key issues.</h4>
+                            <div className="f-icon">⚡</div>
+                            <h4>Live AI insights generated during the encounter.</h4>
                         </div>
+
                     </div>
                 </div>
             </section>

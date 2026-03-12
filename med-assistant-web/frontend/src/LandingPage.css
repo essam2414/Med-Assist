@@ -358,6 +358,29 @@
     background: #3b82f6;
 }
 
+.live-insight-mockup {
+    margin: 16px 0;
+    padding: 12px;
+    background: rgba(59, 130, 246, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.live-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+}
+
 /* Features Outline Grid */
 .features-grid {
     display: grid;
