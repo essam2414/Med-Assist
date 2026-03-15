@@ -31,6 +31,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
   const [patients, setPatients] = useState([]);
   const [selectedPatientId, setSelectedPatientId] = useState("");
   const [about, setAbout] = useState("");
+  const [patientSearch, setPatientSearch] = useState("");
   // Recall Bot State
   const [meetingUrl, setMeetingUrl] = useState('');
   const [isJoining, setIsJoining] = useState(false);
@@ -74,6 +75,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
     setTitle("");
     setSelectedPatientId("");
     setAbout("");
+    setPatientSearch("");
     setView("create");
   };
 
@@ -247,19 +249,75 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                   Skip (Anonymous)
                 </label>
               </div>
-
+              
               {selectedPatientId !== "" && (
-                <div style={{ marginTop: "4px", animation: "fadeIn 0.2s ease" }}>
-                  {patients.length > 0 ? (
-                    <select
-                      style={{ width: "100%", padding: "14px", borderRadius: "10px", border: "1px solid rgba(59, 130, 246, 0.4)", backgroundColor: "rgba(15, 23, 42, 0.6)", color: "#f8fafc", outline: "none", fontSize: "15px", cursor: "pointer", boxShadow: "0 0 0 2px rgba(59,130,246,0.1)" }}
-                      value={selectedPatientId}
-                      onChange={(e) => setSelectedPatientId(e.target.value)}
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px", animation: "fadeIn 0.2s ease" }}>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type="text"
+                      placeholder="Search by name or patient ID..."
+                      value={patientSearch}
+                      onChange={(e) => setPatientSearch(e.target.value)}
+                      style={{ 
+                        width: "100%", 
+                        padding: "10px 12px 10px 36px", 
+                        borderRadius: "8px", 
+                        border: "1px solid rgba(148, 163, 184, 0.2)", 
+                        backgroundColor: "rgba(15, 23, 42, 0.3)", 
+                        color: "#f8fafc", 
+                        fontSize: "14px", 
+                        outline: "none",
+                        boxSizing: "border-box"
+                      }}
+                    />
+                    <svg 
+                      width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" 
+                      style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }}
                     >
-                      {patients.map(p => (
-                        <option key={p.id} value={p.id}>{p.name ? `${p.name} (${p.display_id})` : p.display_id}</option>
-                      ))}
-                    </select>
+                      <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                  </div>
+                  {patients.length > 0 ? (
+                    (() => {
+                      const filtered = patients.filter(p => 
+                        (p.name || "").toLowerCase().includes(patientSearch.toLowerCase()) || 
+                        (p.display_id || "").toLowerCase().includes(patientSearch.toLowerCase())
+                      );
+                      
+                      return (
+                        <>
+                          <select
+                            style={{ 
+                              width: "100%", 
+                              padding: "14px", 
+                              borderRadius: "10px", 
+                              border: "1px solid rgba(59, 130, 246, 0.4)", 
+                              backgroundColor: "rgba(15, 23, 42, 0.6)", 
+                              color: "#f8fafc", 
+                              outline: "none", 
+                              fontSize: "15px", 
+                              cursor: "pointer", 
+                              boxShadow: "0 0 0 2px rgba(59,130,246,0.1)" 
+                            }}
+                            value={selectedPatientId}
+                            onChange={(e) => setSelectedPatientId(e.target.value)}
+                          >
+                            {filtered.length > 0 ? (
+                              filtered.map(p => (
+                                <option key={p.id} value={p.id}>{p.name ? `${p.name} (${p.display_id})` : p.display_id}</option>
+                              ))
+                            ) : (
+                              <option value="none_selected" disabled>No matching patients</option>
+                            )}
+                          </select>
+                          {filtered.length === 0 && patientSearch && (
+                            <div style={{ fontSize: "12px", color: "#fca5a5", marginTop: "4px" }}>
+                              No results found for "{patientSearch}"
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()
                   ) : (
                     <div style={{ padding: "14px", borderRadius: "10px", border: "1px solid rgba(239, 68, 68, 0.3)", backgroundColor: "rgba(239, 68, 68, 0.05)", color: "#fca5a5", fontSize: "14px" }}>
                       No patients are present in the system. Please create a patient in the Patients section first.
