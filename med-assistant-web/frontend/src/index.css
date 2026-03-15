@@ -5,9 +5,22 @@
   line-height: 1.5;
   font-weight: 400;
 
+  /* Theme Variables */
+  --bg-main: #0f172a;
+  --bg-sidebar: #0f172a;
+  --bg-card: rgba(30, 41, 59, 0.7);
+  --bg-panel: rgba(15, 23, 42, 0.3);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-main: rgba(148, 163, 184, 0.15);
+  --accent-color: #3b82f6;
+  --glass-bg: rgba(30, 41, 59, 0.7);
+  --glass-border: rgba(148, 163, 184, 0.15);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+
   color-scheme: dark;
-  color: #f8fafc;
-  background-color: #0f172a;
+  color: var(--text-main);
+  background-color: var(--bg-main);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -16,10 +29,22 @@
 
   --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  --glass-bg: rgba(30, 41, 59, 0.7);
-  --glass-border: rgba(148, 163, 184, 0.15);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   --card-radius: 16px;
+}
+
+[data-theme='light'] {
+  --bg-main: #f1f5f9;
+  --bg-sidebar: #ffffff;
+  --bg-card: #ffffff;
+  --bg-panel: #f8fafc;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --border-main: #cbd5e1;
+  --accent-color: #2563eb;
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(203, 213, 225, 0.5);
+  --glass-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  color-scheme: light;
 }
 
 body {
@@ -27,11 +52,13 @@ body {
   display: flex;
   min-height: 100vh;
   min-width: 100vw;
-  background-color: #0f172a;
+  background-color: var(--bg-main);
   background-image:
-    radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
+    radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
   background-attachment: fixed;
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {

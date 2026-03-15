@@ -278,10 +278,10 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "40px" }}>
           <div>
-            <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 12px 0", color: "#f8fafc" }}>
+            <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 12px 0", color: "var(--text-main)" }}>
               {updatedC.title}
             </h1>
-            <div style={{ display: "flex", gap: "16px", color: "#94a3b8", fontSize: "14px", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: "16px", color: "var(--text-muted)", fontSize: "14px", alignItems: "center" }}>
               <span>{new Date(updatedC.created_at).toLocaleString()}</span>
               {updatedC.patient && (
                 <>
@@ -323,24 +323,24 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
 
             {updatedC.patient && (
               <div className="glass-panel" style={{ padding: "24px" }}>
-                <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "8px" }}>
+                <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "8px" }}>
                   Patient Info
                 </h3>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", color: "#f1f5f9", fontSize: "15px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", color: "var(--text-main)", fontSize: "15px" }}>
                   <div>
-                    <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px" }}>Display ID</div>
+                    <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "4px" }}>Display ID</div>
                     <div>{updatedC.patient.display_id}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px" }}>Full Name</div>
+                    <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "4px" }}>Full Name</div>
                     <div>{updatedC.patient.name || "N/A"}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px" }}>DOB</div>
+                    <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "4px" }}>DOB</div>
                     <div>{updatedC.patient.date_of_birth || "N/A"}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px" }}>Gender</div>
+                    <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "4px" }}>Gender</div>
                     <div>{updatedC.patient.gender || "N/A"}</div>
                   </div>
                 </div>
@@ -348,7 +348,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
             )}
 
             <div className="glass-panel" style={{ padding: "24px", flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
-              <h3 style={{ margin: "0 0 20px 0", fontSize: "16px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              <h3 style={{ margin: "0 0 20px 0", fontSize: "16px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 Transcript Moments ({updatedC.transcripts?.length || 0})
               </h3>
 
@@ -359,18 +359,18 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                       <div key={t.id} style={{ display: "flex", gap: "16px", fontSize: "15px" }}>
                         <div style={{ color: "#3b82f6", fontWeight: 600, minWidth: "100px", fontSize: "14px" }}>
                           {t.speaker}
-                          <div style={{ fontSize: "12px", color: "#64748b", fontWeight: "normal", marginTop: "4px" }}>
+                          <div style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: "normal", marginTop: "4px" }}>
                             {formatTime(t.start_time)}
                           </div>
                         </div>
-                        <div style={{ color: "#f8fafc", lineHeight: "1.6", flex: 1, backgroundColor: "rgba(15, 23, 42, 0.4)", padding: "16px", borderRadius: "12px", border: "1px solid rgba(148, 163, 184, 0.1)", overflowWrap: "anywhere", wordBreak: "break-word" }}>
-                          {t.text}
+                        <div style={{ color: "var(--text-main)", lineHeight: "1.6", flex: 1, backgroundColor: "var(--bg-panel)", padding: "16px", borderRadius: "12px", border: "1px solid var(--border-main)", overflowWrap: "anywhere", wordBreak: "break-word" }}>
+                           {t.text}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div style={{ padding: "40px 20px", textAlign: "center", color: "#64748b", fontSize: "15px", fontStyle: "italic", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "12px", border: "1px dashed rgba(148, 163, 184, 0.2)" }}>
+                  <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--text-muted)", fontSize: "15px", fontStyle: "italic", backgroundColor: "var(--bg-panel)", borderRadius: "12px", border: "1px dashed var(--border-main)" }}>
                     No transcript moments recorded for this consultation.
                   </div>
                 )}
@@ -382,16 +382,16 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
           <div style={{ display: "flex", flexDirection: "column", gap: "24px", height: "100%", minHeight: 0 }}>
             <div className="glass-panel" style={{ padding: "16px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: (updatedC.recall_bot_id || botError) ? "12px" : "0" }}>
-                <h3 style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "6px" }}>
+                <h3 style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "6px" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 0 0-10 10v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7a10 10 0 0 0-10-10z" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
                   Meeting Bot
                   <div className="tooltip-container" style={{ position: "relative", display: "inline-flex", alignItems: "center", cursor: "help" }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#64748b" }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--text-muted)" }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
                     <div className="tooltip-text" style={{
                       visibility: "hidden",
                       width: "220px",
-                      backgroundColor: "#1e293b",
-                      color: "#f1f5f9",
+                      backgroundColor: "var(--bg-card)",
+                      color: "var(--text-main)",
                       textAlign: "left",
                       borderRadius: "8px",
                       padding: "12px",
@@ -434,7 +434,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
               </div>
 
               {updatedC.status !== 'draft' ? (
-                <div style={{ padding: '12px', backgroundColor: 'rgba(148, 163, 184, 0.05)', border: '1px solid rgba(148, 163, 184, 0.1)', borderRadius: '8px', color: '#94a3b8', fontSize: '13px', textAlign: 'center', fontStyle: 'italic', marginTop: '10px' }}>
+                <div style={{ padding: '12px', backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-main)', borderRadius: '8px', color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', fontStyle: 'italic', marginTop: '10px' }}>
                   Bot only available for active consultations.
                 </div>
               ) : updatedC.recall_bot_id ? (
@@ -466,13 +466,13 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                       gap: '10px',
                       padding: '8px 12px',
                       borderRadius: '8px',
-                      border: '1px solid rgba(148, 163, 184, 0.2)',
-                      backgroundColor: 'rgba(15, 23, 42, 0.4)',
+                      border: '1px solid var(--border-main)',
+                      backgroundColor: 'var(--bg-panel)',
                       transition: 'all 0.2s ease',
                       position: 'relative',
                       minWidth: 0
                     }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64748b', flexShrink: 0 }}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)', flexShrink: 0 }}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
                       <input
                         type="text"
                         placeholder="Meeting link..."
@@ -482,7 +482,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                           flex: 1,
                           background: 'transparent',
                           border: 'none',
-                          color: '#f8fafc',
+                          color: 'var(--text-main)',
                           fontFamily: "'Inter', system-ui, sans-serif",
                           fontSize: '14px',
                           letterSpacing: '0.01em',
@@ -529,17 +529,17 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
             </div>
 
             <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-              <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "8px" }}>
+              <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "8px" }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                 AI Summary & Insights
               </h3>
-              <div style={{ padding: "16px", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "10px", border: "1px solid rgba(148, 163, 184, 0.1)", flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0 }}>
+              <div style={{ padding: "16px", backgroundColor: "var(--bg-panel)", borderRadius: "10px", border: "1px solid var(--border-main)", flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0 }}>
                 {updatedC.insights ? (
-                  <div style={{ color: "#f1f5f9", lineHeight: "1.6", fontSize: "15px", whiteSpace: "pre-wrap", overflowWrap: "anywhere", wordBreak: "break-word" }}>
+                  <div style={{ color: "var(--text-main)", lineHeight: "1.6", fontSize: "15px", whiteSpace: "pre-wrap", overflowWrap: "anywhere", wordBreak: "break-word" }}>
                     {updatedC.insights.summary}
                   </div>
                 ) : (
-                  <div style={{ color: "#64748b", fontStyle: "italic", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                  <div style={{ color: "var(--text-muted)", fontStyle: "italic", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
                     No insights generated yet. Recordings will automatically generate insights.
                   </div>
                 )}
@@ -566,10 +566,10 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
     <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }} className="animate-fade-in">
         <div>
-          <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0" }}>
+          <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0", color: "var(--text-main)" }}>
             Manage <span className="text-gradient">Consultations</span>
           </h1>
-          <p style={{ color: "#94a3b8", margin: 0, fontSize: "16px" }}>
+          <p style={{ color: "var(--text-muted)", margin: 0, fontSize: "16px" }}>
             View, create, and manage your patient records.
           </p>
         </div>
@@ -603,15 +603,15 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
 
       <div className="glass-panel animate-fade-in stagger-1" style={{ padding: "32px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-          <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "#f8fafc" }}>All Consultations</h2>
+          <h2 style={{ fontSize: "20px", fontWeight: 600, margin: 0, color: "var(--text-main)" }}>All Consultations</h2>
           <div style={{ display: "flex", alignItems: "center", position: "relative" }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: "10px" }}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: "10px" }}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             <input
               type="text"
               placeholder="Search by title or patient..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ padding: "8px 12px 8px 34px", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.2)", backgroundColor: "rgba(15, 23, 42, 0.4)", color: "#f8fafc", outline: "none", width: "250px", fontSize: "14px" }}
+              style={{ padding: "8px 12px 8px 34px", borderRadius: "8px", border: "1px solid var(--border-main)", backgroundColor: "var(--bg-panel)", color: "var(--text-main)", outline: "none", width: "250px", fontSize: "14px" }}
             />
           </div>
         </div>
@@ -623,13 +623,13 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
         )}
 
         {loading && consultations.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "48px", color: "#64748b" }}>Loading consultations...</div>
+          <div style={{ textAlign: "center", padding: "48px", color: "var(--text-muted)" }}>Loading consultations...</div>
         ) : consultations.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "64px", border: "1px dashed rgba(148, 163, 184, 0.2)", borderRadius: "12px", color: "#64748b" }}>
+          <div style={{ textAlign: "center", padding: "64px", border: "1px dashed var(--border-main)", borderRadius: "12px", color: "var(--text-muted)" }}>
             No consultations found. Start by creating a new one.
           </div>
         ) : filteredConsultations.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "64px", border: "1px dashed rgba(148, 163, 184, 0.2)", borderRadius: "12px", color: "#64748b" }}>
+          <div style={{ textAlign: "center", padding: "64px", border: "1px dashed var(--border-main)", borderRadius: "12px", color: "var(--text-muted)" }}>
             No consultations match your search.
           </div>
         ) : (
@@ -648,8 +648,8 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                     padding: "0",
                     cursor: "pointer",
                     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                    border: "1px solid rgba(148, 163, 184, 0.15)",
-                    backgroundColor: "rgba(30, 41, 59, 0.4)",
+                    border: "1px solid var(--border-main)",
+                    backgroundColor: "var(--bg-card)",
                     display: "flex",
                     flexDirection: "column",
                     overflow: "hidden"
@@ -657,36 +657,36 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                   onClick={() => handleViewDetail(c)}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-4px)";
-                    e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.4)";
-                    e.currentTarget.style.boxShadow = "0 12px 24px -10px rgba(59, 130, 246, 0.2)";
-                    e.currentTarget.querySelector('.consult-footer-text').style.color = "#60a5fa";
+                    e.currentTarget.style.borderColor = "var(--accent-color)";
+                    e.currentTarget.style.boxShadow = "var(--glass-shadow)";
+                    e.currentTarget.querySelector('.consult-footer-text').style.color = "var(--accent-color)";
                     e.currentTarget.querySelector('.consult-footer-icon').style.transform = "translateX(4px)";
-                    e.currentTarget.querySelector('.consult-footer-icon').style.color = "#60a5fa";
+                    e.currentTarget.querySelector('.consult-footer-icon').style.color = "var(--accent-color)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.15)";
+                    e.currentTarget.style.borderColor = "var(--border-main)";
                     e.currentTarget.style.boxShadow = "none";
-                    e.currentTarget.querySelector('.consult-footer-text').style.color = "#94a3b8";
+                    e.currentTarget.querySelector('.consult-footer-text').style.color = "var(--text-muted)";
                     e.currentTarget.querySelector('.consult-footer-icon').style.transform = "translateX(0)";
-                    e.currentTarget.querySelector('.consult-footer-icon').style.color = "#94a3b8";
+                    e.currentTarget.querySelector('.consult-footer-icon').style.color = "var(--text-muted)";
                   }}
                 >
-                  <div style={{ padding: "24px 24px 16px 24px", borderBottom: "1px solid rgba(148, 163, 184, 0.05)" }}>
-                    <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "8px", fontWeight: 500, display: "flex", alignItems: "center", gap: "6px" }}>
+                  <div style={{ padding: "24px 24px 16px 24px", borderBottom: "1px solid var(--border-main)" }}>
+                    <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "8px", fontWeight: 500, display: "flex", alignItems: "center", gap: "6px" }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
                       {new Date(c.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </div>
-                    <h3 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "#f8fafc", lineHeight: "1.3" }}>{c.title}</h3>
+                    <h3 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "var(--text-main)", lineHeight: "1.3" }}>{c.title}</h3>
                   </div>
 
-                  <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "12px", backgroundColor: "rgba(15, 23, 42, 0.15)", flex: 1 }}>
+                  <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "12px", backgroundColor: "var(--bg-panel)", flex: 1 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                      <span style={{ color: "#e2e8f0", fontSize: "14px", fontWeight: 500 }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                      <span style={{ color: "var(--text-main)", fontSize: "14px", fontWeight: 500 }}>
                         {patientDisplay}
                         {!isAnonymous && (
-                          <span style={{ color: "#64748b", fontWeight: 400, marginLeft: "8px" }}>
+                          <span style={{ color: "var(--text-muted)", fontWeight: 400, marginLeft: "8px" }}>
                             ID: {c.patient.display_id}
                           </span>
                         )}
@@ -694,22 +694,22 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                     </div>
 
                     {c.insights && (
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", padding: "8px 12px", backgroundColor: "rgba(52, 211, 153, 0.05)", borderRadius: "8px", border: "1px solid rgba(52, 211, 153, 0.1)" }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                        <span style={{ color: "#34d399", fontWeight: 600 }}>AI Insights Generated</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", padding: "8px 12px", backgroundColor: "rgba(52, 211, 153, 0.05)", borderRadius: "8px", border: "1px solid rgba(52, 211, 153, 0.2)" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                        <span style={{ color: "#10b981", fontWeight: 600 }}>AI Insights Generated</span>
                       </div>
                     )}
                   </div>
 
                   <div style={{
                     padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center",
-                    borderTop: "1px solid rgba(148, 163, 184, 0.1)", backgroundColor: "rgba(15, 23, 42, 0.3)"
+                    borderTop: "1px solid var(--border-main)", backgroundColor: "var(--bg-panel)"
                   }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      <span className="consult-footer-text" style={{ fontSize: "13px", fontWeight: 600, color: "#94a3b8", transition: "color 0.2s ease" }}>
+                      <span className="consult-footer-text" style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", transition: "color 0.2s ease" }}>
                         View Details
                       </span>
-                      <svg className="consult-footer-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "all 0.2s ease", color: "#94a3b8" }}>
+                      <svg className="consult-footer-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "all 0.2s ease", color: "var(--text-muted)" }}>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                         <polyline points="12 5 19 12 12 19"></polyline>
                       </svg>
@@ -719,7 +719,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                       fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px",
                       padding: "2px 8px", borderRadius: "4px",
                       backgroundColor: isCompleted ? "rgba(16, 185, 129, 0.1)" : "rgba(234, 179, 8, 0.1)",
-                      color: isCompleted ? "#34d399" : "#facc15",
+                      color: isCompleted ? "#10b981" : "#d97706",
                       border: `1px solid ${isCompleted ? 'rgba(16, 185, 129, 0.2)' : 'rgba(234, 179, 8, 0.2)'}`
                     }}>
                       {isCompleted ? 'Completed' : 'Active'}
@@ -846,17 +846,17 @@ function Patients({ onLogout, onNavigateToConsultation, focusedPatientId, setFoc
 
     return (
       <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box", animation: "fadeIn 0.3s ease" }}>
-        <button onClick={() => setView("list")} style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
+        <button onClick={() => setView("list")} style={{ background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
           <span>←</span> Back to all patients
         </button>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
-          <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0", color: "#f8fafc" }}>
+          <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0", color: "var(--text-main)" }}>
             Patient Details: {p.name || p.display_id}
           </h1>
           <div style={{ display: "flex", gap: "12px" }}>
             <button
               onClick={() => { setNewPatient({ ...p, date_of_birth: p.date_of_birth || "" }); setView("edit"); }}
-              style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.2)", backgroundColor: "rgba(15, 23, 42, 0.4)", color: "#f1f5f9", cursor: "pointer", fontWeight: 600, fontSize: "14px" }}
+              style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid var(--border-main)", backgroundColor: "var(--bg-panel)", color: "var(--text-main)", cursor: "pointer", fontWeight: 600, fontSize: "14px" }}
               className="hover-bg"
             >
               Edit Details
@@ -877,13 +877,13 @@ function Patients({ onLogout, onNavigateToConsultation, focusedPatientId, setFoc
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
               CRITICAL WARNING
             </h3>
-            <p style={{ color: "#f8fafc", margin: 0, fontSize: "15px", lineHeight: "1.5" }}>
+            <p style={{ color: "var(--text-main)", margin: 0, fontSize: "15px", lineHeight: "1.5" }}>
               Are you sure you want to delete this patient? This will physically delete the patient AND all of their associated consultations, transcripts, and insights permanently. This CANNOT be reversed.
             </p>
             <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
               <button
                 onClick={() => setPatientToDelete(null)}
-                style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.3)", backgroundColor: "transparent", color: "#f8fafc", cursor: "pointer", fontWeight: 600 }}
+                style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid var(--border-main)", backgroundColor: "transparent", color: "var(--text-main)", cursor: "pointer", fontWeight: 600 }}
               >
                 Cancel
               </button>
@@ -903,50 +903,50 @@ function Patients({ onLogout, onNavigateToConsultation, focusedPatientId, setFoc
           </div>
         )}
 
-        <div className="glass-panel" style={{ padding: "24px", marginBottom: "24px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "16px", color: "#f1f5f9", fontSize: "15px" }}>
+        <div className="glass-panel" style={{ padding: "24px", marginBottom: "24px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "16px", color: "var(--text-main)", fontSize: "15px" }}>
           <div>
-            <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px" }}>Display ID</div>
+            <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "4px" }}>Display ID</div>
             <div>{p.display_id}</div>
           </div>
           <div>
-            <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px" }}>Full Name</div>
+            <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "4px" }}>Full Name</div>
             <div>{p.name || "N/A"}</div>
           </div>
           <div>
-            <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px" }}>Date of Birth</div>
+            <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "4px" }}>Date of Birth</div>
             <div>{p.date_of_birth || "N/A"}</div>
           </div>
           <div>
-            <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "4px" }}>Gender</div>
+            <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "4px" }}>Gender</div>
             <div>{p.gender || "N/A"}</div>
           </div>
         </div>
 
         <div className="glass-panel" style={{ padding: "24px", marginBottom: "24px" }}>
-          <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "8px" }}>
+          <h3 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "8px" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>
             Key Insights
           </h3>
-          <div style={{ color: p.key_history ? "#f1f5f9" : "#64748b", fontSize: "15px", lineHeight: "1.6", whiteSpace: "pre-wrap", fontStyle: p.key_history ? "normal" : "italic" }}>
+          <div style={{ color: p.key_history ? "var(--text-main)" : "var(--text-muted)", fontSize: "15px", lineHeight: "1.6", whiteSpace: "pre-wrap", fontStyle: p.key_history ? "normal" : "italic" }}>
             {p.key_history || "No key insights or history recorded for this patient yet."}
           </div>
         </div>
 
-        <h2 style={{ fontSize: "20px", fontWeight: 600, margin: "0 0 16px 0", color: "#f8fafc" }}>Consultations History</h2>
+        <h2 style={{ fontSize: "20px", fontWeight: 600, margin: "0 0 16px 0", color: "var(--text-main)" }}>Consultations History</h2>
         {patientConsultations.length === 0 ? (
-          <div style={{ padding: "24px", color: "#64748b", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "12px", border: "1px dashed rgba(148, 163, 184, 0.2)" }}>No consultations found for this patient.</div>
+          <div style={{ padding: "24px", color: "var(--text-muted)", backgroundColor: "var(--bg-panel)", borderRadius: "12px", border: "1px dashed var(--border-main)" }}>No consultations found for this patient.</div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {patientConsultations.map((c, index) => (
               <div
                 key={c.id}
                 className="animate-fade-in glass-panel hover-bg"
-                style={{ animationDelay: `${(index % 5) * 0.1}s`, padding: "16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "transform 0.2s ease", border: "1px solid rgba(148, 163, 184, 0.1)", backgroundColor: "rgba(30, 41, 59, 0.4)" }}
+                style={{ animationDelay: `${(index % 5) * 0.1}s`, padding: "16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "transform 0.2s ease", border: "1px solid var(--border-main)", backgroundColor: "var(--bg-panel)" }}
                 onClick={() => onNavigateToConsultation(c.id, p.id)}
               >
                 <div>
-                  <div style={{ fontWeight: 600, color: "#f1f5f9", fontSize: "16px" }}>{c.title}</div>
-                  <div style={{ fontSize: "13px", color: "#94a3b8", marginTop: "4px" }}>Taken on: {new Date(c.created_at).toLocaleString()}</div>
+                  <div style={{ fontWeight: 600, color: "var(--text-main)", fontSize: "16px" }}>{c.title}</div>
+                  <div style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "4px" }}>Taken on: {new Date(c.created_at).toLocaleString()}</div>
                 </div>
                 <div>
                   <span style={{ padding: "4px 8px", backgroundColor: c.status === 'completed' ? "rgba(16, 185, 129, 0.1)" : "rgba(234, 179, 8, 0.1)", color: c.status === 'completed' ? "#34d399" : "#facc15", borderRadius: "4px", fontSize: "12px", textTransform: "uppercase", fontWeight: 600 }}>
@@ -965,19 +965,19 @@ function Patients({ onLogout, onNavigateToConsultation, focusedPatientId, setFoc
     const isEditing = view === "edit";
     return (
       <div style={{ padding: "32px 24px", width: "100%", maxWidth: "800px", margin: "0 auto", boxSizing: "border-box", animation: "fadeIn 0.3s ease" }}>
-        <button onClick={() => setView(isEditing ? "detail" : "list")} style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
+        <button onClick={() => setView(isEditing ? "detail" : "list")} style={{ background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
           <span>←</span> Back to {isEditing ? "patient details" : "list"}
         </button>
-        <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 24px 0", color: "#f8fafc" }}>
+        <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 24px 0", color: "var(--text-main)" }}>
           {isEditing ? "Edit Patient Details" : "Create New Patient"}
         </h1>
         <div className="glass-panel" style={{ padding: "32px" }}>
           <form onSubmit={isEditing ? handleUpdatePatientSubmit : handleCreatePatientSubmit} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Patient ID {isEditing ? "" : "*"}</label>
+                <label style={{ fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>Patient ID {isEditing ? "" : "*"}</label>
                 <input
-                  style={{ padding: "12px", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.2)", backgroundColor: "rgba(15, 23, 42, 0.4)", color: isEditing ? "#64748b" : "#f8fafc", outline: "none", cursor: isEditing ? "not-allowed" : "text" }}
+                  style={{ padding: "12px", borderRadius: "8px", border: "1px solid var(--border-main)", backgroundColor: "var(--bg-panel)", color: isEditing ? "var(--text-muted)" : "var(--text-main)", outline: "none", cursor: isEditing ? "not-allowed" : "text" }}
                   value={newPatient.display_id}
                   onChange={(e) => !isEditing && setNewPatient({ ...newPatient, display_id: e.target.value })}
                   placeholder="e.g. P-001"
@@ -986,27 +986,27 @@ function Patients({ onLogout, onNavigateToConsultation, focusedPatientId, setFoc
                 />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Full Name</label>
+                <label style={{ fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>Full Name</label>
                 <input
-                  style={{ padding: "12px", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.2)", backgroundColor: "rgba(15, 23, 42, 0.4)", color: "#f8fafc", outline: "none" }}
+                  style={{ padding: "12px", borderRadius: "8px", border: "1px solid var(--border-main)", backgroundColor: "var(--bg-panel)", color: "var(--text-main)", outline: "none" }}
                   value={newPatient.name}
                   onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
                   placeholder="e.g. Jane Doe"
                 />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Date of Birth</label>
+                <label style={{ fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>Date of Birth</label>
                 <input
                   type="date"
-                  style={{ padding: "12px", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.2)", backgroundColor: "rgba(15, 23, 42, 0.4)", color: "#f8fafc", outline: "none", colorScheme: "dark" }}
+                  style={{ padding: "12px", borderRadius: "8px", border: "1px solid var(--border-main)", backgroundColor: "var(--bg-panel)", color: "var(--text-main)", outline: "none" }}
                   value={newPatient.date_of_birth}
                   onChange={(e) => setNewPatient({ ...newPatient, date_of_birth: e.target.value })}
                 />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Gender</label>
+                <label style={{ fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>Gender</label>
                 <select
-                  style={{ padding: "12px", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.2)", backgroundColor: "rgba(15, 23, 42, 0.4)", color: "#f8fafc", outline: "none" }}
+                  style={{ padding: "12px", borderRadius: "8px", border: "1px solid var(--border-main)", backgroundColor: "var(--bg-panel)", color: "var(--text-main)", outline: "none" }}
                   value={newPatient.gender}
                   onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value })}
                 >
@@ -1019,9 +1019,9 @@ function Patients({ onLogout, onNavigateToConsultation, focusedPatientId, setFoc
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Key History / Notes</label>
+              <label style={{ fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>Key History / Notes</label>
               <textarea
-                style={{ padding: "12px", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.2)", backgroundColor: "rgba(15, 23, 42, 0.4)", color: "#f8fafc", outline: "none", minHeight: "100px", resize: "vertical" }}
+                style={{ padding: "12px", borderRadius: "8px", border: "1px solid var(--border-main)", backgroundColor: "var(--bg-panel)", color: "var(--text-main)", outline: "none", minHeight: "100px", resize: "vertical" }}
                 value={newPatient.key_history}
                 onChange={(e) => setNewPatient({ ...newPatient, key_history: e.target.value })}
                 placeholder="Important medical history, allergies, or ongoing conditions..."
@@ -1059,10 +1059,10 @@ function Patients({ onLogout, onNavigateToConsultation, focusedPatientId, setFoc
     <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }} className="animate-fade-in">
         <div>
-          <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0" }}>
+          <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0", color: "var(--text-main)" }}>
             Patient <span className="text-gradient">Records</span>
           </h1>
-          <p style={{ color: "#94a3b8", margin: 0, fontSize: "16px" }}>
+          <p style={{ color: "var(--text-muted)", margin: 0, fontSize: "16px" }}>
             Find and manage patient profiles.
           </p>
         </div>
@@ -1098,12 +1098,12 @@ function Patients({ onLogout, onNavigateToConsultation, focusedPatientId, setFoc
           placeholder="Search by ID or Name..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ width: "100%", padding: "12px", marginBottom: "32px", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.2)", backgroundColor: "rgba(15, 23, 42, 0.4)", color: "#f8fafc", outline: "none", boxSizing: "border-box" }}
+          style={{ width: "100%", padding: "12px", marginBottom: "32px", borderRadius: "8px", border: "1px solid var(--border-main)", backgroundColor: "var(--bg-panel)", color: "var(--text-main)", outline: "none", boxSizing: "border-box" }}
         />
         {loading && patients.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "48px", color: "#64748b" }}>Loading patients...</div>
+          <div style={{ textAlign: "center", padding: "48px", color: "var(--text-muted)" }}>Loading patients...</div>
         ) : filteredPatients.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "48px", border: "1px dashed rgba(148, 163, 184, 0.2)", borderRadius: "12px", color: "#64748b" }}>No patients found.</div>
+          <div style={{ textAlign: "center", padding: "48px", border: "1px dashed var(--border-main)", borderRadius: "12px", color: "var(--text-muted)" }}>No patients found.</div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "24px" }}>
             {filteredPatients.map((p, index) => {
@@ -1118,8 +1118,8 @@ function Patients({ onLogout, onNavigateToConsultation, focusedPatientId, setFoc
                     padding: "0",
                     cursor: "pointer",
                     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                    border: "1px solid rgba(148, 163, 184, 0.15)",
-                    backgroundColor: "rgba(30, 41, 59, 0.4)",
+                    border: "1px solid var(--border-main)",
+                    backgroundColor: "var(--bg-card)",
                     display: "flex",
                     flexDirection: "column",
                     overflow: "hidden"
@@ -1127,56 +1127,56 @@ function Patients({ onLogout, onNavigateToConsultation, focusedPatientId, setFoc
                   onClick={() => handleViewDetail(p)}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "translateY(-4px)";
-                    e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.4)";
-                    e.currentTarget.style.boxShadow = "0 12px 24px -10px rgba(59, 130, 246, 0.2)";
-                    e.currentTarget.querySelector('.patient-footer-text').style.color = "#60a5fa";
+                    e.currentTarget.style.borderColor = "var(--accent-color)";
+                    e.currentTarget.style.boxShadow = "var(--glass-shadow)";
+                    e.currentTarget.querySelector('.patient-footer-text').style.color = "var(--accent-color)";
                     e.currentTarget.querySelector('.patient-footer-icon').style.transform = "translateX(4px)";
-                    e.currentTarget.querySelector('.patient-footer-icon').style.color = "#60a5fa";
+                    e.currentTarget.querySelector('.patient-footer-icon').style.color = "var(--accent-color)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.15)";
+                    e.currentTarget.style.borderColor = "var(--border-main)";
                     e.currentTarget.style.boxShadow = "none";
-                    e.currentTarget.querySelector('.patient-footer-text').style.color = "#94a3b8";
+                    e.currentTarget.querySelector('.patient-footer-text').style.color = "var(--text-muted)";
                     e.currentTarget.querySelector('.patient-footer-icon').style.transform = "translateX(0)";
-                    e.currentTarget.querySelector('.patient-footer-icon').style.color = "#94a3b8";
+                    e.currentTarget.querySelector('.patient-footer-icon').style.color = "var(--text-muted)";
                   }}
                 >
-                  <div style={{ padding: "20px", display: "flex", alignItems: "center", gap: "16px", borderBottom: "1px solid rgba(148, 163, 184, 0.1)" }}>
+                  <div style={{ padding: "20px", display: "flex", alignItems: "center", gap: "16px", borderBottom: "1px solid var(--border-main)" }}>
                     <div style={{
                       width: "48px", height: "48px", borderRadius: "12px", flexShrink: 0,
                       background: "linear-gradient(135deg, rgba(59,130,246,0.2) 0%, rgba(139,92,246,0.2) 100%)",
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      color: "#60a5fa", fontWeight: 700, fontSize: "16px", letterSpacing: "1px",
-                      border: "1px solid rgba(59, 130, 246, 0.1)"
+                      color: "var(--accent-color)", fontWeight: 700, fontSize: "16px", letterSpacing: "1px",
+                      border: "1px solid var(--border-main)"
                     }}>
                       {initials}
                     </div>
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <h3 style={{ margin: "0 0 4px 0", fontSize: "18px", fontWeight: 600, color: "#f8fafc", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      <h3 style={{ margin: "0 0 4px 0", fontSize: "18px", fontWeight: 600, color: "var(--text-main)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {p.name || "Unknown Name"}
                       </h3>
-                      <div style={{ fontSize: "13px", color: "#94a3b8", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <div style={{ fontSize: "13px", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "6px" }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                         {p.display_id}
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ padding: "20px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", backgroundColor: "rgba(15, 23, 42, 0.2)", flex: 1 }}>
+                  <div style={{ padding: "20px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", backgroundColor: "rgba(15, 23, 42, 0.05)", flex: 1 }}>
                     <div>
-                      <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px", fontWeight: 600 }}>Gender</div>
-                      <div style={{ color: "#e2e8f0", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <div style={{ fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px", fontWeight: 600 }}>Gender</div>
+                      <div style={{ color: "var(--text-main)", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
                         {p.gender === 'Male' && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="14" r="5" /><line x1="13.5" y1="10.5" x2="20" y2="4" /><polyline points="16 4 20 4 20 8" /></svg>}
                         {p.gender === 'Female' && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f472b6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="10" r="5" /><line x1="12" y1="15" x2="12" y2="22" /><line x1="9" y1="19" x2="15" y2="19" /></svg>}
-                        {(!p.gender || (p.gender !== 'Male' && p.gender !== 'Female')) && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>}
+                        {(!p.gender || (p.gender !== 'Male' && p.gender !== 'Female')) && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>}
                         {p.gender || "Not specified"}
                       </div>
                     </div>
                     <div>
-                      <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px", fontWeight: 600 }}>Date of Birth</div>
-                      <div style={{ color: "#e2e8f0", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap" }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                      <div style={{ fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px", fontWeight: 600 }}>Date of Birth</div>
+                      <div style={{ color: "var(--text-main)", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
                         {p.date_of_birth || "Unknown"}
                       </div>
                     </div>
@@ -1184,12 +1184,12 @@ function Patients({ onLogout, onNavigateToConsultation, focusedPatientId, setFoc
 
                   <div style={{
                     padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center",
-                    borderTop: "1px solid rgba(148, 163, 184, 0.1)", backgroundColor: "rgba(15, 23, 42, 0.4)"
+                    borderTop: "1px solid var(--border-main)", backgroundColor: "var(--bg-panel)"
                   }}>
-                    <span className="patient-footer-text" style={{ fontSize: "13px", fontWeight: 600, color: "#94a3b8", transition: "color 0.2s ease" }}>
+                    <span className="patient-footer-text" style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", transition: "color 0.2s ease" }}>
                       View Clinical Record
                     </span>
-                    <svg className="patient-footer-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "all 0.2s ease", color: "#94a3b8" }}>
+                    <svg className="patient-footer-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "all 0.2s ease", color: "var(--text-muted)" }}>
                       <line x1="5" y1="12" x2="19" y2="12"></line>
                       <polyline points="12 5 19 12 12 19"></polyline>
                     </svg>
@@ -1209,10 +1209,10 @@ function AIAnalytics() {
     <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }} className="animate-fade-in">
         <div>
-          <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0" }}>
+          <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0", color: "var(--text-main)" }}>
             AI <span className="text-gradient">Analytics</span>
           </h1>
-          <p style={{ color: "#94a3b8", margin: 0, fontSize: "16px" }}>
+          <p style={{ color: "var(--text-muted)", margin: 0, fontSize: "16px" }}>
             Advanced health patterns and consultation intelligence.
           </p>
         </div>
@@ -1233,9 +1233,9 @@ function AIAnalytics() {
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>
         </div>
 
-        <h2 style={{ fontSize: "24px", fontWeight: 600, color: "#f8fafc", marginBottom: "16px" }}>Intellectual Analysis Coming Soon</h2>
+        <h2 style={{ fontSize: "24px", fontWeight: 600, color: "var(--text-main)", marginBottom: "16px" }}>Intellectual Analysis Coming Soon</h2>
 
-        <div style={{ maxWidth: "600px", margin: "0 auto", color: "#94a3b8", lineHeight: "1.8", fontSize: "16px" }}>
+        <div style={{ maxWidth: "600px", margin: "0 auto", color: "var(--text-muted)", lineHeight: "1.8", fontSize: "16px" }}>
           <p>
             The **AI Analytics Engine** is currently under development. This section will feature a
             specialized Large Language Model designed to securely process your historical
@@ -1243,21 +1243,21 @@ function AIAnalytics() {
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginTop: "40px", textAlign: "left" }}>
-            <div style={{ padding: "20px", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "12px", border: "1px solid rgba(148, 163, 184, 0.1)" }}>
-              <div style={{ fontWeight: 600, color: "#f1f5f9", marginBottom: "8px" }}>📊 Pattern Recognition</div>
-              <div style={{ fontSize: "14px" }}>Identify recurring patient symptoms and diagnosis trends across your entire practice history.</div>
+            <div style={{ padding: "20px", backgroundColor: "var(--bg-panel)", borderRadius: "12px", border: "1px solid var(--border-main)" }}>
+              <div style={{ fontWeight: 600, color: "var(--text-main)", marginBottom: "8px" }}>📊 Pattern Recognition</div>
+              <div style={{ fontSize: "14px", color: "var(--text-muted)" }}>Identify recurring patient symptoms and diagnosis trends across your entire practice history.</div>
             </div>
-            <div style={{ padding: "20px", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "12px", border: "1px solid rgba(148, 163, 184, 0.1)" }}>
-              <div style={{ fontWeight: 600, color: "#f1f5f9", marginBottom: "8px" }}>📈 Practice Growth</div>
-              <div style={{ fontSize: "14px" }}>Visual statistics on consultation volume, average session times, and automated reporting.</div>
+            <div style={{ padding: "20px", backgroundColor: "var(--bg-panel)", borderRadius: "12px", border: "1px solid var(--border-main)" }}>
+              <div style={{ fontWeight: 600, color: "var(--text-main)", marginBottom: "8px" }}>📈 Practice Growth</div>
+              <div style={{ fontSize: "14px", color: "var(--text-muted)" }}>Visual statistics on consultation volume, average session times, and automated reporting.</div>
             </div>
-            <div style={{ padding: "20px", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "12px", border: "1px solid rgba(148, 163, 184, 0.1)" }}>
-              <div style={{ fontWeight: 600, color: "#f1f5f9", marginBottom: "8px" }}>🧬 Health Insights</div>
-              <div style={{ fontSize: "14px" }}>LLM-driven analysis of transcript data to suggest potential treatment paths and drug interactions.</div>
+            <div style={{ padding: "20px", backgroundColor: "var(--bg-panel)", borderRadius: "12px", border: "1px solid var(--border-main)" }}>
+              <div style={{ fontWeight: 600, color: "var(--text-main)", marginBottom: "8px" }}>🧬 Health Insights</div>
+              <div style={{ fontSize: "14px", color: "var(--text-muted)" }}>LLM-driven analysis of transcript data to suggest potential treatment paths and drug interactions.</div>
             </div>
-            <div style={{ padding: "20px", backgroundColor: "rgba(15, 23, 42, 0.4)", borderRadius: "12px", border: "1px solid rgba(148, 163, 184, 0.1)" }}>
-              <div style={{ fontWeight: 600, color: "#f1f5f9", marginBottom: "8px" }}>🔒 Private & Secure</div>
-              <div style={{ fontSize: "14px" }}>Local-first processing ensuring patient data never leaves your secure environment.</div>
+            <div style={{ padding: "20px", backgroundColor: "var(--bg-panel)", borderRadius: "12px", border: "1px solid var(--border-main)" }}>
+              <div style={{ fontWeight: 600, color: "var(--text-main)", marginBottom: "8px" }}>🔒 Private & Secure</div>
+              <div style={{ fontSize: "14px", color: "var(--text-muted)" }}>Local-first processing ensuring patient data never leaves your secure environment.</div>
             </div>
           </div>
         </div>
@@ -1377,7 +1377,7 @@ function AskAI() {
     <div style={{ display: "flex", height: "100%", maxWidth: "1400px", margin: "0 auto", width: "100%", padding: "24px", boxSizing: "border-box", gap: "24px" }}>
       {/* Sidebar for Sessions */}
       <div className="glass-panel animate-fade-in stagger-1" style={{ width: "300px", display: "flex", flexDirection: "column", borderRadius: "16px", overflow: "hidden" }}>
-        <div style={{ padding: "20px", borderBottom: "1px solid rgba(148, 163, 184, 0.1)" }}>
+        <div style={{ padding: "20px", borderBottom: "1px solid var(--border-main)" }}>
           <button
             onClick={handleNewChat}
             style={{
@@ -1403,7 +1403,7 @@ function AskAI() {
 
         <div className="custom-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
           {sessions.length === 0 ? (
-            <div style={{ color: "#64748b", textAlign: "center", fontStyle: "italic", fontSize: "14px", marginTop: "20px" }}>No past conversations</div>
+            <div style={{ color: "var(--text-muted)", textAlign: "center", fontStyle: "italic", fontSize: "14px", marginTop: "20px" }}>No past conversations</div>
           ) : (
             sessions.map(s => (
               <div
@@ -1422,16 +1422,16 @@ function AskAI() {
                 }}
                 className="hover-bg"
               >
-                <div style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: activeSessionId === s.id ? "#60a5fa" : "#e2e8f0", fontSize: "14px", fontWeight: activeSessionId === s.id ? 600 : 400 }}>
+                <div style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: activeSessionId === s.id ? "#60a5fa" : "var(--text-main)", fontSize: "14px", fontWeight: activeSessionId === s.id ? 600 : 400 }}>
                   {s.title}
                 </div>
                 <button
                   onClick={(e) => handleDeleteSession(e, s.id)}
                   style={{
-                    background: "transparent", border: "none", color: "#64748b", cursor: "pointer", padding: "4px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "4px"
+                    background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: "4px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "4px"
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.color = "#ef4444"; e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = "#64748b"; e.currentTarget.style.backgroundColor = "transparent"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.backgroundColor = "transparent"; }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                 </button>
@@ -1444,10 +1444,10 @@ function AskAI() {
       {/* Main Chat Area */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <div style={{ marginBottom: "20px" }} className="animate-fade-in">
-          <h1 style={{ fontSize: "32px", fontWeight: 700, margin: "0 0 8px 0" }}>
+          <h1 style={{ fontSize: "32px", fontWeight: 700, margin: "0 0 8px 0", color: "var(--text-main)" }}>
             Ask <span className="text-gradient">AI</span>
           </h1>
-          <p style={{ color: "#94a3b8", margin: 0, fontSize: "15px" }}>
+          <p style={{ color: "var(--text-muted)", margin: 0, fontSize: "15px" }}>
             Chat with your intelligent assistant.
           </p>
         </div>
@@ -1456,12 +1456,12 @@ function AskAI() {
           {/* Chat window */}
           <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: "20px" }}>
             {messages.length === 0 && !loading && (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "#64748b", gap: "16px", padding: "20px", textAlign: "center" }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--text-muted)", gap: "16px", padding: "20px", textAlign: "center" }}>
                 <div style={{ width: "64px", height: "64px", borderRadius: "16px", background: "rgba(139, 92, 246, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#8b5cf6" }}>
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M12 7v5" /><path d="M12 16h.01" /></svg>
                 </div>
                 <div>
-                  <h3 style={{ margin: "0 0 8px 0", color: "#f8fafc", fontSize: "18px" }}>How can I help you today?</h3>
+                  <h3 style={{ margin: "0 0 8px 0", color: "var(--text-main)", fontSize: "18px" }}>How can I help you today?</h3>
                   <p style={{ margin: 0, fontSize: "15px" }}>Start a new conversation or select one from the history.</p>
                 </div>
               </div>
@@ -1481,14 +1481,14 @@ function AskAI() {
                   )}
                   <div style={{
                     padding: "16px 20px",
-                    backgroundColor: isUser ? "var(--primary-gradient)" : "rgba(30, 41, 59, 0.5)",
+                    backgroundColor: isUser ? "var(--primary-gradient)" : "var(--bg-panel)",
                     background: isUser ? "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" : undefined,
                     borderRadius: isUser ? "20px 20px 4px 20px" : "20px 20px 20px 4px",
-                    color: "#f8fafc",
+                    color: isUser ? "white" : "var(--text-main)",
                     fontSize: "15px",
                     lineHeight: "1.6",
-                    border: isUser ? "none" : "1px solid rgba(148, 163, 184, 0.1)",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    border: isUser ? "none" : "1px solid var(--border-main)",
+                    boxShadow: "var(--glass-shadow)",
                     whiteSpace: "pre-wrap",
                     overflowWrap: "anywhere",
                   }}>
@@ -1516,14 +1516,14 @@ function AskAI() {
                 </div>
                 <div style={{
                   padding: "16px 20px",
-                  backgroundColor: "rgba(30, 41, 59, 0.5)",
+                  backgroundColor: "var(--bg-panel)",
                   borderRadius: "20px 20px 20px 4px",
-                  color: "#94a3b8",
+                  color: "var(--text-muted)",
                   fontSize: "15px",
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                  border: "1px solid rgba(148, 163, 184, 0.1)"
+                  border: "1px solid var(--border-main)"
                 }}>
                   <div className="typing-dot" style={{ width: "6px", height: "6px", backgroundColor: "#8b5cf6", borderRadius: "50%" }}></div>
                   <div className="typing-dot" style={{ width: "6px", height: "6px", backgroundColor: "#8b5cf6", borderRadius: "50%" }}></div>
@@ -1534,7 +1534,7 @@ function AskAI() {
           </div>
 
           {/* Input area */}
-          <div style={{ padding: "20px", borderTop: "1px solid rgba(148, 163, 184, 0.1)", backgroundColor: "rgba(15, 23, 42, 0.4)" }}>
+          <div style={{ padding: "20px", borderTop: "1px solid var(--border-main)", backgroundColor: "var(--bg-panel)" }}>
             <form onSubmit={handleSubmit} style={{ display: "flex", gap: "12px", position: "relative" }}>
               <input
                 type="text"
@@ -1546,9 +1546,9 @@ function AskAI() {
                   padding: "16px 24px",
                   paddingRight: "60px",
                   borderRadius: "999px",
-                  border: "1px solid rgba(148, 163, 184, 0.2)",
-                  backgroundColor: "rgba(15, 23, 42, 0.6)",
-                  color: "#f8fafc",
+                  border: "1px solid var(--border-main)",
+                  backgroundColor: "var(--bg-card)",
+                  color: "var(--text-main)",
                   fontSize: "15px",
                   outline: "none",
                   transition: "all 0.2s ease"
@@ -1591,11 +1591,11 @@ function AskAI() {
   );
 }
 
-function Settings({ onLogout }) {
+function Settings({ onLogout, theme, setTheme }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("profile"); // "profile", "security", "danger"
+  const [activeTab, setActiveTab] = useState("profile"); // "profile", "security", "preferences", "danger"
 
   const [profileName, setProfileName] = useState("");
   const [profileSpecialty, setProfileSpecialty] = useState("");
@@ -1678,10 +1678,10 @@ function Settings({ onLogout }) {
   return (
     <div style={{ padding: "32px 24px", width: "100%", maxWidth: "1200px", margin: "0 auto", boxSizing: "border-box" }}>
       <div style={{ marginBottom: "40px" }} className="animate-fade-in">
-        <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0" }}>
+        <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0", color: "var(--text-main)" }}>
           Settings
         </h1>
-        <p style={{ color: "#94a3b8", margin: 0, fontSize: "16px" }}>
+        <p style={{ color: "var(--text-muted)", margin: 0, fontSize: "16px" }}>
           Manage your account and medical practice preferences.
         </p>
       </div>
@@ -1704,8 +1704,16 @@ function Settings({ onLogout }) {
             Security
           </div>
           <div
+            className={`settings-tab ${activeTab === 'preferences' ? 'active' : ''}`}
+            onClick={() => setActiveTab('preferences')}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            Preferences
+          </div>
+          <div
             className={`settings-tab ${activeTab === 'danger' ? 'active' : ''}`}
             onClick={() => setActiveTab('danger')}
+            style={{ color: activeTab === 'danger' ? '#ef4444' : 'var(--text-muted)' }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
             Danger Zone
@@ -1716,7 +1724,7 @@ function Settings({ onLogout }) {
         <div className="settings-content">
           <div className="glass-panel settings-card">
             {loading ? (
-              <div style={{ textAlign: "center", padding: "48px", color: "#64748b" }}>Loading your data...</div>
+              <div style={{ textAlign: "center", padding: "48px", color: "var(--text-muted)" }}>Loading your data...</div>
             ) : error ? (
               <div style={{ padding: "16px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", color: "#ef4444", fontSize: "14px" }}>
                 {error}
@@ -1726,16 +1734,16 @@ function Settings({ onLogout }) {
                 {activeTab === 'profile' && (
                   <div className="animate-fade-in">
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
-                      <h2 style={{ fontSize: "22px", fontWeight: 700, margin: 0, color: "#f8fafc" }}>Profile Information</h2>
+                      <h2 style={{ fontSize: "22px", fontWeight: 700, margin: 0, color: "var(--text-main)" }}>Profile Information</h2>
                       {!isEditingProfile && (
                         <button
                           onClick={() => setIsEditingProfile(true)}
                           style={{
                             padding: "8px 20px",
                             borderRadius: "8px",
-                            background: "rgba(59, 130, 246, 0.1)",
-                            border: "1px solid rgba(59, 130, 246, 0.2)",
-                            color: "#3b82f6",
+                            background: "var(--bg-panel)",
+                            border: "1px solid var(--border-main)",
+                            color: "var(--accent-color)",
                             fontSize: "14px",
                             fontWeight: 600,
                             cursor: "pointer"
@@ -1748,55 +1756,55 @@ function Settings({ onLogout }) {
 
                     <form onSubmit={handleProfileUpdate} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
                       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                        <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Full Name</label>
+                        <label style={{ fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>Full Name</label>
                         {isEditingProfile ? (
                           <input
                             type="text"
                             value={profileName}
                             onChange={(e) => setProfileName(e.target.value)}
-                            style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.5)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "10px", color: "#f1f5f9", fontSize: "15px", outline: "none" }}
+                            style={{ padding: "12px 16px", backgroundColor: "var(--bg-panel)", border: "1px solid var(--border-main)", borderRadius: "10px", color: "var(--text-main)", fontSize: "15px", outline: "none" }}
                             placeholder="Enter your name"
                           />
                         ) : (
-                          <div style={{ padding: "14px 16px", backgroundColor: "rgba(15, 23, 42, 0.3)", border: "1px solid rgba(148, 163, 184, 0.1)", borderRadius: "10px", color: "#f1f5f9", fontSize: "15px" }}>
+                          <div style={{ padding: "14px 16px", backgroundColor: "var(--bg-panel)", border: "1px solid var(--border-main)", borderRadius: "10px", color: "var(--text-main)", fontSize: "15px" }}>
                             {user.name}
                           </div>
                         )}
                       </div>
 
                       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                        <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Medical Specialisation</label>
+                        <label style={{ fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>Medical Specialisation</label>
                         {isEditingProfile ? (
                           <input
                             type="text"
                             value={profileSpecialty}
                             onChange={(e) => setProfileSpecialty(e.target.value)}
-                            style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.5)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "10px", color: "#f1f5f9", fontSize: "15px", outline: "none" }}
+                            style={{ padding: "12px 16px", backgroundColor: "var(--bg-panel)", border: "1px solid var(--border-main)", borderRadius: "10px", color: "var(--text-main)", fontSize: "15px", outline: "none" }}
                             placeholder="e.g. GP, Cardiologist"
                           />
                         ) : (
-                          <div style={{ padding: "14px 16px", backgroundColor: "rgba(15, 23, 42, 0.3)", border: "1px solid rgba(148, 163, 184, 0.1)", borderRadius: "10px", color: user.specialty ? "#f1f5f9" : "#64748b", fontSize: "15px", fontStyle: user.specialty ? "normal" : "italic" }}>
+                          <div style={{ padding: "14px 16px", backgroundColor: "var(--bg-panel)", border: "1px solid var(--border-main)", borderRadius: "10px", color: user.specialty ? "var(--text-main)" : "var(--text-muted)", fontSize: "15px", fontStyle: user.specialty ? "normal" : "italic" }}>
                             {user.specialty || "No specialisation set"}
                           </div>
                         )}
                       </div>
 
                       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                        <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Email Address</label>
-                        <div style={{ padding: "14px 16px", backgroundColor: "rgba(15, 23, 42, 0.2)", border: "1px solid rgba(148, 163, 184, 0.05)", borderRadius: "10px", color: "#64748b", fontSize: "15px" }}>
+                        <label style={{ fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>Email Address</label>
+                        <div style={{ padding: "14px 16px", backgroundColor: "var(--bg-panel)", opacity: 0.6, border: "1px solid var(--border-main)", borderRadius: "10px", color: "var(--text-muted)", fontSize: "15px" }}>
                           {user.email}
                         </div>
                       </div>
 
                       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                        <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>User Role</label>
-                        <div style={{ padding: "14px 16px", backgroundColor: "rgba(15, 23, 42, 0.2)", border: "1px solid rgba(148, 163, 184, 0.05)", borderRadius: "10px", color: "#64748b", fontSize: "15px", textTransform: "capitalize" }}>
+                        <label style={{ fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>User Role</label>
+                        <div style={{ padding: "14px 16px", backgroundColor: "var(--bg-panel)", opacity: 0.6, border: "1px solid var(--border-main)", borderRadius: "10px", color: "var(--text-muted)", fontSize: "15px", textTransform: "capitalize" }}>
                           {user.role}
                         </div>
                       </div>
 
-                      <div style={{ gridColumn: "span 2", display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", paddingTop: "24px", borderTop: "1px solid rgba(148, 163, 184, 0.1)" }}>
-                        <div style={{ fontSize: "13px", color: "#64748b" }}>
+                      <div style={{ gridColumn: "span 2", display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", paddingTop: "24px", borderTop: "1px solid var(--border-main)" }}>
+                        <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
                           Account created on {new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                         </div>
 
@@ -1811,10 +1819,10 @@ function Settings({ onLogout }) {
                               }}
                               style={{
                                 background: "transparent",
-                                border: "1px solid rgba(148, 163, 184, 0.3)",
+                                border: "1px solid var(--border-main)",
                                 padding: "10px 24px",
                                 borderRadius: "10px",
-                                color: "#94a3b8",
+                                color: "var(--text-muted)",
                                 fontWeight: 600,
                                 fontSize: "14px",
                                 cursor: "pointer"
@@ -1860,41 +1868,41 @@ function Settings({ onLogout }) {
 
                 {activeTab === 'security' && (
                   <div className="animate-fade-in">
-                    <h2 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 32px 0", color: "#f8fafc" }}>Security Settings</h2>
+                    <h2 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 32px 0", color: "var(--text-main)" }}>Security Settings</h2>
                     <form onSubmit={handlePasswordChange} style={{ display: "flex", flexDirection: "column", gap: "20px", maxWidth: "500px" }}>
                       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                        <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Current Password</label>
+                        <label style={{ fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>Current Password</label>
                         <input
                           type="password"
                           required
                           value={currentPassword}
                           onChange={(e) => setCurrentPassword(e.target.value)}
                           placeholder="••••••••"
-                          style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.5)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "10px", color: "#f1f5f9", fontSize: "15px", outline: "none" }}
+                          style={{ padding: "12px 16px", backgroundColor: "var(--bg-panel)", border: "1px solid var(--border-main)", borderRadius: "10px", color: "var(--text-main)", fontSize: "15px", outline: "none" }}
                         />
                       </div>
 
                       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                        <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>New Password</label>
+                        <label style={{ fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>New Password</label>
                         <input
                           type="password"
                           required
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           placeholder="••••••••"
-                          style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.5)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "10px", color: "#f1f5f9", fontSize: "15px", outline: "none" }}
+                          style={{ padding: "12px 16px", backgroundColor: "var(--bg-panel)", border: "1px solid var(--border-main)", borderRadius: "10px", color: "var(--text-main)", fontSize: "15px", outline: "none" }}
                         />
                       </div>
 
                       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                        <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Confirm New Password</label>
+                        <label style={{ fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>Confirm New Password</label>
                         <input
                           type="password"
                           required
                           value={confirmNewPassword}
                           onChange={(e) => setConfirmNewPassword(e.target.value)}
                           placeholder="••••••••"
-                          style={{ padding: "12px 16px", backgroundColor: "rgba(15, 23, 42, 0.5)", border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "10px", color: "#f1f5f9", fontSize: "15px", outline: "none" }}
+                          style={{ padding: "12px 16px", backgroundColor: "var(--bg-panel)", border: "1px solid var(--border-main)", borderRadius: "10px", color: "var(--text-main)", fontSize: "15px", outline: "none" }}
                         />
                       </div>
 
@@ -1932,17 +1940,61 @@ function Settings({ onLogout }) {
                   </div>
                 )}
 
+                {activeTab === 'preferences' && (
+                  <div className="animate-fade-in">
+                    <h2 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 32px 0", color: "var(--text-main)" }}>Application Preferences</h2>
+                    
+                    <div style={{ display: "flex", flexDirection: "column", gap: "24px", maxWidth: "500px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px", backgroundColor: "var(--bg-panel)", border: "1px solid var(--border-main)", borderRadius: "16px" }}>
+                        <div>
+                          <h4 style={{ margin: "0 0 4px 0", color: "var(--text-main)", fontSize: "16px", fontWeight: 600 }}>Display Theme</h4>
+                          <p style={{ margin: 0, color: "var(--text-muted)", fontSize: "13px" }}>Switch between light and dark mode</p>
+                        </div>
+                        <button
+                          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            padding: "10px 16px",
+                            backgroundColor: "var(--bg-card)",
+                            border: "1px solid var(--border-main)",
+                            borderRadius: "10px",
+                            color: "var(--text-main)",
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            transition: "all 0.2s ease"
+                          }}
+                        >
+                          {theme === 'dark' ? (
+                            <>
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                              Light Mode
+                            </>
+                          ) : (
+                            <>
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                              Dark Mode
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {activeTab === 'danger' && (
                   <div className="animate-fade-in">
                     <h2 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 16px 0", color: "#ef4444" }}>Danger Zone</h2>
-                    <p style={{ color: "#94a3b8", marginBottom: "32px", maxWidth: "600px" }}>
+                    <p style={{ color: "var(--text-muted)", marginBottom: "32px", maxWidth: "600px" }}>
                       Deleting your account is permanent and will result in the immediate and irreversible loss of all your patients, consultations, and transcript data.
                     </p>
 
                     <div style={{ padding: "32px", backgroundColor: "rgba(239, 68, 68, 0.05)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "16px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "32px" }}>
                       <div>
                         <h4 style={{ margin: "0 0 8px 0", color: "#ef4444", fontSize: "18px", fontWeight: 700 }}>Permanently Delete Account</h4>
-                        <p style={{ margin: 0, color: "#94a3b8", fontSize: "14px" }}>Please be certain before taking this action.</p>
+                        <p style={{ margin: 0, color: "var(--text-muted)", fontSize: "14px" }}>Please be certain before taking this action.</p>
                       </div>
                       <button
                         onClick={async () => {
@@ -2098,10 +2150,10 @@ function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNav
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "32px", position: "relative", zIndex: 100 }} className="animate-fade-in">
         <div>
-          <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0" }}>
+          <h1 style={{ fontSize: "36px", fontWeight: 700, margin: "0 0 8px 0", color: "var(--text-main)" }}>
             Welcome back, <span className="text-gradient">{user?.name || "Doctor"}</span>
           </h1>
-          <p style={{ color: "#94a3b8", margin: 0, fontSize: "16px" }}>
+          <p style={{ color: "var(--text-muted)", margin: 0, fontSize: "16px" }}>
             Here is your daily medical overview.
           </p>
         </div>
@@ -2148,14 +2200,14 @@ function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNav
                 width: "240px",
                 padding: "20px",
                 zIndex: 1000,
-                background: "#1e293b", // Fully opaque background
+                background: "var(--bg-card)", // Use theme-aware background
                 borderRadius: "16px",
-                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)",
-                border: "1px solid rgba(148, 163, 184, 0.2)",
+                boxShadow: "var(--glass-shadow)",
+                border: "1px solid var(--border-main)",
                 animation: "fadeIn 0.2s ease-out"
               }}
             >
-              <h4 style={{ margin: "0 0 12px 0", fontSize: "12px", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Infrastructure Status</h4>
+              <h4 style={{ margin: "0 0 12px 0", fontSize: "12px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Infrastructure Status</h4>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {[
                   { id: 'main_backend', label: 'Main Backend' },
@@ -2163,7 +2215,7 @@ function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNav
                   { id: 'vexa_collector', label: 'Vexa Collector' }
                 ].map(service => (
                   <div key={service.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: "13px", color: "#e2e8f0" }}>{service.label}</span>
+                    <span style={{ fontSize: "13px", color: "var(--text-main)" }}>{service.label}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                       <div style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: serverDetails[service.id] === 'active' ? "#10b981" : "#ef4444" }}></div>
                       <span style={{ fontSize: "11px", fontWeight: 600, color: serverDetails[service.id] === 'active' ? "#34d399" : "#ef4444", textTransform: "capitalize" }}>
@@ -2187,7 +2239,7 @@ function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNav
       {/* Main Action Card */}
       <div className="animate-fade-in stagger-1" style={{ marginBottom: "40px" }}>
         {loading ? (
-          <div className="glass-panel" style={{ padding: "32px", textAlign: "center", color: "#64748b" }}>Loading dashboard...</div>
+          <div className="glass-panel" style={{ padding: "32px", textAlign: "center", color: "var(--text-muted)" }}>Loading dashboard...</div>
         ) : activeConsultation ? (
           <div
             className="glass-panel"
@@ -2199,8 +2251,8 @@ function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNav
                 <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#3b82f6", boxShadow: "0 0 8px #3b82f6" }}></span>
                 Active Consultation
               </div>
-              <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#f8fafc", margin: 0 }}>{activeConsultation.title}</h2>
-              <p style={{ color: "#94a3b8", marginTop: "8px", marginBottom: 0 }}>
+              <h2 style={{ fontSize: "24px", fontWeight: 700, color: "var(--text-main)", margin: 0 }}>{activeConsultation.title}</h2>
+              <p style={{ color: "var(--text-muted)", marginTop: "8px", marginBottom: 0 }}>
                 Patient: {activeConsultation.patient?.name || "Anonymous"}
               </p>
             </div>
@@ -2217,8 +2269,8 @@ function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNav
             onClick={() => onNavigate("consultations")}
           >
             <div>
-              <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#f8fafc", margin: "0 0 8px 0" }}>Ready for your next patient?</h2>
-              <p style={{ color: "#94a3b8", margin: 0 }}>Create a new consultation to start recording insights.</p>
+              <h2 style={{ fontSize: "24px", fontWeight: 700, color: "var(--text-main)", margin: "0 0 8px 0" }}>Ready for your next patient?</h2>
+              <p style={{ color: "var(--text-muted)", margin: 0 }}>Create a new consultation to start recording insights.</p>
             </div>
             <div>
               <button style={{ padding: "12px 24px", backgroundColor: "#3b82f6", color: "white", border: "none", borderRadius: "8px", fontWeight: 600, cursor: "pointer", fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
@@ -2235,8 +2287,8 @@ function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNav
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }} className="animate-fade-in stagger-2">
           {/* Recent Consultations */}
           <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column" }}>
-            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#f8fafc", margin: "0 0 20px 0", display: "flex", alignItems: "center", gap: "8px" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "var(--text-main)", margin: "0 0 20px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
               Recent Consultations
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
@@ -2247,40 +2299,40 @@ function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNav
                   style={{
                     height: "82px",
                     padding: "12px 16px",
-                    backgroundColor: "rgba(15, 23, 42, 0.4)",
+                    backgroundColor: "var(--bg-panel)",
                     borderRadius: "12px",
                     cursor: "pointer",
                     transition: "all 0.2s ease",
-                    border: "1px solid rgba(148, 163, 184, 0.1)",
+                    border: "1px solid var(--border-main)",
                     display: "flex",
                     alignItems: "center",
                     gap: "16px",
                     boxSizing: "border-box"
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(30, 41, 59, 0.6)"; e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.3)"; e.currentTarget.style.transform = "translateX(4px)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.4)"; e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.1)"; e.currentTarget.style.transform = "translateX(0)"; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--bg-card)"; e.currentTarget.style.borderColor = "var(--accent-color)"; e.currentTarget.style.transform = "translateX(4px)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "var(--bg-panel)"; e.currentTarget.style.borderColor = "var(--border-main)"; e.currentTarget.style.transform = "translateX(0)"; }}
                 >
-                  <div style={{ width: "40px", height: "40px", borderRadius: "10px", backgroundColor: "rgba(59, 130, 246, 0.1)", color: "#60a5fa", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <div style={{ width: "40px", height: "40px", borderRadius: "10px", backgroundColor: "rgba(59, 130, 246, 0.1)", color: "var(--accent-color)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
-                      <span style={{ fontWeight: 600, color: "#e2e8f0", fontSize: "15px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.title}</span>
-                      <span style={{ fontSize: "11px", color: "#64748b", flexShrink: 0, fontWeight: 500 }}>{new Date(c.created_at).toLocaleDateString()}</span>
+                      <span style={{ fontWeight: 600, color: "var(--text-main)", fontSize: "15px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.title}</span>
+                      <span style={{ fontSize: "11px", color: "var(--text-muted)", flexShrink: 0, fontWeight: 500 }}>{new Date(c.created_at).toLocaleDateString()}</span>
                     </div>
-                    <div style={{ fontSize: "13px", color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <div style={{ fontSize: "13px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {c.patient?.name ? `Patient: ${c.patient.name}` : "Anonymous Session"}
                     </div>
                   </div>
                 </div>
               )) : (
-                <div style={{ padding: "24px", textAlign: "center", color: "#64748b", border: "1px dashed rgba(148, 163, 184, 0.2)", borderRadius: "8px" }}>No recent consultations</div>
+                <div style={{ padding: "24px", textAlign: "center", color: "var(--text-muted)", border: "1px dashed var(--border-main)", borderRadius: "8px" }}>No recent consultations</div>
               )}
             </div>
             <button
               onClick={() => onNavigate("consultations")}
-              style={{ padding: "12px", width: "100%", marginTop: "16px", backgroundColor: "transparent", border: "1px solid rgba(148, 163, 184, 0.2)", color: "#e2e8f0", borderRadius: "8px", cursor: "pointer", fontWeight: 500 }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)"}
+              style={{ padding: "12px", width: "100%", marginTop: "16px", backgroundColor: "transparent", border: "1px solid var(--border-main)", color: "var(--text-main)", borderRadius: "8px", cursor: "pointer", fontWeight: 500 }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(59, 130, 246, 0.05)"}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
             >
               View All Consultations
@@ -2289,8 +2341,8 @@ function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNav
 
           {/* Recent Patients */}
           <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column" }}>
-            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#f8fafc", margin: "0 0 20px 0", display: "flex", alignItems: "center", gap: "8px" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "var(--text-main)", margin: "0 0 20px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
               Recently Viewed Patients
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
@@ -2301,35 +2353,35 @@ function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNav
                   style={{
                     height: "82px",
                     padding: "12px 16px",
-                    backgroundColor: "rgba(15, 23, 42, 0.4)",
+                    backgroundColor: "var(--bg-panel)",
                     borderRadius: "12px",
                     cursor: "pointer",
                     transition: "all 0.2s ease",
-                    border: "1px solid rgba(148, 163, 184, 0.1)",
+                    border: "1px solid var(--border-main)",
                     display: "flex",
                     alignItems: "center",
                     gap: "16px",
                     boxSizing: "border-box"
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(30, 41, 59, 0.6)"; e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.3)"; e.currentTarget.style.transform = "translateX(4px)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.4)"; e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.1)"; e.currentTarget.style.transform = "translateX(0)"; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--bg-card)"; e.currentTarget.style.borderColor = "var(--accent-color)"; e.currentTarget.style.transform = "translateX(4px)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "var(--bg-panel)"; e.currentTarget.style.borderColor = "var(--border-main)"; e.currentTarget.style.transform = "translateX(0)"; }}
                 >
                   <div style={{ width: "40px", height: "40px", borderRadius: "10px", backgroundColor: "rgba(16, 185, 129, 0.1)", color: "#34d399", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, flexShrink: 0, fontSize: "16px" }}>
                     {p.name.charAt(0)}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, color: "#e2e8f0", fontSize: "15px", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
-                    <div style={{ fontSize: "13px", color: "#94a3b8" }}>ID: {p.display_id}</div>
+                    <div style={{ fontWeight: 600, color: "var(--text-main)", fontSize: "15px", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+                    <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>ID: {p.display_id}</div>
                   </div>
                 </div>
               )) : (
-                <div style={{ padding: "24px", textAlign: "center", color: "#64748b", border: "1px dashed rgba(148, 163, 184, 0.2)", borderRadius: "8px" }}>No recent patients</div>
+                <div style={{ padding: "24px", textAlign: "center", color: "var(--text-muted)", border: "1px dashed var(--border-main)", borderRadius: "8px" }}>No recent patients</div>
               )}
             </div>
             <button
               onClick={() => onNavigate("patients")}
-              style={{ padding: "12px", width: "100%", marginTop: "16px", backgroundColor: "transparent", border: "1px solid rgba(148, 163, 184, 0.2)", color: "#e2e8f0", borderRadius: "8px", cursor: "pointer", fontWeight: 500 }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)"}
+              style={{ padding: "12px", width: "100%", marginTop: "16px", backgroundColor: "transparent", border: "1px solid var(--border-main)", color: "var(--text-main)", borderRadius: "8px", cursor: "pointer", fontWeight: 500 }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(59, 130, 246, 0.05)"}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
             >
               View All Patients
@@ -2353,6 +2405,14 @@ function App() {
   const [focusedPatientId, setFocusedPatientId] = useState(null);
   const [backToTab, setBackToTab] = useState(null);
   const [showLogin, setShowLogin] = useState(window.location.pathname === "/login");
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+
+  useEffect(() => {
+    // Force dark mode for login and landing pages (when not logged in)
+    const effectiveTheme = isLoggedIn ? theme : 'dark';
+    document.body.setAttribute('data-theme', effectiveTheme);
+    localStorage.setItem('theme', theme);
+  }, [theme, isLoggedIn]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -2477,7 +2537,7 @@ function App() {
         )}
         {activeTab === "ai-insights" && <AIAnalytics key={`ai-insights-${refreshKey}`} />}
         {activeTab === "ask-ai" && <AskAI key={`ask-ai-${refreshKey}`} />}
-        {activeTab === "settings" && <Settings key={`settings-${refreshKey}`} onLogout={handleLogout} />}
+        {activeTab === "settings" && <Settings key={`settings-${refreshKey}`} onLogout={handleLogout} theme={theme} setTheme={setTheme} />}
       </div>
     </div>
   );

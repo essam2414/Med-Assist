@@ -89,7 +89,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed
                 boxSizing: 'border-box'
             }}>
                 {!isCollapsed && (
-                    <div style={{ fontWeight: 700, fontSize: '22px', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontWeight: 700, fontSize: '22px', whiteSpace: 'nowrap', color: 'var(--text-main)' }}>
                         <span className="text-gradient">Med</span> Assist
                     </div>
                 )}
@@ -98,7 +98,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed
                     style={{
                         background: 'transparent',
                         border: 'none',
-                        color: '#94a3b8',
+                        color: 'var(--text-muted)',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -140,7 +140,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed
                             borderRadius: '10px',
                             border: 'none',
                             background: activeTab === item.id ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-                            color: activeTab === item.id ? '#60a5fa' : '#94a3b8',
+                            color: activeTab === item.id ? '#60a5fa' : 'var(--text-muted)',
                             cursor: 'pointer',
                             transition: 'all 0.2s',
                             justifyContent: isCollapsed ? 'center' : 'flex-start',
@@ -157,7 +157,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed
                 ))}
 
                 {!isCollapsed && (
-                    <div style={{ marginTop: '24px', marginBottom: '6px', padding: '0 12px', fontSize: '11px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <div style={{ marginTop: '24px', marginBottom: '6px', padding: '0 12px', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         Current Session
                     </div>
                 )}
@@ -182,7 +182,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }}></div>
                             {!isCollapsed && (
-                                <div style={{ fontSize: '13px', fontWeight: 600, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {activeConsultation.title}
                                 </div>
                             )}
@@ -214,7 +214,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed
                     </div>
                 ) : (
                     !isCollapsed && (
-                        <div style={{ padding: '0 12px', fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>
+                        <div style={{ padding: '0 12px', fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
                             No active session
                         </div>
                     )
@@ -228,8 +228,8 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed
                     <div style={{
                         padding: isCollapsed ? '8px 0' : '10px',
                         borderRadius: '10px',
-                        background: isCollapsed ? 'transparent' : 'rgba(30, 41, 59, 0.4)',
-                        border: isCollapsed ? 'none' : '1px solid rgba(148, 163, 184, 0.1)',
+                        background: isCollapsed ? 'transparent' : 'var(--bg-panel)',
+                        border: isCollapsed ? 'none' : '1px solid var(--border-main)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: isCollapsed ? 'center' : 'flex-start',
@@ -253,8 +253,8 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed
                         </div>
                         {!isCollapsed && (
                             <div style={{ overflow: 'hidden' }}>
-                                <div style={{ fontSize: '13px', fontWeight: 600, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</div>
-                                <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'capitalize' }}>{user.role}</div>
+                                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</div>
+                                <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'capitalize' }}>{user.role}</div>
                             </div>
                         )}
                     </div>
@@ -271,7 +271,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, isCollapsed
                         borderRadius: '10px',
                         border: 'none',
                         background: activeTab === 'settings' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-                        color: activeTab === 'settings' ? '#60a5fa' : '#94a3b8',
+                        color: activeTab === 'settings' ? '#60a5fa' : 'var(--text-muted)',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
                         justifyContent: isCollapsed ? 'center' : 'flex-start',
