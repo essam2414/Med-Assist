@@ -119,14 +119,14 @@ export async function fetchConsultations() {
   return res.json();
 }
 
-export async function createConsultation(title, patient_id = null) {
+export async function createConsultation(title, patient_id = null, about = null) {
   const res = await fetch(`${API_URL}/consultations`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     credentials: "include",
-    body: JSON.stringify({ title, patient_id }),
+    body: JSON.stringify({ title, patient_id, about }),
   });
   if (res.status === 401) {
     throw new Error("unauthorized");

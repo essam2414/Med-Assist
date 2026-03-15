@@ -34,6 +34,15 @@ def migrate():
             print("Migration successful.")
         else:
             print("Column specialty already exists.")
+
+        # Check consultations table for about
+        if "about" not in columns:
+            print("Adding about column to consultations table...")
+            cursor.execute("ALTER TABLE consultations ADD COLUMN about TEXT")
+            conn.commit()
+            print("Migration successful.")
+        else:
+            print("Column about already exists.")
             
     except Exception as e:
         print(f"Migration failed: {e}")

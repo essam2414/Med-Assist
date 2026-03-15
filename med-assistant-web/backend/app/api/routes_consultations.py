@@ -27,6 +27,7 @@ def create_consultation(
         title=payload.title,
         doctor_id=current_user.id,
         patient_id=payload.patient_id,
+        about=payload.about,
         status="draft",
         created_at=datetime.utcnow(),
     )

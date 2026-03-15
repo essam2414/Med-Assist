@@ -9,6 +9,7 @@ from app.schemas.patient import Patient
 class ConsultationBase(BaseModel):
   title: str
   patient_id: Optional[int] = None
+  about: Optional[str] = None
 
 
 class ConsultationCreate(ConsultationBase):
