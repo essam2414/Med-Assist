@@ -6,7 +6,7 @@ import Sidebar from "./Sidebar";
 import MicPermission from "./MicPermission";
 import LandingPage from "./LandingPage";
 
-function Consultations({ onLogout, focusedConsultationId, setFocusedConsultationId, onBack, backLabel }) {
+function Consultations({ onLogout, focusedConsultationId, setFocusedConsultationId, onBack, backLabel, serverStatus }) {
   const [view, setView] = useState("list"); // "list", "create", "detail"
   const [consultations, setConsultations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,8 +87,19 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
       let finalPatientId = selectedPatientId;
 
       const created = await createConsultation(title, finalPatientId || null);
+      
+
+      // Ensure created object has patient info for immediate display
+      if (!created.patient && finalPatientId) {
+        const p = patients.find(pat => pat.id.toString() === finalPatientId.toString());
+        if (p) created.patient = p;
+      }
+
       setConsultations((prev) => [created, ...prev]);
-      setView("list");
+      setSelectedConsultation(created);
+      setMeetingUrl('');
+      setBotError('');
+      setView("detail");
     } catch (err) {
       if (err.message === "unauthorized") onLogout();
       else setError(err.message);
@@ -364,7 +375,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                           </div>
                         </div>
                         <div style={{ color: "var(--text-main)", lineHeight: "1.6", flex: 1, backgroundColor: "var(--bg-panel)", padding: "16px", borderRadius: "12px", border: "1px solid var(--border-main)", overflowWrap: "anywhere", wordBreak: "break-word" }}>
-                           {t.text}
+                          {t.text}
                         </div>
                       </div>
                     ))}
@@ -436,6 +447,16 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
               {updatedC.status !== 'draft' ? (
                 <div style={{ padding: '12px', backgroundColor: 'var(--bg-panel)', border: '1px solid var(--border-main)', borderRadius: '8px', color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', fontStyle: 'italic', marginTop: '10px' }}>
                   Bot only available for active consultations.
+                </div>
+              ) : (serverStatus?.services && (serverStatus.services.vexa_gateway !== 'active' || serverStatus.services.vexa_collector !== 'active')) ? (
+                <div style={{ padding: '16px', backgroundColor: 'rgba(234, 179, 8, 0.05)', border: '1px solid rgba(234, 179, 8, 0.2)', borderRadius: '12px', color: '#facc15', fontSize: '13px', textAlign: 'center', marginTop: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    Recording Server Offline
+                  </div>
+                  <div style={{ lineHeight: '1.5', opacity: 0.9 }}>
+                    The Vexa automation server is currently inactive. The meeting bot cannot be invited at this time.
+                  </div>
                 </div>
               ) : updatedC.recall_bot_id ? (
                 <button
@@ -1943,7 +1964,7 @@ function Settings({ onLogout, theme, setTheme }) {
                 {activeTab === 'preferences' && (
                   <div className="animate-fade-in">
                     <h2 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 32px 0", color: "var(--text-main)" }}>Application Preferences</h2>
-                    
+
                     <div style={{ display: "flex", flexDirection: "column", gap: "24px", maxWidth: "500px" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px", backgroundColor: "var(--bg-panel)", border: "1px solid var(--border-main)", borderRadius: "16px" }}>
                         <div>
@@ -2037,16 +2058,17 @@ function Settings({ onLogout, theme, setTheme }) {
 }
 
 
-function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNavigateToPatient }) {
+function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNavigateToPatient, serverStatus }) {
   const [consultations, setConsultations] = useState([]);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [expandedId, setExpandedId] = useState(null);
-  const [isServerActive, setIsServerActive] = useState(null);
-  const [serverDetails, setServerDetails] = useState(null);
   const [showStatusDetails, setShowStatusDetails] = useState(false);
   const statusDetailsRef = useRef(null);
+
+  const isServerActive = serverStatus.isActive;
+  const serverDetails = serverStatus.services;
 
   const loadData = () => {
     Promise.all([fetchConsultations(), fetchPatients()])
@@ -2064,31 +2086,14 @@ function Dashboard({ onLogout, user, onNavigate, onNavigateToConsultation, onNav
       .finally(() => setLoading(false));
   };
 
-  const checkStatus = () => {
-    checkServerStatus()
-      .then((data) => {
-        setServerDetails(data.services || null);
-        if (data.status === "ok") setIsServerActive(true);
-        else setIsServerActive(false);
-      })
-      .catch(() => {
-        setIsServerActive(false);
-        setServerDetails({
-          main_backend: "inactive",
-          vexa_gateway: "inactive",
-          vexa_collector: "inactive"
-        });
-      });
-  };
+
 
   useEffect(() => {
     loadData();
-    checkStatus();
 
     // Poll for updates every 3 seconds
     const intervalId = setInterval(() => {
       loadData();
-      checkStatus();
     }, 3000);
     const handleStatusChanged = () => loadData();
     window.addEventListener('consultationStatusChanged', handleStatusChanged);
@@ -2406,6 +2411,35 @@ function App() {
   const [backToTab, setBackToTab] = useState(null);
   const [showLogin, setShowLogin] = useState(window.location.pathname === "/login");
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [serverStatus, setServerStatus] = useState({ isActive: null, services: null });
+
+  const checkStatus = () => {
+    checkServerStatus()
+      .then((data) => {
+        setServerStatus({
+          isActive: data.status === "ok",
+          services: data.services || null
+        });
+      })
+      .catch(() => {
+        setServerStatus({
+          isActive: false,
+          services: {
+            main_backend: "inactive",
+            vexa_gateway: "inactive",
+            vexa_collector: "inactive"
+          }
+        });
+      });
+  };
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      checkStatus();
+      const intervalId = setInterval(checkStatus, 3000);
+      return () => clearInterval(intervalId);
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
     // Force dark mode for login and landing pages (when not logged in)
@@ -2502,6 +2536,7 @@ function App() {
             key={`dashboard-${refreshKey}`}
             onLogout={handleLogout}
             user={user}
+            serverStatus={serverStatus}
             onNavigate={(tab) => handleTabChange(tab)}
             onNavigateToConsultation={(id) => { setFocusedConsultationId(id); setActiveTab("consultations"); }}
             onNavigateToPatient={(id) => { setFocusedPatientId(id); setActiveTab("patients"); }}
@@ -2511,6 +2546,7 @@ function App() {
           <Consultations
             key={`consultations-${refreshKey}`}
             onLogout={handleLogout}
+            serverStatus={serverStatus}
             focusedConsultationId={focusedConsultationId}
             setFocusedConsultationId={setFocusedConsultationId}
             onBack={backToTab ? () => {
