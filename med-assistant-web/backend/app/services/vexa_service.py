@@ -116,16 +116,32 @@ class VexaService:
                     # That allows real-time segments (which can change) to be properly represented.
                     db.query(TranscriptEntry).filter(TranscriptEntry.consultation_id == consultation.id).delete()
                     
+                    doctor_email = consultation.doctor.email.lower()
+                    doctor_name = consultation.doctor.name.lower()
+                    
                     for seg in segments:
                         text = seg.get("text", "").strip()
-                        speaker = seg.get("speaker", "Unknown")
+                        raw_speaker = seg.get("speaker", "Unknown")
+                        
+                        # Try to identify if this is the doctor
+                        # Check speaker_email, then fallback to name comparison
+                        speaker_email = seg.get("speaker_email") or seg.get("email")
+                        
+                        is_doctor = False
+                        if speaker_email and speaker_email.lower() == doctor_email:
+                            is_doctor = True
+                        elif raw_speaker.lower() == doctor_name or raw_speaker.lower() == doctor_email:
+                            is_doctor = True
+                        
+                        speaker_label = "doctor" if is_doctor else "patient"
+                        
                         start_time = seg.get("start", 0.0)
                         end_time = seg.get("end", 0.0)
                         
                         if text:
                             new_entry = TranscriptEntry(
                                 consultation_id=consultation.id,
-                                speaker=speaker,
+                                speaker=speaker_label,
                                 text=text,
                                 start_time=start_time,
                                 end_time=end_time,
