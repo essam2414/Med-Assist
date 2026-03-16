@@ -15,6 +15,7 @@ class AIInsight(Base):
     key_points = Column(Text, nullable=True)          # JSON or newline text later
     suggested_questions = Column(Text, nullable=True) # JSON or text
     risk_flags = Column(Text, nullable=True)
+    emerging_themes = Column(Text, nullable=True)
     model_name = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 

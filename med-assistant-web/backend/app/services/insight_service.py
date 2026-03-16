@@ -11,24 +11,25 @@ from app.services.knowledge_base import knowledge_base
 
 SYSTEM_PROMPT = """You are an assistant for clinicians during a live consultation.
 
-Your goal is to generate brief, non-directive insights that help the doctor understand and document the consultation.
+Your goal is to generate structured, brief, and non-directive insights.
 
 Rules:
 - Do NOT give diagnoses, treatment recommendations, or dosing advice.
-- Only summarise or highlight what is explicitly present in the transcript or patient data.
-- Incorporate shared decision-making principles from clinical guidelines where relevant.
-- Focus on:
-  1. summarising main complaints and history so far
-  2. suggesting clarifications the doctor might want to ask
-  3. reminding the doctor of relevant existing conditions/allergies
-  4. referencing best practices for patient communication or shared decision making
+- Only summarise or highlight what is explicitly present in the transcript or patient record.
+- Incorporate shared decision-making and patient experience principles from NICE guidelines.
 
-You MUST respond ONLY with a valid JSON object matching this schema. Do not include any other text or markdown formatting outside the JSON:
+Output Format:
+1. Summary: 1-3 sentences summarising what has been discussed so far. Neutral and factual.
+2. Main problems mentioned today: 3-5 short bullet points max.
+3. Clarification prompts (for you to consider): 2-4 bullet points about missing standard details (onset, duration, severity, impact, red flags). Use standard structures (e.g., SOCRATES).
+4. Relevant Context / Risks: List prior diagnoses, meds, and allergies from the record.
+
+You MUST respond ONLY with a valid JSON object. Do not include markdown formatting:
 {
-  "summary": "1-3 sentences summarizing what has been said so far",
-  "key_points": "A few bullet points summarizing main complaints/history",
-  "suggested_questions": "A few non-directive clarifications or shared decision-making prompts",
-  "risk_flags": "Relevant existing conditions, allergies, or points of clinical uncertainty"
+  "summary": "Summary text",
+  "key_points": "Bullet list for Main problems",
+  "suggested_questions": "Bullet list for Clarification prompts",
+  "risk_flags": "Bullet list for Relevant Context / Risks"
 }
 """
 
@@ -46,6 +47,7 @@ def generate_live_insights(consultation_id: int, db: Session, doctor_id: int):
 
     # 2. Fetch Structured Patient Data
     patient_info = "No patient data available (Anonymous)."
+    
     if patient:
         patient_info = (
             f"Patient Name: {patient.name or 'N/A'}\n"
@@ -74,28 +76,26 @@ def generate_live_insights(consultation_id: int, db: Session, doctor_id: int):
     about_text = consultation.about or "Not specified."
 
     # 4. Fetch Relevant Guidelines (RAG)
-    # PERFORMANCE OPTIMIZATION: Reduce k to 2 for faster context processing
+    # PERFORMANCE OPTIMIZATION: k=2 for speed
     guideline_query = f"{about_text} {transcript_text[:500]}"
     relevant_guidelines = knowledge_base.query_guidelines(guideline_query, k=2)
 
     # 5. Construct the Prompt
     human_content = (
-        f"--- CONSULTATION CONTEXT ---\n"
-        f"Topic/About: {about_text}\n\n"
-        f"--- PATIENT PROFILE ---\n{patient_info}\n"
-        f"--- CLINICAL GUIDELINES ---\n{relevant_guidelines}\n\n"
-        f"--- TRANSCRIPT---\n{transcript_text}\n"
+        f"--- CURRENT CONSULTATION ---\n"
+        f"Topic/About: {about_text}\n"
+        f"Transcript Segment: \n{transcript_text}\n\n"
+        f"--- PATIENT RECORD ---\n{patient_info}\n"
+        f"--- REFERENCE CLINICAL GUIDELINES ---\n{relevant_guidelines}\n"
     )
 
-    print(f"--- Generating AI Insights for Consultation {consultation_id} ---")
-    print(f"Transcript Length: {len(transcript_text)} chars{' (Truncated)' if is_truncated else ''}")
-    print(f"Retrieved Guidelines from FAISS: {len(relevant_guidelines)} chars")
-
-    # 6. Invoke the Model (matching Ask AI config)
+    print(f"--- Generating Optimized AI Insights for Consultation {consultation_id} ---")
+    
+    # 6. Invoke the Model
     llm = ChatOllama(
         model="llama3.2", 
         temperature=0,
-        num_predict=400,    # Optimized for speed
+        num_predict=400,
         num_thread=8,
         num_ctx=4096,
         repeat_penalty=1.2,
@@ -110,12 +110,10 @@ def generate_live_insights(consultation_id: int, db: Session, doctor_id: int):
     response = llm.invoke(messages)
     content = response.content
 
-
     # 6. Parse Output
     try:
         parsed_data = json.loads(content)
         
-        # Helper to ensure we get a string back (supporting lists from AI)
         def ensure_string(val):
             if isinstance(val, list):
                 return "\n".join([f"- {item}" if not str(item).startswith("-") else str(item) for item in val])
@@ -129,10 +127,9 @@ def generate_live_insights(consultation_id: int, db: Session, doctor_id: int):
             "model_name": "llama3.2"
         }
     except json.JSONDecodeError:
-        print("Failed to parse JSON from AI model. Raw content:", content)
-        # Fallback if standard JSON mapping fails
+        print("Failed to parse JSON. Raw content:", content)
         return {
-            "summary": "AI successfully analyzed but returned improperly formatted text.",
+            "summary": "Error parsing AI output.",
             "key_points": str(content),
             "suggested_questions": "",
             "risk_flags": "",

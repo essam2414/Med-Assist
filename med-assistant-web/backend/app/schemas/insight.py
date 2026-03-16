@@ -8,6 +8,7 @@ class AIInsightBase(BaseModel):
     key_points: Optional[str] = None
     suggested_questions: Optional[str] = None
     risk_flags: Optional[str] = None
+    emerging_themes: Optional[str] = None
     model_name: Optional[str] = None
 
 

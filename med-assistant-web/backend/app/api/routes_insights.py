@@ -54,6 +54,7 @@ def generate_and_save_insight(
         key_points=insight_data.get("key_points", ""),
         suggested_questions=insight_data.get("suggested_questions", ""),
         risk_flags=insight_data.get("risk_flags", ""),
+        emerging_themes=insight_data.get("emerging_themes", ""),
         model_name=insight_data.get("model_name", "llama3.2"),
         created_at=datetime.utcnow(),
     )
