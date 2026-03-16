@@ -1,7 +1,7 @@
 // frontend/src/App.jsx
 import { useEffect, useState, useRef } from "react";
 import Login from "./Login";
-import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount, joinMeetingWithBot, disconnectBot, updateConsultationStatus, updateUserProfile, checkServerStatus } from "./api";
+import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount, joinMeetingWithBot, disconnectBot, updateConsultationStatus, updateUserProfile, checkServerStatus, generateConsultationInsights } from "./api";
 import Sidebar from "./Sidebar";
 import MicPermission from "./MicPermission";
 import LandingPage from "./LandingPage";
@@ -37,6 +37,25 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
   const [isJoining, setIsJoining] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [botError, setBotError] = useState('');
+
+  // AI Insights State
+  const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
+  const [insightError, setInsightError] = useState("");
+
+  const handleGenerateInsights = async (consultationId) => {
+    if (!consultationId) return;
+    setIsGeneratingInsights(true);
+    setInsightError("");
+    try {
+      await generateConsultationInsights(consultationId);
+      loadData(); // Reload consultations to get the new insights
+    } catch (e) {
+      setInsightError(e.message || "Failed to generate insights.");
+    } finally {
+      setIsGeneratingInsights(false);
+    }
+  };
+
 
   const activeConsultationObj = consultations.find(c => c.status === 'draft');
 
@@ -92,7 +111,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
 
       const created = await createConsultation(title, finalPatientId || null, about || null);
       setConsultations((prev) => [created, ...prev]);
-      
+
       // Select and redirect to the new consultation
       setSelectedConsultation(created);
       setMeetingUrl('');
@@ -195,12 +214,12 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>About this Consultation (Optional)</label>
               <textarea
-                style={{ 
-                  padding: "12px", 
-                  borderRadius: "8px", 
-                  border: "1px solid rgba(148, 163, 184, 0.2)", 
-                  backgroundColor: "rgba(15, 23, 42, 0.4)", 
-                  color: "#f8fafc", 
+                style={{
+                  padding: "12px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(148, 163, 184, 0.2)",
+                  backgroundColor: "rgba(15, 23, 42, 0.4)",
+                  color: "#f8fafc",
                   outline: "none",
                   minHeight: "44px",
                   resize: "none",
@@ -249,7 +268,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                   Skip (Anonymous)
                 </label>
               </div>
-              
+
               {selectedPatientId !== "" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px", animation: "fadeIn 0.2s ease" }}>
                   <div style={{ position: "relative" }}>
@@ -258,20 +277,20 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                       placeholder="Search by name or patient ID..."
                       value={patientSearch}
                       onChange={(e) => setPatientSearch(e.target.value)}
-                      style={{ 
-                        width: "100%", 
-                        padding: "10px 12px 10px 36px", 
-                        borderRadius: "8px", 
-                        border: "1px solid rgba(148, 163, 184, 0.2)", 
-                        backgroundColor: "rgba(15, 23, 42, 0.3)", 
-                        color: "#f8fafc", 
-                        fontSize: "14px", 
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px 10px 36px",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(148, 163, 184, 0.2)",
+                        backgroundColor: "rgba(15, 23, 42, 0.3)",
+                        color: "#f8fafc",
+                        fontSize: "14px",
                         outline: "none",
                         boxSizing: "border-box"
                       }}
                     />
-                    <svg 
-                      width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" 
+                    <svg
+                      width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2"
                       style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }}
                     >
                       <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -279,25 +298,25 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                   </div>
                   {patients.length > 0 ? (
                     (() => {
-                      const filtered = patients.filter(p => 
-                        (p.name || "").toLowerCase().includes(patientSearch.toLowerCase()) || 
+                      const filtered = patients.filter(p =>
+                        (p.name || "").toLowerCase().includes(patientSearch.toLowerCase()) ||
                         (p.display_id || "").toLowerCase().includes(patientSearch.toLowerCase())
                       );
-                      
+
                       return (
                         <>
                           <select
-                            style={{ 
-                              width: "100%", 
-                              padding: "14px", 
-                              borderRadius: "10px", 
-                              border: "1px solid rgba(59, 130, 246, 0.4)", 
-                              backgroundColor: "rgba(15, 23, 42, 0.6)", 
-                              color: "#f8fafc", 
-                              outline: "none", 
-                              fontSize: "15px", 
-                              cursor: "pointer", 
-                              boxShadow: "0 0 0 2px rgba(59,130,246,0.1)" 
+                            style={{
+                              width: "100%",
+                              padding: "14px",
+                              borderRadius: "10px",
+                              border: "1px solid rgba(59, 130, 246, 0.4)",
+                              backgroundColor: "rgba(15, 23, 42, 0.6)",
+                              color: "#f8fafc",
+                              outline: "none",
+                              fontSize: "15px",
+                              cursor: "pointer",
+                              boxShadow: "0 0 0 2px rgba(59,130,246,0.1)"
                             }}
                             value={selectedPatientId}
                             onChange={(e) => setSelectedPatientId(e.target.value)}
@@ -388,12 +407,12 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
               </span>
             </div>
             {updatedC.about && (
-              <p style={{ 
-                margin: "12px 0 0 0", 
-                color: "var(--text-muted)", 
-                fontSize: "15px", 
-                fontStyle: "italic", 
-                maxWidth: "800px", 
+              <p style={{
+                margin: "12px 0 0 0",
+                color: "var(--text-muted)",
+                fontSize: "15px",
+                fontStyle: "italic",
+                maxWidth: "800px",
                 lineHeight: "1.5",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
@@ -634,18 +653,70 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
             </div>
 
             <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-              <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "8px" }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                AI Summary & Insights
-              </h3>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                  AI Summary & Insights
+                </h3>
+                <button
+                  onClick={() => handleGenerateInsights(updatedC.id)}
+                  disabled={isGeneratingInsights}
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: "6px",
+                    background: isGeneratingInsights ? "rgba(59, 130, 246, 0.2)" : "var(--primary-gradient)",
+                    color: "white",
+                    border: "none",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    cursor: isGeneratingInsights ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {isGeneratingInsights ? "Generating..." : "Generate Insights"}
+                </button>
+              </div>
+              
+              {insightError && <div style={{ color: "#ef4444", fontSize: "13px", marginBottom: "12px" }}>{insightError}</div>}
+              
               <div style={{ padding: "16px", backgroundColor: "var(--bg-panel)", borderRadius: "10px", border: "1px solid var(--border-main)", flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0 }}>
                 {updatedC.insights ? (
-                  <div style={{ color: "var(--text-main)", lineHeight: "1.6", fontSize: "15px", whiteSpace: "pre-wrap", overflowWrap: "anywhere", wordBreak: "break-word" }}>
-                    {updatedC.insights.summary}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                    {updatedC.insights.summary && (
+                      <div>
+                        <strong style={{ color: "var(--text-main)", fontSize: "14px" }}>Summary:</strong>
+                        <div style={{ color: "var(--text-muted)", lineHeight: "1.6", fontSize: "14px", marginTop: "4px" }}>
+                          {updatedC.insights.summary}
+                        </div>
+                      </div>
+                    )}
+                    {updatedC.insights.key_points && (
+                      <div>
+                        <strong style={{ color: "var(--text-main)", fontSize: "14px" }}>Key Concerns & Problems:</strong>
+                        <div style={{ color: "var(--text-muted)", lineHeight: "1.6", fontSize: "14px", marginTop: "4px", whiteSpace: "pre-wrap" }}>
+                          {updatedC.insights.key_points}
+                        </div>
+                      </div>
+                    )}
+                    {updatedC.insights.suggested_questions && (
+                      <div>
+                        <strong style={{ color: "#3b82f6", fontSize: "14px" }}>Suggested Clarifications:</strong>
+                        <div style={{ color: "var(--text-muted)", lineHeight: "1.6", fontSize: "14px", marginTop: "4px", whiteSpace: "pre-wrap" }}>
+                          {updatedC.insights.suggested_questions}
+                        </div>
+                      </div>
+                    )}
+                    {updatedC.insights.risk_flags && (
+                      <div>
+                        <strong style={{ color: "#ef4444", fontSize: "14px" }}>Relevant Context / Risks:</strong>
+                        <div style={{ color: "var(--text-muted)", lineHeight: "1.6", fontSize: "14px", marginTop: "4px", whiteSpace: "pre-wrap" }}>
+                          {updatedC.insights.risk_flags}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div style={{ color: "var(--text-muted)", fontStyle: "italic", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-                    No insights generated yet. Recordings will automatically generate insights.
+                    No insights generated yet. Click "Generate Insights" to summarize the current conversation.
                   </div>
                 )}
               </div>

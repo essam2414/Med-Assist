@@ -353,3 +353,21 @@ export async function checkServerStatus() {
   if (!res.ok) throw new Error("Server error");
   return res.json();
 }
+
+export async function generateConsultationInsights(consultationId) {
+  const res = await fetch(`${API_URL}/insights/generate/${consultationId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to generate AI insights");
+  }
+  return res.json();
+}
