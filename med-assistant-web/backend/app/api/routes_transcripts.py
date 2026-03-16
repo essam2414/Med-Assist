@@ -1,6 +1,6 @@
 import tempfile
 import os
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
@@ -11,12 +11,14 @@ from app.models.consultation import Consultation as ConsultationModel
 from app.schemas.transcript import TranscriptEntry, TranscriptEntryCreate
 from app.models.user import User
 from app.services.stt_service import transcribe_audio_async
+from app.services.live_insight_service import evaluate_and_generate_live_insights
 import asyncio
 
 router = APIRouter(prefix="/transcripts", tags=["transcripts"])
 
 @router.post("/upload", response_model=List[TranscriptEntry])
 async def upload_and_transcribe(
+    background_tasks: BackgroundTasks,
     audio_file: UploadFile = File(...),
     mic_file: UploadFile = File(...),
     consultation_id: int = Form(...),
@@ -91,12 +93,16 @@ async def upload_and_transcribe(
     for t in created_transcripts:
         db.refresh(t)
         
+    # Trigger live insights evaluation in the background
+    background_tasks.add_task(evaluate_and_generate_live_insights, consultation.id)
+        
     return created_transcripts
 
 @router.post("/", response_model=TranscriptEntry)
 def create_transcript(
     payload: TranscriptEntryCreate,
     consultation_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -120,6 +126,9 @@ def create_transcript(
     db.add(t)
     db.commit()
     db.refresh(t)
+    
+    background_tasks.add_task(evaluate_and_generate_live_insights, consultation.id)
+    
     return t
 
 @router.get("/", response_model=List[TranscriptEntry])

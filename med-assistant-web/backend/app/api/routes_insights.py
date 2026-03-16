@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
@@ -9,13 +9,41 @@ from app.models.consultation import Consultation as ConsultationModel
 from app.schemas.insight import AIInsight, AIInsightCreate
 from app.models.user import User
 from app.services.insight_service import generate_live_insights
+from app.services.live_insight_service import evaluate_and_generate_live_insights
 
 router = APIRouter(prefix="/insights", tags=["insights"])
 
 from pydantic import BaseModel
 
+from app.models.live_insight import LiveInsight as LiveInsightModel
+from app.schemas.live_insight import LiveInsight as LiveInsightSchema
+
 class GenerateInsightsRequest(BaseModel):
     pass
+
+@router.get("/live/{consultation_id}", response_model=List[LiveInsightSchema])
+def get_live_insights(
+    consultation_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    consultation = db.query(ConsultationModel).filter(
+        ConsultationModel.id == consultation_id,
+        ConsultationModel.doctor_id == current_user.id
+    ).first()
+    
+    if not consultation:
+        raise HTTPException(status_code=404, detail="Consultation not found")
+        
+    insights = db.query(LiveInsightModel).filter(
+        LiveInsightModel.consultation_id == consultation_id
+    ).order_by(LiveInsightModel.created_at.asc()).all()
+
+    # Trigger background evaluation so the NEXT poll might have fresh data
+    background_tasks.add_task(evaluate_and_generate_live_insights, consultation_id)
+    
+    return insights
 
 @router.get("/generate/{consultation_id}", response_model=AIInsight)
 def generate_and_save_insight(

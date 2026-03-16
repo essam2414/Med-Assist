@@ -1,7 +1,7 @@
 // frontend/src/App.jsx
 import { useEffect, useState, useRef } from "react";
 import Login from "./Login";
-import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount, joinMeetingWithBot, disconnectBot, updateConsultationStatus, updateUserProfile, checkServerStatus, generateConsultationInsights } from "./api";
+import { fetchConsultations, createConsultation, deleteConsultation, logout, fetchCurrentUser, fetchPatients, createPatient, updatePatient, deletePatient, sendChatMessage, fetchChatSessions, createChatSession, fetchChatSession, deleteChatSession, changePassword, deleteAccount, joinMeetingWithBot, disconnectBot, updateConsultationStatus, updateUserProfile, checkServerStatus, generateConsultationInsights, fetchLiveInsights } from "./api";
 import Sidebar from "./Sidebar";
 import MicPermission from "./MicPermission";
 import LandingPage from "./LandingPage";
@@ -42,6 +42,27 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
   const [insightMode, setInsightMode] = useState("manual"); // "manual" or "live"
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
   const [insightError, setInsightError] = useState("");
+  const [liveInsights, setLiveInsights] = useState([]);
+  
+  useEffect(() => {
+    let intervalId;
+    if (view === "detail" && selectedConsultation && insightMode === "live") {
+      const loadLiveInsights = async () => {
+        try {
+          const data = await fetchLiveInsights(selectedConsultation.id);
+          setLiveInsights(data);
+        } catch (e) {
+          console.error("Failed to fetch live insights:", e);
+        }
+      };
+      
+      loadLiveInsights(); // initial fetch
+      intervalId = setInterval(loadLiveInsights, 5000);
+    } else {
+      setLiveInsights([]);
+    }
+    return () => clearInterval(intervalId);
+  }, [view, selectedConsultation?.id, insightMode]);
 
   const handleGenerateInsights = async (consultationId) => {
     if (!consultationId) return;
@@ -724,15 +745,15 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                       border: "1px solid rgba(16, 185, 129, 0.3)",
                       fontSize: "13px",
                       fontWeight: 700,
-                      cursor: "wait",
+                      cursor: "default",
                       display: "flex",
                       alignItems: "center",
                       gap: "6px"
                     }}
-                    title="Real-time insights coming soon!"
+                    title="Real-time insights are active"
                   >
                     <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#10b981", animation: "pulse 2s infinite" }}></div>
-                    Live Mode
+                    Live Mode (Polling)
                   </button>
                 )}
               </div>
@@ -740,48 +761,102 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
               {insightError && <div style={{ color: "#ef4444", fontSize: "13px", marginBottom: "12px" }}>{insightError}</div>}
               
               <div style={{ padding: "16px", backgroundColor: "var(--bg-panel)", borderRadius: "10px", border: "1px solid var(--border-main)", flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0 }}>
-                {updatedC.insights ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                    {updatedC.insights.summary && (
-                      <div>
-                        <strong style={{ color: "var(--text-main)", fontSize: "14px" }}>Summary:</strong>
-                        <div style={{ color: "var(--text-muted)", lineHeight: "1.6", fontSize: "14px", marginTop: "4px" }}>
-                          {updatedC.insights.summary}
+                {insightMode === "manual" ? (
+                  updatedC.insights ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                      {updatedC.insights.summary && (
+                        <div>
+                          <strong style={{ color: "var(--text-main)", fontSize: "14px" }}>Summary:</strong>
+                          <div style={{ color: "var(--text-muted)", lineHeight: "1.6", fontSize: "14px", marginTop: "4px" }}>
+                            {updatedC.insights.summary}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {updatedC.insights.key_points && (
-                      <div>
-                        <strong style={{ color: "var(--text-main)", fontSize: "14px" }}>Main problems mentioned today:</strong>
-                        <div style={{ color: "var(--text-muted)", lineHeight: "1.6", fontSize: "14px", marginTop: "4px", whiteSpace: "pre-wrap" }}>
-                          {updatedC.insights.key_points}
+                      )}
+                      {updatedC.insights.key_points && (
+                        <div>
+                          <strong style={{ color: "var(--text-main)", fontSize: "14px" }}>Main problems mentioned today:</strong>
+                          <div style={{ color: "var(--text-muted)", lineHeight: "1.6", fontSize: "14px", marginTop: "4px", whiteSpace: "pre-wrap" }}>
+                            {updatedC.insights.key_points}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {updatedC.insights.suggested_questions && (
-                      <div>
-                        <strong style={{ color: "#3b82f6", fontSize: "14px" }}>Clarification prompts (for you to consider):</strong>
-                        <div style={{ color: "var(--text-muted)", lineHeight: "1.6", fontSize: "14px", marginTop: "4px", whiteSpace: "pre-wrap" }}>
-                          {updatedC.insights.suggested_questions}
+                      )}
+                      {updatedC.insights.suggested_questions && (
+                        <div>
+                          <strong style={{ color: "#3b82f6", fontSize: "14px" }}>Clarification prompts (for you to consider):</strong>
+                          <div style={{ color: "var(--text-muted)", lineHeight: "1.6", fontSize: "14px", marginTop: "4px", whiteSpace: "pre-wrap" }}>
+                            {updatedC.insights.suggested_questions}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {updatedC.insights.risk_flags && (
-                      <div style={{ padding: "12px", backgroundColor: "rgba(225, 29, 72, 0.05)", borderRadius: "8px", border: "1px solid rgba(225, 29, 72, 0.1)" }}>
-                        <strong style={{ color: "#f43f5e", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                          Relevant Context / Risks
-                        </strong>
-                        <div style={{ color: "var(--text-muted)", lineHeight: "1.6", fontSize: "14px", marginTop: "8px", whiteSpace: "pre-wrap" }}>
-                          {updatedC.insights.risk_flags}
+                      )}
+                      {updatedC.insights.risk_flags && (
+                        <div style={{ padding: "12px", backgroundColor: "rgba(225, 29, 72, 0.05)", borderRadius: "8px", border: "1px solid rgba(225, 29, 72, 0.1)" }}>
+                          <strong style={{ color: "#f43f5e", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            Relevant Context / Risks
+                          </strong>
+                          <div style={{ color: "var(--text-muted)", lineHeight: "1.6", fontSize: "14px", marginTop: "8px", whiteSpace: "pre-wrap" }}>
+                            {updatedC.insights.risk_flags}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ color: "var(--text-muted)", fontStyle: "italic", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                      No insights generated yet. Click "Generate Insights" to summarize the current conversation.
+                    </div>
+                  )
                 ) : (
-                  <div style={{ color: "var(--text-muted)", fontStyle: "italic", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-                    No insights generated yet. Click "Generate Insights" to summarize the current conversation.
-                  </div>
+                  /* LIVE MODE INSIGHTS */
+                  liveInsights.length > 0 ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                      {[...liveInsights].reverse().map((insight, idx) => (
+                        <div key={insight.id} style={{ display: "flex", flexDirection: "column", gap: "12px", paddingBottom: "16px", borderBottom: idx === liveInsights.length - 1 ? "none" : "1px dashed var(--border-main)" }}>
+                          <div style={{ fontSize: "12px", color: "var(--text-muted)", display: "flex", justifyContent: "space-between" }}>
+                            <span>Update {liveInsights.length - idx}</span>
+                            <span>{new Date(insight.created_at).toLocaleTimeString()}</span>
+                          </div>
+                          
+                          {insight.summary && (
+                            <div>
+                              <strong style={{ color: "var(--text-main)", fontSize: "13px" }}>Summary:</strong>
+                              <div style={{ color: "var(--text-muted)", lineHeight: "1.5", fontSize: "13px", marginTop: "4px" }}>
+                                {insight.summary}
+                              </div>
+                            </div>
+                          )}
+                          {insight.key_points && (
+                            <div>
+                              <strong style={{ color: "#10b981", fontSize: "13px" }}>New Problems:</strong>
+                              <div style={{ color: "var(--text-muted)", lineHeight: "1.5", fontSize: "13px", marginTop: "4px", whiteSpace: "pre-wrap" }}>
+                                {insight.key_points}
+                              </div>
+                            </div>
+                          )}
+                          {insight.suggested_questions && (
+                            <div>
+                              <strong style={{ color: "#3b82f6", fontSize: "13px" }}>To Consider:</strong>
+                              <div style={{ color: "var(--text-muted)", lineHeight: "1.5", fontSize: "13px", marginTop: "4px", whiteSpace: "pre-wrap" }}>
+                                {insight.suggested_questions}
+                              </div>
+                            </div>
+                          )}
+                          {insight.risk_flags && (
+                            <div>
+                              <strong style={{ color: "#f43f5e", fontSize: "13px" }}>Risks/Context:</strong>
+                              <div style={{ color: "var(--text-muted)", lineHeight: "1.5", fontSize: "13px", marginTop: "4px", whiteSpace: "pre-wrap" }}>
+                                {insight.risk_flags}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ color: "var(--text-muted)", fontStyle: "italic", fontSize: "14px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: "12px" }}>
+                      <div className="pulsing-dot" style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#10b981", animation: "pulse 2s infinite" }}></div>
+                      Listening for significant conversation updates...
+                    </div>
+                  )
                 )}
               </div>
             </div>

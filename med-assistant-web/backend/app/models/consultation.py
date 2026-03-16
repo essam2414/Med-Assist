@@ -26,3 +26,4 @@ class Consultation(Base):
 
     transcripts = relationship("TranscriptEntry", back_populates="consultation", cascade="all, delete-orphan")
     insights = relationship("AIInsight", back_populates="consultation", uselist=False, cascade="all, delete-orphan")
+    live_insights = relationship("LiveInsight", back_populates="consultation", cascade="all, delete-orphan")

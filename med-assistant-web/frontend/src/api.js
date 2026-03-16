@@ -371,3 +371,21 @@ export async function generateConsultationInsights(consultationId) {
   }
   return res.json();
 }
+
+export async function fetchLiveInsights(consultationId) {
+  const res = await fetch(`${API_URL}/insights/live/${consultationId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to fetch live insights");
+  }
+  return res.json();
+}

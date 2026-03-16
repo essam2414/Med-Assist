@@ -1,0 +1,45 @@
+Doctor: Good morning. I understand you've been having some chest pain recently?
+
+Patient: Yes, doctor. It's happened a few times over the last week. 
+
+Doctor: I'm sorry to hear that. Can you describe what the pain feels like?
+
+Patient: It's like a heavy pressure, right in the middle of my chest. Almost like someone is sitting on it.
+
+Doctor: Does the pain go anywhere else? Like your jaw, neck, or arms?
+
+Patient: Sometimes it feels like it's Tightening in my left shoulder and down the arm a bit.
+
+Doctor: And how long does it usually last when it happens?
+
+Patient: Usually about five or ten minutes.
+
+Doctor: What are you doing when the pain starts?
+
+Patient: It's mostly when I'm active. Like this morning, I was walking to the shop and had to stop because it caught me.
+
+Doctor: Does anything make it better?
+
+Patient: If I stop and rest for a few minutes, it usually eases off.
+
+Doctor: Are you feeling any other symptoms with it? Any nausea, sweating, or feeling short of breath?
+
+Patient: I do get a bit breathless, but no sweating or feeling sick.
+
+Doctor: Have you ever had anything like this before? Any history of heart problems?
+
+Patient: No, nothing like this. 
+
+Doctor: I'll check your records, but do you have any other health conditions, like high blood pressure or diabetes?
+
+Patient: I have high blood pressure, and I've been taking tablets for that for a few years.
+
+Doctor: Do you smoke at all?
+
+Patient: Yes, I've smoked about 10 a day for twenty years.
+
+Doctor: Thank you. Based on what you've told me, the fact that it's a constricting discomfort brought on by exertion and relieved by rest sounds like typical angina. We need to do some more tests, starting with an ECG right now.
+
+Patient: Okay, doctor. That makes sense.
+
+Doctor: I'll also arrange for some blood tests, including your cholesterol and glucose, and we might need to refer you for further cardiac imaging depending on the ECG results.

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session, joinedload
 from datetime import datetime
 from typing import List
@@ -10,6 +10,7 @@ from app.models.insight import AIInsight
 from app.schemas.consultation import Consultation, ConsultationCreate
 from app.models.user import User
 from app.services.vexa_service import vexa_service
+from app.services.live_insight_service import evaluate_and_generate_live_insights
 import logging
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ def create_consultation(
 
 @router.get("/", response_model=List[Consultation])
 async def list_consultations(
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -58,6 +60,7 @@ async def list_consultations(
     for c in consultations:
         if c.status == "draft" and c.recall_bot_id:
             await vexa_service.sync_transcripts(c, db)
+            background_tasks.add_task(evaluate_and_generate_live_insights, c.id)
             
     # Refresh the instances heavily joined if any synced
     if any(c.status == "draft" and c.recall_bot_id for c in consultations):
@@ -136,6 +139,7 @@ async def update_consultation(
 
 @router.get("/active")
 async def get_active_consultation(
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -155,5 +159,6 @@ async def get_active_consultation(
     )
     if c and c.recall_bot_id:
         await vexa_service.sync_transcripts(c, db)
+        background_tasks.add_task(evaluate_and_generate_live_insights, c.id)
         db.refresh(c)
     return c
