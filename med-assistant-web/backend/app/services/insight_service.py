@@ -7,6 +7,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from app.models.consultation import Consultation
 from app.models.patient import Patient
 from app.models.transcript import TranscriptEntry
+from app.services.knowledge_base import knowledge_base
 
 SYSTEM_PROMPT = """You are an assistant for clinicians during a live consultation.
 
@@ -15,17 +16,19 @@ Your goal is to generate brief, non-directive insights that help the doctor unde
 Rules:
 - Do NOT give diagnoses, treatment recommendations, or dosing advice.
 - Only summarise or highlight what is explicitly present in the transcript or patient data.
+- Incorporate shared decision-making principles from clinical guidelines where relevant.
 - Focus on:
   1. summarising main complaints and history so far
   2. suggesting clarifications the doctor might want to ask
   3. reminding the doctor of relevant existing conditions/allergies
+  4. referencing best practices for patient communication or shared decision making
 
 You MUST respond ONLY with a valid JSON object matching this schema. Do not include any other text or markdown formatting outside the JSON:
 {
   "summary": "1-3 sentences summarizing what has been said so far",
   "key_points": "A few bullet points summarizing main complaints/history",
-  "suggested_questions": "A few non-directive clarifications the doctor might want to ask",
-  "risk_flags": "Relevant existing conditions or allergies as a reminder"
+  "suggested_questions": "A few non-directive clarifications or shared decision-making prompts",
+  "risk_flags": "Relevant existing conditions, allergies, or points of clinical uncertainty"
 }
 """
 
@@ -60,26 +63,39 @@ def generate_live_insights(consultation_id: int, db: Session, doctor_id: int):
     if transcripts:
         transcript_text = "\n".join([f"[{t.speaker}]: {t.text}" for t in transcripts])
     
+    # --- PERFORMANCE OPTIMIZATION: Transcript Windowing ---
+    MAX_TRANSCRIPT_CHARS = 6000
+    is_truncated = False
+    if len(transcript_text) > MAX_TRANSCRIPT_CHARS:
+        transcript_text = "[... Earlier transcript omitted for speed ...]\n" + transcript_text[-MAX_TRANSCRIPT_CHARS:]
+        is_truncated = True
+
     # 3b. Consultation About
     about_text = consultation.about or "Not specified."
 
-    # 4. Construct the Prompt
+    # 4. Fetch Relevant Guidelines (RAG)
+    # PERFORMANCE OPTIMIZATION: Reduce k to 2 for faster context processing
+    guideline_query = f"{about_text} {transcript_text[:500]}"
+    relevant_guidelines = knowledge_base.query_guidelines(guideline_query, k=2)
+
+    # 5. Construct the Prompt
     human_content = (
         f"--- CONSULTATION CONTEXT ---\n"
         f"Topic/About: {about_text}\n\n"
         f"--- PATIENT PROFILE ---\n{patient_info}\n"
-        f"--- TRANSCRIPT ---\n{transcript_text}\n"
+        f"--- CLINICAL GUIDELINES ---\n{relevant_guidelines}\n\n"
+        f"--- TRANSCRIPT---\n{transcript_text}\n"
     )
 
     print(f"--- Generating AI Insights for Consultation {consultation_id} ---")
-    print(f"Transcript Length: {len(transcript_text)} chars")
+    print(f"Transcript Length: {len(transcript_text)} chars{' (Truncated)' if is_truncated else ''}")
+    print(f"Retrieved Guidelines from FAISS: {len(relevant_guidelines)} chars")
 
-
-    # 5. Invoke the Model (matching Ask AI config)
+    # 6. Invoke the Model (matching Ask AI config)
     llm = ChatOllama(
         model="llama3.2", 
         temperature=0,
-        num_predict=400,    # Slightly larger to return full JSON
+        num_predict=400,    # Optimized for speed
         num_thread=8,
         num_ctx=4096,
         repeat_penalty=1.2,
@@ -93,6 +109,7 @@ def generate_live_insights(consultation_id: int, db: Session, doctor_id: int):
     
     response = llm.invoke(messages)
     content = response.content
+
 
     # 6. Parse Output
     try:
