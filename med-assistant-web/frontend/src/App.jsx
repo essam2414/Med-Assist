@@ -43,6 +43,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
   const [insightError, setInsightError] = useState("");
   const [liveInsights, setLiveInsights] = useState([]);
+  const [showGuide, setShowGuide] = useState(false);
   
   useEffect(() => {
     let intervalId;
@@ -897,24 +898,60 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
           </p>
         </div>
         <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-          <button
-            onClick={handleCreateView}
-            disabled={!!activeConsultationObj}
-            style={{
-              background: activeConsultationObj ? "rgba(148, 163, 184, 0.1)" : "var(--primary-gradient)",
-              border: activeConsultationObj ? "1px solid rgba(148, 163, 184, 0.2)" : "none",
-              padding: "12px 24px",
-              borderRadius: "8px",
-              color: activeConsultationObj ? "#64748b" : "white",
-              fontWeight: 600,
-              fontSize: "15px",
-              cursor: activeConsultationObj ? "not-allowed" : "pointer",
-              boxShadow: activeConsultationObj ? "none" : "0 4px 12px rgba(59, 130, 246, 0.3)",
-              transition: "all 0.2s ease"
-            }}
-          >
-            + New Consultation
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => setShowGuide(true)}
+              style={{
+                background: "rgba(59, 130, 246, 0.08)",
+                border: "1px solid rgba(59, 130, 246, 0.2)",
+                padding: "10px 16px",
+                borderRadius: "10px",
+                color: "#60a5fa",
+                fontWeight: 600,
+                fontSize: "14px",
+                cursor: "pointer",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(59, 130, 246, 0.15)";
+                e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.4)";
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.boxShadow = "0 6px 16px rgba(59, 130, 246, 0.15)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(59, 130, 246, 0.08)";
+                e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.2)";
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.1)";
+              }}
+              title="See Clinical Assistant Guide"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              Clinical Guide
+            </button>
+            <button
+              onClick={handleCreateView}
+              disabled={!!activeConsultationObj}
+              style={{
+                background: activeConsultationObj ? "rgba(148, 163, 184, 0.1)" : "var(--primary-gradient)",
+                border: activeConsultationObj ? "1px solid rgba(148, 163, 184, 0.2)" : "none",
+                padding: "12px 24px",
+                borderRadius: "8px",
+                color: activeConsultationObj ? "#64748b" : "white",
+                fontWeight: 600,
+                fontSize: "15px",
+                cursor: activeConsultationObj ? "not-allowed" : "pointer",
+                boxShadow: activeConsultationObj ? "none" : "0 4px 12px rgba(59, 130, 246, 0.3)",
+                transition: "all 0.2s ease"
+              }}
+            >
+              + New Consultation
+            </button>
+          </div>
           {activeConsultationObj && (
             <div style={{ padding: "8px 12px", backgroundColor: "rgba(234, 179, 8, 0.1)", border: "1px solid rgba(234, 179, 8, 0.2)", borderRadius: "8px", color: "#facc15", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px", fontWeight: 500 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
@@ -1054,6 +1091,92 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
           </div>
         )}
       </div>
+
+      {showGuide && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+          backgroundColor: "rgba(10, 15, 30, 0.85)", backdropFilter: "blur(12px)",
+          zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center",
+          padding: "20px", animation: "fadeIn 0.3s ease"
+        }} onClick={() => setShowGuide(false)}>
+          <div style={{
+            width: "100%", maxWidth: "640px", backgroundColor: "var(--bg-card)",
+            border: "1px solid rgba(148, 163, 184, 0.2)", borderRadius: "20px",
+            maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 50px rgba(0,0,0,0.5)",
+            display: "flex", flexDirection: "column", animation: "slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)"
+          }} onClick={e => e.stopPropagation()}>
+            
+            <div style={{ 
+              padding: "24px 32px", 
+              background: "linear-gradient(to right, rgba(59, 130, 246, 0.05), transparent)",
+              borderBottom: "1px solid var(--border-main)", 
+              display: "flex", justifyContent: "space-between", alignItems: "center" 
+            }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "var(--text-main)", display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ padding: "8px", borderRadius: "10px", background: "rgba(59, 130, 246, 0.15)", color: "#3b82f6", display: "flex" }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  </div>
+                  System Overview
+                </h2>
+                <p style={{ margin: "4px 0 0 42px", fontSize: "13px", color: "var(--text-muted)" }}>How your AI Clinical Assistant works</p>
+              </div>
+              <button onClick={() => setShowGuide(false)} style={{ background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "28px", padding: "4px" }}>&times;</button>
+            </div>
+
+            <div style={{ padding: "32px", display: "flex", flexDirection: "column", gap: "32px" }}>
+              
+              <div style={{ display: "flex", gap: "20px" }}>
+                <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "rgba(59, 130, 246, 0.1)", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, flexShrink: 0 }}>1</div>
+                <div>
+                  <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--text-main)", marginBottom: "8px" }}>Connecting Vexa.ai</h3>
+                  <p style={{ color: "var(--text-muted)", fontSize: "14px", lineHeight: "1.6" }}>
+                    Paste your <strong>Google Meet URL</strong> into an active consultation and click <strong>Invite</strong>. 
+                    Admit the Vexa bot to your call to start real-time transcription.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "20px" }}>
+                <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "rgba(16, 185, 129, 0.1)", color: "#10b981", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, flexShrink: 0 }}>2</div>
+                <div>
+                  <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--text-main)", marginBottom: "8px" }}>Live AI Insights</h3>
+                  <p style={{ color: "var(--text-muted)", fontSize: "14px", lineHeight: "1.6" }}>
+                    <strong>Automated & Incremental:</strong> The AI monitors the dialogue every few minutes to flag clinical risks, new problems, and SOCRATES clarification prompts in real-time.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "20px" }}>
+                <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "rgba(139, 92, 246, 0.1)", color: "#8b5cf6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, flexShrink: 0 }}>3</div>
+                <div>
+                  <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--text-main)", marginBottom: "8px" }}>Manual Summary</h3>
+                  <p style={{ color: "var(--text-muted)", fontSize: "14px", lineHeight: "1.6" }}>
+                    Best used at the end of a session to analyze the <strong>entire</strong> dialogue as a single holistic oversight.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "20px" }}>
+                <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "rgba(245, 158, 11, 0.1)", color: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, flexShrink: 0 }}>4</div>
+                <div>
+                  <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--text-main)", marginBottom: "8px" }}>AI Data Sources</h3>
+                  <p style={{ color: "var(--text-muted)", fontSize: "14px", lineHeight: "1.6" }}>
+                    The AI generates insights by aggregating **Patient History**, the **Live Transcript**, and evidence-based **NICE Guidelines** to ensure clinical safety.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+            <div style={{ padding: "24px 32px", borderTop: "1px solid var(--border-main)", backgroundColor: "rgba(15, 23, 42, 0.3)", display: "flex", justifyContent: "flex-end" }}>
+              <button onClick={() => setShowGuide(false)} style={{ padding: "12px 32px", background: "var(--primary-gradient)", border: "none", borderRadius: "12px", color: "white", fontWeight: 600, cursor: "pointer", fontSize: "14px", boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)" }}>
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

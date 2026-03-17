@@ -86,6 +86,12 @@ async function pollForActiveConsultation() {
     if (data && data.id) {
       clearInterval(consultationPollInterval);
       consultationPollInterval = null;
+      
+      // If this is a different consultation than what we last knew about, clear state
+      if (!currentConsultation || currentConsultation.id !== data.id) {
+        clearInsightsState();
+      }
+
       currentConsultation = data;
       renderConsultationCard(data);
       showView('active');
@@ -142,8 +148,11 @@ function startInsightsPolling(consultationId) {
           currentConsultation = data;
           renderConsultationCard(data);
           await fetchAndRenderInsights(consultationId);
-        } else if (!data || !data.id) {
-          // Consultation ended
+        } else if (data && data.id && data.id !== consultationId) {
+          // A DIFFERENT consultation is now active
+          handleConsultationEnded(consultationId);
+        } else {
+          // No active consultation
           handleConsultationEnded(consultationId);
         }
       } else if (res.status === 404) {
@@ -159,20 +168,29 @@ async function handleConsultationEnded(consultationId) {
   stopInsightsPolling();
   // Do one final insights fetch so the last update is captured
   await fetchAndRenderInsights(consultationId);
-  // Update UI to finished state
-  if (currentConsultation) {
+  
+  if (currentConsultation && currentConsultation.id === consultationId) {
     currentConsultation.status = 'completed';
     renderConsultationCard(currentConsultation);
   }
+
   // Start polling for a new consultation
   setTimeout(() => {
-    currentConsultation = null;
-    renderedInsightIds.clear();
-    insightsList.innerHTML = '';
-    insightsList.appendChild(emptyState);
-    insightCount.textContent = '0 updates';
-    startConsultationPolling();
-  }, 15000); // Wait 15s showing "Finished" before resetting
+    // Only reset if we are still looking at the same (now ended) consultation
+    if (currentConsultation && currentConsultation.id === consultationId) {
+      clearInsightsState();
+      startConsultationPolling();
+    }
+  }, 10000); // reduced to 10s
+}
+
+function clearInsightsState() {
+  renderedInsightIds.clear();
+  insightsList.innerHTML = '';
+  insightsList.appendChild(emptyState);
+  emptyState.style.display = 'block';
+  insightCount.textContent = '0 updates';
+  currentConsultation = null;
 }
 
 function stopInsightsPolling() {
@@ -185,8 +203,7 @@ function stopInsightsPolling() {
 function stopAllPolling() {
   if (consultationPollInterval) { clearInterval(consultationPollInterval); consultationPollInterval = null; }
   stopInsightsPolling();
-  currentConsultation = null;
-  renderedInsightIds.clear();
+  clearInsightsState();
 }
 
 async function fetchAndRenderInsights(consultationId) {
