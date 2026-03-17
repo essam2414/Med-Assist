@@ -842,7 +842,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                           )}
                           {insight.suggested_questions && (
                             <div>
-                              <strong style={{ color: "#3b82f6", fontSize: "13px" }}>To Consider:</strong>
+                              <strong style={{ color: "#3b82f6", fontSize: "13px" }}>Suggestions to Consider:</strong>
                               <div style={{ color: "var(--text-muted)", lineHeight: "1.5", fontSize: "13px", marginTop: "4px", whiteSpace: "pre-wrap" }}>
                                 {insight.suggested_questions}
                               </div>

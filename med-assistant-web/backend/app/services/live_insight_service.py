@@ -14,27 +14,49 @@ PROCESSING_CONSULTATIONS = set()
 LIVE_SYSTEM_PROMPT = """You are a real-time clinical assistant helping a doctor during a live patient consultation.
 
 You will receive:
-1. PATIENT BACKGROUND - Name and known history
-2. ALL PREVIOUS LIVE INSIGHTS - everything you have already communicated to the doctor
-3. THE NEW TRANSCRIPT SEGMENT - the specific new lines spoken since your last update
-4. FULL CONVERSATION SO FAR - for context only
+1. PATIENT BACKGROUND - name and known history
+2. ALL PREVIOUS LIVE INSIGHTS - everything already communicated; do NOT repeat any of it
+3. THE NEW TRANSCRIPT SEGMENT - lines spoken since your last update (your PRIMARY source)
+4. FULL CONVERSATION SO FAR - background context only
 
-Your **only** job is to identify what is GENUINELY NEW in the NEW TRANSCRIPT SEGMENT that has NOT already been covered in the ALL PREVIOUS LIVE INSIGHTS.
+Your job: identify what is GENUINELY NEW in section 3 that is NOT already in section 2.
 
-STRICT RULES:
-- Only report facts that are EXPLICITLY STATED in the NEW TRANSCRIPT SEGMENT. Do NOT infer, speculate or interpret tone/emotion.
-- If a fact was already in the previous insights, DO NOT mention it again, even slightly rephrased.
-- "To Consider" must only be questions / actions NOT already addressed by the doctor in the full conversation.
-- If the new segment adds nothing materially new (e.g. it's just the doctor ordering a test already mentioned), return ALL empty strings. It is better to return nothing than to repeat.
-- Do NOT give diagnoses, prognoses or medical advice.
-- Keep each bullet to one concise line.
+━━━ RULES ━━━
+GROUNDING
+- Only report facts EXPLICITLY STATED in sections 3 or 4. Never infer or speculate.
+- Do NOT interpret tone, emotion, or certainty unless directly quoted.
+- Do NOT give diagnoses, prognoses, or medical advice.
 
-Output Format: You MUST respond ONLY with a valid JSON object, no markdown, no explanation:
+NON-REPETITION
+- A fact already in section 2 must NOT appear again, even slightly rephrased.
+- If the new segment adds nothing materially new, return ALL empty strings. Silence is better than repetition.
+
+PROBLEM-LEVEL SUMMARIES (not atomic data points)
+- Under "new_problems", group related clinical facts into meaningful problem statements.
+  GOOD: "Recurrent exertional central chest pain radiating to left arm, lasting 5-10 mins, relieved by rest."
+  BAD:  "Location of pain: middle of the chest." / "Pain duration: 5-10 minutes."
+
+SUMMARY (2-3 sentences)
+- Sentence 1: the main complaint and its key features (location, character, radiation, timing, triggers, relief).
+- Sentence 2: any associated symptoms or absence of red-flag symptoms if newly mentioned.
+- Sentence 3 (optional): where in the consultation you are (e.g. "History complete; doctor has proposed ECG.").
+
+SUGGESTIONS TO CONSIDER (max 2)
+- Only suggest clarifications NOT already addressed in section 4.
+- Advance logically: if location/nature/duration are documented, move to triggers, relief, associated symptoms, risk factors, impact on functioning, red flags.
+- Never repeat a suggestion from section 2.
+
+RISKS/CONTEXT
+- Explicitly capture: cardiovascular risk factors (smoking, hypertension, diabetes, family history), exertional pattern, relief factors, and any red-flag symptom absences (e.g. "no nausea or sweating reported").
+- Only include what is documented in sections 3 or 4.
+
+━━━ OUTPUT ━━━
+Respond ONLY with a valid JSON object. No markdown, no explanation:
 {
-  "summary": "One sentence on the single most important NEW topic from this segment, or empty string",
-  "key_points": "1-2 bullet lines of NEW clinical facts (symptoms, history, medications), or empty string",
-  "suggested_questions": "1-2 bullet lines for follow-up the doctor has NOT yet asked, or empty string",
-  "risk_flags": "1-2 bullet lines of NEW risk factors or red flags explicitly mentioned, or empty string"
+  "summary": "2-3 sentence clinical summary of what is new, or empty string if nothing new",
+  "new_problems": "1-3 bullet lines, each a clinical problem statement grouping related facts, or empty string",
+  "suggestions_to_consider": "Up to 2 bullet lines of next logical clarifications not yet addressed, or empty string",
+  "risks_context": "1-4 bullet lines of risk factors, red flags, and modifiers explicitly documented, or empty string"
 }
 """
 
@@ -97,50 +119,56 @@ def evaluate_and_generate_live_insights(consultation_id: int):
                 f"History: {patient.key_history or 'None'}"
             )
 
-        # Build the full conversation transcript for background context
-        all_transcripts = db.query(TranscriptEntry).filter(
-            TranscriptEntry.consultation_id == consultation_id
-        ).order_by(TranscriptEntry.start_time).all()
-        
-        full_transcript = "\n".join([f"[{t.speaker}]: {t.text}" for t in all_transcripts])
-        # Trim to last 6000 chars to stay within context window
-        full_transcript_window = full_transcript[-6000:] if len(full_transcript) > 6000 else full_transcript
-
-        # Build the NEW segment specifically (lines added since last insight)
+        # Build the NEW segment specifically (lines added since last insight) — primary source
         new_segment_text = "\n".join([f"[{t.speaker}]: {t.text}" for t in new_transcripts])
 
-        # Get ALL previous live insights (not just 3) so the model can diff fully
+        # Build a compact cumulative "established facts" summary from all previous insights.
+        # This stays flat in size (one bullet per fact type, deduplicated) rather than
+        # growing linearly with every update, which keeps the prompt token count bounded.
         all_prev_insights = db.query(LiveInsight).filter(
             LiveInsight.consultation_id == consultation_id
         ).order_by(LiveInsight.created_at.asc()).all()
 
-        previous_insights_text = "None - this is the first update."
-        if all_prev_insights:
-            prev_texts = []
-            for i, pi in enumerate(all_prev_insights):
-                parts = []
-                if pi.summary: parts.append(f"  Summary: {pi.summary}")
-                if pi.key_points: parts.append(f"  Key Points: {pi.key_points}")
-                if pi.suggested_questions: parts.append(f"  To Consider: {pi.suggested_questions}")
-                if pi.risk_flags: parts.append(f"  Risks: {pi.risk_flags}")
-                if parts:
-                    prev_texts.append(f"[Update {i+1}]\n" + "\n".join(parts))
-            previous_insights_text = "\n\n".join(prev_texts)
+        if not all_prev_insights:
+            established_facts = "None - this is the first update."
+        else:
+            # Collect all unique lines from all previous updates
+            seen = set()
+            fact_lines = []
+            for pi in all_prev_insights:
+                for field in [pi.summary, pi.key_points, pi.suggested_questions, pi.risk_flags]:
+                    if not field:
+                        continue
+                    for line in field.split("\n"):
+                        line = line.strip()
+                        if line and line.lower() not in seen:
+                            seen.add(line.lower())
+                            fact_lines.append(f"• {line.lstrip('- •')}")
+            established_facts = "\n".join(fact_lines) if fact_lines else "None."
 
-        # 4. PROMPTING — structured to match the new system prompt
+        # Only include the last 800 chars of transcript for bridging context.
+        # The model already has the new segment and established facts — the full
+        # transcript is redundant and expensive.
+        all_transcripts = db.query(TranscriptEntry).filter(
+            TranscriptEntry.consultation_id == consultation_id
+        ).order_by(TranscriptEntry.start_time).all()
+        full_transcript = "\n".join([f"[{t.speaker}]: {t.text}" for t in all_transcripts])
+        bridge_context = full_transcript[-800:] if len(full_transcript) > 800 else full_transcript
+
+        # 4. PROMPTING — compact structure
         human_content = (
             f"--- 1. PATIENT BACKGROUND ---\n{patient_info}\n\n"
-            f"--- 2. ALL PREVIOUS LIVE INSIGHTS (do NOT repeat any of this) ---\n{previous_insights_text}\n\n"
-            f"--- 3. THE NEW TRANSCRIPT SEGMENT (your primary source for new insights) ---\n{new_segment_text}\n\n"
-            f"--- 4. FULL CONVERSATION SO FAR (background context only) ---\n{full_transcript_window}\n"
+            f"--- 2. ESTABLISHED FACTS (do NOT repeat any of this) ---\n{established_facts}\n\n"
+            f"--- 3. NEW TRANSCRIPT SEGMENT (your primary source) ---\n{new_segment_text}\n\n"
+            f"--- 4. RECENT CONVERSATION CONTEXT ---\n{bridge_context}\n"
         )
 
         llm = ChatOllama(
-            model="llama3.2", 
+            model="llama3.2",
             temperature=0,
-            num_predict=300,  # Keep responses tight
+            num_predict=400,
             num_thread=8,
-            num_ctx=4096
+            num_ctx=2048,   # Reduced: inputs are now compact so we don't need 4096
         )
 
         response = llm.invoke([
@@ -150,7 +178,13 @@ def evaluate_and_generate_live_insights(consultation_id: int):
 
         # 5. PARSE AND SAVE
         try:
-            parsed = json.loads(response.content)
+            # Strip any accidental markdown fences the model might add
+            raw = response.content.strip()
+            if raw.startswith("```"):
+                raw = raw.split("```")[1]
+                if raw.startswith("json"):
+                    raw = raw[4:]
+            parsed = json.loads(raw)
             
             def ensure_string(val):
                 if isinstance(val, list):
@@ -158,9 +192,10 @@ def evaluate_and_generate_live_insights(consultation_id: int):
                 return str(val) if val is not None else ""
 
             summary = ensure_string(parsed.get("summary", "")).strip()
-            key_points = ensure_string(parsed.get("key_points", "")).strip()
-            suggested = ensure_string(parsed.get("suggested_questions", "")).strip()
-            risks = ensure_string(parsed.get("risk_flags", "")).strip()
+            # Support new field names; fall back to old names for backward compat
+            key_points = ensure_string(parsed.get("new_problems", parsed.get("key_points", ""))).strip()
+            suggested = ensure_string(parsed.get("suggestions_to_consider", parsed.get("suggested_questions", ""))).strip()
+            risks = ensure_string(parsed.get("risks_context", parsed.get("risk_flags", ""))).strip()
 
             # If all are empty, the model found nothing new to say, don't clatter the DB
             if not any([summary, key_points, suggested, risks]):
