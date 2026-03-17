@@ -46,6 +46,8 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
   
   useEffect(() => {
     let intervalId;
+    const currentC = selectedConsultation ? (consultations.find(c => c.id === selectedConsultation.id) || selectedConsultation) : null;
+    
     if (view === "detail" && selectedConsultation && insightMode === "live") {
       const loadLiveInsights = async () => {
         try {
@@ -57,12 +59,16 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
       };
       
       loadLiveInsights(); // initial fetch
-      intervalId = setInterval(loadLiveInsights, 5000);
+      
+      // Only poll if the consultation is still active (draft)
+      if (currentC?.status === 'draft') {
+        intervalId = setInterval(loadLiveInsights, 5000);
+      }
     } else {
       setLiveInsights([]);
     }
     return () => clearInterval(intervalId);
-  }, [view, selectedConsultation?.id, insightMode]);
+  }, [view, selectedConsultation?.id, insightMode, consultations]);
 
   const handleGenerateInsights = async (consultationId) => {
     if (!consultationId) return;
@@ -740,9 +746,9 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                     style={{
                       padding: "8px 16px",
                       borderRadius: "8px",
-                      background: "rgba(16, 185, 129, 0.1)",
-                      color: "#10b981",
-                      border: "1px solid rgba(16, 185, 129, 0.3)",
+                      background: updatedC.status === 'draft' ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
+                      color: updatedC.status === 'draft' ? "#10b981" : "#ef4444",
+                      border: updatedC.status === 'draft' ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid rgba(239, 68, 68, 0.3)",
                       fontSize: "13px",
                       fontWeight: 700,
                       cursor: "default",
@@ -750,10 +756,12 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                       alignItems: "center",
                       gap: "6px"
                     }}
-                    title="Real-time insights are active"
+                    title={updatedC.status === 'draft' ? "Real-time insights are active" : "Historical live insights"}
                   >
-                    <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#10b981", animation: "pulse 2s infinite" }}></div>
-                    Live Mode (Polling)
+                    {updatedC.status === 'draft' && (
+                      <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#10b981", animation: "pulse 2s infinite" }}></div>
+                    )}
+                    {updatedC.status === 'draft' ? "Live Mode (Polling)" : "Polling Finished"}
                   </button>
                 )}
               </div>

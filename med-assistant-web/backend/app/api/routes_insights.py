@@ -40,8 +40,9 @@ def get_live_insights(
         LiveInsightModel.consultation_id == consultation_id
     ).order_by(LiveInsightModel.created_at.asc()).all()
 
-    # Trigger background evaluation so the NEXT poll might have fresh data
-    background_tasks.add_task(evaluate_and_generate_live_insights, consultation_id)
+    # Trigger background evaluation ONLY if the consultation is still active (draft)
+    if consultation.status == "draft":
+        background_tasks.add_task(evaluate_and_generate_live_insights, consultation_id)
     
     return insights
 

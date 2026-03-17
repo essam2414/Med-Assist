@@ -11,24 +11,30 @@ from app.db import SessionLocal
 # Global set to track consultations currently generating insights
 PROCESSING_CONSULTATIONS = set()
 
-LIVE_SYSTEM_PROMPT = """You are a real-time clinical assistant monitoring a live consultation.
+LIVE_SYSTEM_PROMPT = """You are a real-time clinical assistant helping a doctor during a live patient consultation.
 
-Your goal is to generate *incremental, non-repetitive* insights based on the *latest* transcript segment.
-You will be provided with the last few minutes of conversation, as well as the previous insights you have already generated.
+You will receive:
+1. PATIENT BACKGROUND - Name and known history
+2. ALL PREVIOUS LIVE INSIGHTS - everything you have already communicated to the doctor
+3. THE NEW TRANSCRIPT SEGMENT - the specific new lines spoken since your last update
+4. FULL CONVERSATION SO FAR - for context only
 
-Rules:
-- Do NOT repeat points that are already in the "Previously Generated Insights".
-- Only output NEW, explicitly stated problems, concerns, or context from the latest transcript.
-- Keep it extremely brief. Bullet points only.
-- Do NOT give diagnoses or medical advice.
-- If there is nothing significantly new to report, return empty strings for the fields.
+Your **only** job is to identify what is GENUINELY NEW in the NEW TRANSCRIPT SEGMENT that has NOT already been covered in the ALL PREVIOUS LIVE INSIGHTS.
 
-Output Format: You MUST respond ONLY with a valid JSON object:
+STRICT RULES:
+- Only report facts that are EXPLICITLY STATED in the NEW TRANSCRIPT SEGMENT. Do NOT infer, speculate or interpret tone/emotion.
+- If a fact was already in the previous insights, DO NOT mention it again, even slightly rephrased.
+- "To Consider" must only be questions / actions NOT already addressed by the doctor in the full conversation.
+- If the new segment adds nothing materially new (e.g. it's just the doctor ordering a test already mentioned), return ALL empty strings. It is better to return nothing than to repeat.
+- Do NOT give diagnoses, prognoses or medical advice.
+- Keep each bullet to one concise line.
+
+Output Format: You MUST respond ONLY with a valid JSON object, no markdown, no explanation:
 {
-  "summary": "1 very brief sentence summarizing the *new* topic of discussion (or empty if none)",
-  "key_points": "1-2 short bullet points of *new* main problems (or empty if none)",
-  "suggested_questions": "1-2 short bullet points for *new* clarification prompts for the doctor (or empty if none)",
-  "risk_flags": "1-2 short bullet points of *new* context/risks mentioned (or empty if none)"
+  "summary": "One sentence on the single most important NEW topic from this segment, or empty string",
+  "key_points": "1-2 bullet lines of NEW clinical facts (symptoms, history, medications), or empty string",
+  "suggested_questions": "1-2 bullet lines for follow-up the doctor has NOT yet asked, or empty string",
+  "risk_flags": "1-2 bullet lines of NEW risk factors or red flags explicitly mentioned, or empty string"
 }
 """
 
@@ -47,7 +53,9 @@ def evaluate_and_generate_live_insights(consultation_id: int):
     db: Session = SessionLocal()
     try:
         consultation = db.query(Consultation).filter(Consultation.id == consultation_id).first()
-        if not consultation:
+        if not consultation or consultation.status != "draft":
+            if consultation and consultation.status != "draft":
+                print(f"[{consultation_id}] LIVE: Skipping. Consultation is {consultation.status}.")
             return
 
         patient = consultation.patient
@@ -74,9 +82,9 @@ def evaluate_and_generate_live_insights(consultation_id: int):
         new_transcripts = query.order_by(TranscriptEntry.start_time).all()
         new_text_len = sum(len(t.text) for t in new_transcripts)
 
-        # Require at least 70 characters of new audio to bother running the LLM
-        if new_text_len < 70:
-            print(f"[{consultation_id}] LIVE: Skipping. Not enough new transcript length ({new_text_len} < 70).")
+        # Require at least 120 characters of new audio to bother running the LLM
+        if new_text_len < 120:
+            print(f"[{consultation_id}] LIVE: Skipping. Not enough new transcript length ({new_text_len} < 120).")
             return
 
         print(f"[{consultation_id}] LIVE: Generating new live insight based on {new_text_len} chars of new audio...")
@@ -89,32 +97,42 @@ def evaluate_and_generate_live_insights(consultation_id: int):
                 f"History: {patient.key_history or 'None'}"
             )
 
-        # Get the recent context window (last 5000 chars of overall transcript)
+        # Build the full conversation transcript for background context
         all_transcripts = db.query(TranscriptEntry).filter(
             TranscriptEntry.consultation_id == consultation_id
         ).order_by(TranscriptEntry.start_time).all()
         
         full_transcript = "\n".join([f"[{t.speaker}]: {t.text}" for t in all_transcripts])
-        recent_transcript = full_transcript[-5000:] if len(full_transcript) > 5000 else full_transcript
+        # Trim to last 6000 chars to stay within context window
+        full_transcript_window = full_transcript[-6000:] if len(full_transcript) > 6000 else full_transcript
 
-        # Get the last 3 live insights to avoid repetition
-        recent_insights = db.query(LiveInsight).filter(
+        # Build the NEW segment specifically (lines added since last insight)
+        new_segment_text = "\n".join([f"[{t.speaker}]: {t.text}" for t in new_transcripts])
+
+        # Get ALL previous live insights (not just 3) so the model can diff fully
+        all_prev_insights = db.query(LiveInsight).filter(
             LiveInsight.consultation_id == consultation_id
-        ).order_by(LiveInsight.created_at.desc()).limit(3).all()
-        
-        previous_insights_text = "None."
-        if recent_insights:
-            # Reverse to be chronological
-            prev_texts = []
-            for i, pi in enumerate(reversed(recent_insights)):
-                prev_texts.append(f"--- Previous Insight {i+1} ---\nSummary: {pi.summary}\nKey Points: {pi.key_points}")
-            previous_insights_text = "\n".join(prev_texts)
+        ).order_by(LiveInsight.created_at.asc()).all()
 
-        # 4. PROMPTING
+        previous_insights_text = "None - this is the first update."
+        if all_prev_insights:
+            prev_texts = []
+            for i, pi in enumerate(all_prev_insights):
+                parts = []
+                if pi.summary: parts.append(f"  Summary: {pi.summary}")
+                if pi.key_points: parts.append(f"  Key Points: {pi.key_points}")
+                if pi.suggested_questions: parts.append(f"  To Consider: {pi.suggested_questions}")
+                if pi.risk_flags: parts.append(f"  Risks: {pi.risk_flags}")
+                if parts:
+                    prev_texts.append(f"[Update {i+1}]\n" + "\n".join(parts))
+            previous_insights_text = "\n\n".join(prev_texts)
+
+        # 4. PROMPTING — structured to match the new system prompt
         human_content = (
-            f"--- PATIENT --- {patient_info}\n\n"
-            f"--- PREVIOUSLY GENERATED INSIGHTS (DO NOT REPEAT THESE) ---\n{previous_insights_text}\n\n"
-            f"--- RECENT TRANSCRIPT WINDOW ---\n{recent_transcript}\n"
+            f"--- 1. PATIENT BACKGROUND ---\n{patient_info}\n\n"
+            f"--- 2. ALL PREVIOUS LIVE INSIGHTS (do NOT repeat any of this) ---\n{previous_insights_text}\n\n"
+            f"--- 3. THE NEW TRANSCRIPT SEGMENT (your primary source for new insights) ---\n{new_segment_text}\n\n"
+            f"--- 4. FULL CONVERSATION SO FAR (background context only) ---\n{full_transcript_window}\n"
         )
 
         llm = ChatOllama(
