@@ -1,571 +1,329 @@
-// panel.js
+// panel.js — Med Assist Live Insights
 
-const loginView = document.getElementById('login-view');
-const appView = document.getElementById('app-view');
-const loginBtn = document.getElementById('login-btn');
+let API_BASE = 'http://localhost:8000';
+let DASHBOARD_URL = 'http://localhost:5173';
 
-loginBtn.addEventListener('click', () => {
-  chrome.tabs.create({ url: 'http://localhost:5173/' });
+// Load saved URLs from storage
+chrome.storage.local.get(['backendUrl', 'dashboardUrl'], (res) => {
+  if (res.backendUrl)   API_BASE       = res.backendUrl;
+  if (res.dashboardUrl) DASHBOARD_URL  = res.dashboardUrl;
 });
 
-/* Permissions Management */
-const permsIcon = document.getElementById('perms-icon');
-const permsPopup = document.getElementById('perms-popup');
-const micStatus = document.getElementById('mic-status');
-const managePermsBtn = document.getElementById('manage-perms');
-let currentMicPermission = 'prompt';
+// ─── View elements ───────────────────────────────────────────────
+const loginView   = document.getElementById('login-view');
+const waitingView = document.getElementById('waiting-view');
+const activeView  = document.getElementById('active-view');
 
-async function refreshPermissions() {
+// Consultation card elements
+const consultTitle   = document.getElementById('consult-title');
+const statusBadge    = document.getElementById('status-badge');
+const metaPatient    = document.getElementById('meta-patient');
+const patientName    = document.getElementById('patient-name');
+const consultTime    = document.getElementById('consult-time');
+const liveBadge      = document.getElementById('live-badge');
+const finishedBadge  = document.getElementById('finished-badge');
+
+// Insights area
+const insightsList   = document.getElementById('insights-list');
+const emptyState     = document.getElementById('empty-state');
+const insightCount   = document.getElementById('insight-count');
+
+// Buttons
+const loginBtn       = document.getElementById('login-btn');
+const settingsBtn    = document.getElementById('settings-btn');
+
+// ─── State ──────────────────────────────────────────────────────
+let consultationPollInterval  = null;
+let insightsPollInterval      = null;
+let currentConsultation       = null;
+let renderedInsightIds        = new Set();
+
+// ─── View switcher ───────────────────────────────────────────────
+function showView(name) {
+  [loginView, waitingView, activeView].forEach(v => v.classList.remove('active'));
+  document.getElementById(`${name}-view`).classList.add('active');
+}
+
+// ─── Auth ────────────────────────────────────────────────────────
+function checkAuth() {
+  chrome.cookies.get({ url: 'http://localhost', name: 'logged_in' }, (c1) => {
+    chrome.cookies.get({ url: 'http://127.0.0.1', name: 'logged_in' }, (c2) => {
+      const authed = (c1 && c1.value === '1') || (c2 && c2.value === '1');
+      if (authed) {
+        startConsultationPolling();
+      } else {
+        stopAllPolling();
+        showView('login');
+      }
+    });
+  });
+}
+
+// ─── Consultation polling ────────────────────────────────────────
+function startConsultationPolling() {
+  // If we have an active consultation already, go straight to insights
+  if (currentConsultation && currentConsultation.status === 'draft') {
+    showView('active');
+    startInsightsPolling(currentConsultation.id);
+    return;
+  }
+  showView('waiting');
+  pollForActiveConsultation();
+  if (!consultationPollInterval) {
+    consultationPollInterval = setInterval(pollForActiveConsultation, 8000);
+  }
+}
+
+async function pollForActiveConsultation() {
   try {
-    const micPerm = await navigator.permissions.query({ name: 'microphone' });
-    updatePermsUI(micPerm.state);
-    micPerm.onchange = () => updatePermsUI(micPerm.state);
+    const res = await fetch(`${API_BASE}/consultations/active`, {
+      credentials: 'include'
+    });
+    if (res.status === 401) { checkAuth(); return; }
+    if (!res.ok) return;
+
+    const data = await res.json();
+    if (data && data.id) {
+      clearInterval(consultationPollInterval);
+      consultationPollInterval = null;
+      
+      // If this is a different consultation than what we last knew about, clear state
+      if (!currentConsultation || currentConsultation.id !== data.id) {
+        clearInsightsState();
+      }
+
+      currentConsultation = data;
+      renderConsultationCard(data);
+      showView('active');
+      startInsightsPolling(data.id);
+    }
   } catch (e) {
-    console.error('Permission query failed', e);
+    console.error('Consultation poll error:', e);
   }
 }
 
-function updatePermsUI(state) {
-  currentMicPermission = state;
-  const statusSubText = document.querySelector('#perms-popup p');
+// ─── Consultation card ───────────────────────────────────────────
+function renderConsultationCard(c) {
+  consultTitle.textContent = c.title || `Consultation ${c.id}`;
 
-  if (state === 'granted') {
-    permsIcon.classList.remove('missing');
-    permsIcon.classList.add('granted');
-    permsIcon.textContent = '🎙️';
-    micStatus.textContent = 'Granted';
-    micStatus.className = 'perms-channel-status perms-status-granted';
-
-    if (managePermsBtn) {
-      managePermsBtn.textContent = 'Manage Permissions';
-      managePermsBtn.className = 'btn manage-perms-btn bg-red';
-    }
-    if (statusSubText) {
-      statusSubText.innerHTML = 'Microphone is active. Click to manage settings.<br/><br/><strong>Tab Audio:</strong> When you press "Start Capture", ensure you select a tab and check the "Also share tab audio" box.';
-    }
-
-    if (startBtn) startBtn.disabled = statusLabel.textContent === 'Recording' || statusLabel.textContent === 'Processing';
+  if (c.patient && (c.patient.name || c.patient.display_id)) {
+    patientName.textContent = c.patient.name
+      ? `${c.patient.name} (${c.patient.display_id})`
+      : c.patient.display_id;
+    metaPatient.style.display = 'flex';
   } else {
-    permsIcon.classList.remove('granted');
-    permsIcon.classList.add('missing');
-    permsIcon.textContent = '!';
-    micStatus.textContent = state === 'denied' ? 'Blocked' : 'Inactive';
-    micStatus.className = 'perms-channel-status perms-status-missing';
+    metaPatient.style.display = 'none';
+  }
 
-    if (managePermsBtn) {
-      managePermsBtn.textContent = 'Enable Microphone Access';
-      managePermsBtn.className = 'btn manage-perms-btn bg-green';
-    }
-    if (statusSubText) {
-      statusSubText.textContent = 'Microphone is inactive. Press to enable microphone.';
-    }
+  if (c.created_at) {
+    const d = new Date(c.created_at);
+    consultTime.textContent = `Started ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  }
 
-    if (startBtn) startBtn.disabled = true;
+  if (c.status === 'draft') {
+    statusBadge.textContent = 'Active';
+    statusBadge.className = 'status-badge status-active';
+    liveBadge.style.display = 'flex';
+    finishedBadge.style.display = 'none';
+  } else {
+    statusBadge.textContent = 'Finished';
+    statusBadge.className = 'status-badge status-finished';
+    liveBadge.style.display = 'none';
+    finishedBadge.style.display = 'flex';
   }
 }
 
-permsIcon.addEventListener('click', (e) => {
-  e.stopPropagation();
-  permsPopup.classList.toggle('active');
-});
+// ─── Insights polling ────────────────────────────────────────────
+function startInsightsPolling(consultationId) {
+  stopInsightsPolling();
+  fetchAndRenderInsights(consultationId);
+  insightsPollInterval = setInterval(async () => {
+    try {
+      // Re-check consultation status each cycle
+      const res = await fetch(`${API_BASE}/consultations/active`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.id === consultationId) {
+          // Still active — update card, fetch insights
+          currentConsultation = data;
+          renderConsultationCard(data);
+          await fetchAndRenderInsights(consultationId);
+        } else if (data && data.id && data.id !== consultationId) {
+          // A DIFFERENT consultation is now active
+          handleConsultationEnded(consultationId);
+        } else {
+          // No active consultation
+          handleConsultationEnded(consultationId);
+        }
+      } else if (res.status === 404) {
+        handleConsultationEnded(consultationId);
+      }
+    } catch (e) {
+      console.error('Insight poll error:', e);
+    }
+  }, 5000);
+}
 
-document.addEventListener('click', (e) => {
-  if (!permsPopup.contains(e.target) && e.target !== permsIcon) {
-    permsPopup.classList.remove('active');
+async function handleConsultationEnded(consultationId) {
+  stopInsightsPolling();
+  // Do one final insights fetch so the last update is captured
+  await fetchAndRenderInsights(consultationId);
+  
+  if (currentConsultation && currentConsultation.id === consultationId) {
+    currentConsultation.status = 'completed';
+    renderConsultationCard(currentConsultation);
   }
+
+  // Start polling for a new consultation
+  setTimeout(() => {
+    // Only reset if we are still looking at the same (now ended) consultation
+    if (currentConsultation && currentConsultation.id === consultationId) {
+      clearInsightsState();
+      startConsultationPolling();
+    }
+  }, 10000); // reduced to 10s
+}
+
+function clearInsightsState() {
+  renderedInsightIds.clear();
+  insightsList.innerHTML = '';
+  insightsList.appendChild(emptyState);
+  emptyState.style.display = 'block';
+  insightCount.textContent = '0 updates';
+  currentConsultation = null;
+}
+
+function stopInsightsPolling() {
+  if (insightsPollInterval) {
+    clearInterval(insightsPollInterval);
+    insightsPollInterval = null;
+  }
+}
+
+function stopAllPolling() {
+  if (consultationPollInterval) { clearInterval(consultationPollInterval); consultationPollInterval = null; }
+  stopInsightsPolling();
+  clearInsightsState();
+}
+
+async function fetchAndRenderInsights(consultationId) {
+  try {
+    const res = await fetch(`${API_BASE}/insights/live/${consultationId}`, {
+      credentials: 'include'
+    });
+    if (!res.ok) return;
+    const insights = await res.json();
+    renderInsights(insights);
+  } catch (e) {
+    console.error('Insights fetch error:', e);
+  }
+}
+
+// ─── Render insights (newest first, only append new ones) ────────
+function renderInsights(insights) {
+  if (!insights || insights.length === 0) return;
+
+  // Count label
+  insightCount.textContent = `${insights.length} update${insights.length !== 1 ? 's' : ''}`;
+  emptyState.style.display = 'none';
+
+  // Only insert insights we haven't rendered yet, maintaining newest-first order
+  const newInsights = insights.filter(i => !renderedInsightIds.has(i.id));
+  if (newInsights.length === 0) return;
+
+  newInsights.forEach(insight => {
+    renderedInsightIds.add(insight.id);
+    const card = buildInsightCard(insight, insights.indexOf(insight) + 1);
+    // Prepend so newest is at top
+    const firstCard = insightsList.querySelector('.insight-card');
+    if (firstCard) {
+      insightsList.insertBefore(card, firstCard);
+    } else {
+      insightsList.appendChild(card);
+    }
+  });
+}
+
+function buildInsightCard(insight, updateNumber) {
+  const card = document.createElement('div');
+  card.className = 'insight-card';
+  card.dataset.id = insight.id;
+
+  const time = new Date(insight.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  const header = document.createElement('div');
+  header.className = 'insight-card-header';
+  header.innerHTML = `
+    <span class="insight-update-label">Update ${updateNumber}</span>
+    <span style="display:flex;align-items:center;gap:8px">
+      <span class="insight-time">${time}</span>
+      <svg class="insight-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </span>
+  `;
+
+  const body = document.createElement('div');
+  body.className = 'insight-body';
+
+  const fields = [
+    { key: 'summary',             label: 'Summary',                labelClass: 'label-summary'     },
+    { key: 'key_points',          label: 'New Problems',           labelClass: 'label-problems'    },
+    { key: 'suggested_questions', label: 'Suggestions to Consider', labelClass: 'label-suggestions' },
+    { key: 'risk_flags',          label: 'Risks / Context',        labelClass: 'label-risks'       },
+  ];
+
+  fields.forEach(({ key, label, labelClass }) => {
+    const value = insight[key];
+    if (!value || !value.trim()) return;
+    const section = document.createElement('div');
+    section.className = 'insight-section';
+    section.innerHTML = `
+      <div class="insight-section-label ${labelClass}">${label}</div>
+      <div class="insight-section-text">${escapeHtml(value.trim())}</div>
+    `;
+    body.appendChild(section);
+  });
+
+  // Collapse toggle
+  header.addEventListener('click', () => card.classList.toggle('collapsed'));
+
+  card.appendChild(header);
+  card.appendChild(body);
+  return card;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ─── Buttons ─────────────────────────────────────────────────────
+loginBtn.addEventListener('click', () => {
+  chrome.storage.local.get(['backendUrl'], (res) => {
+    const url = res.backendUrl || 'http://localhost:5173';
+    chrome.tabs.create({ url });
+  });
 });
 
-managePermsBtn.addEventListener('click', () => {
+settingsBtn.addEventListener('click', () => {
   chrome.runtime.openOptionsPage();
 });
 
-function checkAuthStatus() {
-  chrome.cookies.get({ url: 'http://localhost', name: 'logged_in' }, (cookie1) => {
-    chrome.cookies.get({ url: 'http://127.0.0.1', name: 'logged_in' }, (cookie2) => {
-      if ((cookie1 && cookie1.value === '1') || (cookie2 && cookie2.value === '1')) {
-        loginView.style.display = 'none';
-        appView.style.display = 'flex';
-        refreshPermissions();
-        if (consultationSelect.options.length <= 1) {
-          loadConsultations();
-        }
-      } else {
-        loginView.style.display = 'flex';
-        appView.style.display = 'none';
-      }
-    });
-  });
-}
-
-// Initial check
-checkAuthStatus();
-
-window.addEventListener('focus', checkAuthStatus);
-
-if (chrome.tabs) {
-  chrome.tabs.onActivated.addListener(checkAuthStatus);
-  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'complete' && tab.url && (tab.url.includes('localhost') || tab.url.includes('127.0.0.1'))) {
-      checkAuthStatus();
-    }
-  });
-}
+// ─── Auth listeners ───────────────────────────────────────────────
+window.addEventListener('focus', checkAuth);
 
 if (chrome.cookies) {
-  chrome.cookies.onChanged.addListener((changeInfo) => {
-    if (changeInfo.cookie.name === 'logged_in') {
-      checkAuthStatus();
+  chrome.cookies.onChanged.addListener((change) => {
+    if (change.cookie.name === 'logged_in') checkAuth();
+  });
+}
+
+if (chrome.tabs) {
+  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.status === 'complete' && tab.url &&
+        (tab.url.includes('localhost') || tab.url.includes('127.0.0.1'))) {
+      checkAuth();
     }
   });
 }
 
-const statusEl = document.getElementById('status');
-const statusDot = document.getElementById('status-dot');
-const statusLabel = document.getElementById('status-label');
-
-const startBtn = document.getElementById('start');
-const stopBtn = document.getElementById('stop');
-const audioEl = document.getElementById('player');
-const consultationSelect = document.getElementById('consultation-select');
-const transcriptBox = document.getElementById('transcripts-container');
-
-let mediaStream = null;
-let micStream = null;
-let liveAudio = null;
-let audioContext = null;
-let analyser = null;
-let dataArray = null;
-
-let mediaRecorderTab = null;
-let mediaRecorderMic = null;
-let tabRecordedChunks = [];
-let micRecordedChunks = [];
-let tabBlob = null;
-let micBlob = null;
-let tabBlobUrl = null;
-let micBlobUrl = null;
-let recordingTabId = null;
-
-function formatTime(seconds) {
-  if (!isFinite(seconds)) return '0:00';
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60)
-    .toString()
-    .padStart(2, '0');
-  return `${m}:${s}`;
-}
-
-function setStateIdle(message) {
-  statusEl.textContent =
-    message ||
-    'Not capturing. Open this on a tab with an active call or video.';
-  statusDot.classList.remove('active');
-  statusDot.classList.add('idle');
-  statusLabel.textContent = 'Idle';
-
-  startBtn.disabled = currentMicPermission !== 'granted';
-  stopBtn.disabled = true;
-}
-
-function setStateRecording() {
-  statusEl.textContent =
-    'Capturing audio… stop when the consultation segment is complete.';
-  statusDot.classList.remove('idle');
-  statusDot.classList.add('active');
-  statusLabel.textContent = 'Recording';
-
-  startBtn.disabled = true;
-  stopBtn.disabled = false;
-}
-
-function setStateProcessing() {
-  statusEl.textContent = 'Processing recording…';
-  statusDot.classList.remove('active');
-  statusDot.classList.add('idle');
-  statusLabel.textContent = 'Processing';
-
-  startBtn.disabled = true;
-  stopBtn.disabled = true;
-}
-
-function setStateReady() {
-  statusEl.textContent =
-    'Recording complete. You can now transcribe the segment.';
-  statusDot.classList.remove('active');
-  statusDot.classList.add('idle');
-  statusLabel.textContent = 'Ready';
-
-  startBtn.disabled = false;
-  stopBtn.disabled = true;
-}
-
-function cleanupStream() {
-  if (mediaStream) {
-    mediaStream.getTracks().forEach((t) => t.stop());
-    mediaStream = null;
-  }
-  if (micStream) {
-    micStream.getTracks().forEach((t) => t.stop());
-    micStream = null;
-  }
-  if (liveAudio) {
-    liveAudio.pause();
-    liveAudio.srcObject = null;
-    liveAudio = null;
-  }
-  if (audioContext) {
-    if (audioContext.state !== 'closed') {
-      audioContext.close();
-    }
-    audioContext = null;
-  }
-  analyser = null;
-  dataArray = null;
-  if (recordingTabId) {
-    chrome.tabs.update(recordingTabId, { muted: false }).catch(() => { });
-    recordingTabId = null;
-  }
-}
-
-function resetProgress() {
-  // No-op - removed progress bar
-}
-
-function loadConsultations() {
-  fetch('http://localhost:8000/consultations/', {
-    headers: {},
-    credentials: 'include'
-  })
-    .then(res => res.json())
-    .then(data => {
-      consultationSelect.innerHTML = '<option value="">Select a consultation</option>';
-      if (Array.isArray(data)) {
-        data.forEach(c => {
-          const opt = document.createElement('option');
-          opt.value = c.id;
-          opt.textContent = c.title || `Consultation ${c.id}`;
-          consultationSelect.appendChild(opt);
-        });
-      }
-    })
-    .catch(err => {
-      console.error('Failed to load consultations:', err);
-      consultationSelect.innerHTML = '<option value="">Error loading consultations</option>';
-    });
-}
-
-function displayTranscripts(transcripts) {
-  if (!transcripts || transcripts.length === 0) {
-    transcriptBox.style.display = 'none';
-    return;
-  }
-
-  transcriptBox.style.display = 'flex';
-  transcriptBox.innerHTML = '';
-
-  // Sort transcripts by start time
-  const sorted = [...transcripts].sort((a, b) => a.start_time - b.start_time);
-
-  sorted.forEach(t => {
-    const entry = document.createElement('div');
-    entry.className = 'transcript-entry';
-
-    let timeStr = formatTime(t.start_time);
-
-    entry.innerHTML = `
-      <div class="transcript-speaker">${t.speaker || 'Speaker'} <span style="color:var(--text-muted); font-weight:normal;">[${timeStr}]</span></div>
-      <div class="transcript-text">${t.text}</div>
-    `;
-    transcriptBox.appendChild(entry);
-  });
-
-  transcriptBox.scrollTop = transcriptBox.scrollHeight;
-}
-
-consultationSelect.addEventListener('change', () => {
-  const consultationId = consultationSelect.value;
-  if (!consultationId) {
-    displayTranscripts([]);
-    return;
-  }
-
-  // Fetch transcripts for this consultation
-  fetch(`http://localhost:8000/consultations/`, { credentials: 'include' })
-    .then(res => res.json())
-    .then(data => {
-      const consultation = data.find(c => c.id == consultationId);
-      if (consultation && consultation.transcripts) {
-        displayTranscripts(consultation.transcripts);
-      } else {
-        displayTranscripts([]);
-      }
-    })
-    .catch(console.error);
-});
-
-let liveInterval = null;
-let totalOffset = 0;
-const CHUNK_INTERVAL_MS = 6000;
-const MAX_CHUNK_DURATION = 10000; // Force update after 10s even if still talking
-
-startBtn.addEventListener('click', async () => {
-  const consultationId = consultationSelect.value;
-  if (!consultationId) {
-    alert("Please select a consultation session first.");
-    return;
-  }
-
-  setStateProcessing();
-  statusEl.textContent = 'Starting capture…';
-
-  try {
-    const [tab] = await chrome.tabs.query({
-      active: true,
-      lastFocusedWindow: true
-    });
-
-    if (tab && tab.url && tab.url.startsWith('chrome://')) {
-      setStateIdle('Cannot capture chrome:// pages. Try a normal website tab.');
-      return;
-    }
-
-    try {
-      mediaStream = await navigator.mediaDevices.getDisplayMedia({
-        audio: true,
-        video: { displaySurface: 'browser' },
-        preferCurrentTab: false
-      });
-    } catch (e) {
-      if (e.name === 'NotAllowedError') {
-        setStateIdle('Permission denied or window closed. Capture was cancelled.');
-        return;
-      }
-      throw e;
-    }
-
-    const audioTrack = mediaStream.getAudioTracks()[0];
-    if (!audioTrack) {
-      mediaStream.getTracks().forEach(track => track.stop());
-      setStateIdle('Please check "Share audio" when selecting a tab or screen.');
-      return;
-    }
-    mediaStream.getVideoTracks().forEach(track => track.stop());
-
-    micStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
-      }
-    });
-
-    recordingTabId = tab.id;
-    await chrome.tabs.update(recordingTabId, { muted: true });
-
-    liveAudio = new Audio();
-    liveAudio.srcObject = mediaStream;
-    liveAudio.volume = 1;
-    liveAudio.play();
-
-    let currentChunkOffset = 0;
-    let pendingTabBlob = null;
-    let pendingMicBlob = null;
-    let chunkHasAudio = false; // Flag to track if the current interval has speech
-
-    // Functions to handle the chunking cycles
-    const startNewChunk = () => {
-      // Use localized arrays for this specific chunk
-      const localTabChunks = [];
-      const localMicChunks = [];
-
-      const recorderTab = new MediaRecorder(mediaStream, { mimeType: 'audio/webm' });
-      const recorderMic = new MediaRecorder(micStream, { mimeType: 'audio/webm' });
-
-      recorderTab.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) localTabChunks.push(e.data);
-      };
-      recorderMic.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) localMicChunks.push(e.data);
-      };
-
-      // Capture the current offset for THIS specific chunk
-      const offsetAtStart = currentChunkOffset;
-
-      recorderTab.onstop = async () => {
-        const tBlob = new Blob(localTabChunks, { type: 'audio/webm' });
-        checkAndSend(tBlob, 'tab', offsetAtStart);
-      };
-      recorderMic.onstop = async () => {
-        const mBlob = new Blob(localMicChunks, { type: 'audio/webm' });
-        checkAndSend(mBlob, 'mic', offsetAtStart);
-      };
-
-      recorderTab.start();
-      recorderMic.start();
-
-      return { recorderTab, recorderMic };
-    };
-
-    const checkAndSend = async (blob, source, offset) => {
-      if (source === 'tab') pendingTabBlob = blob;
-      if (source === 'mic') pendingMicBlob = blob;
-
-      if (pendingTabBlob && pendingMicBlob) {
-        const t = pendingTabBlob;
-        const m = pendingMicBlob;
-        pendingTabBlob = null;
-        pendingMicBlob = null;
-
-        console.log(`Sending chunk to backend with offset: ${offset}`);
-        await sendChunkToBackend(t, m, consultationId, offset);
-      }
-    };
-
-    // Silence detection setup
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const source = audioContext.createMediaStreamSource(micStream);
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
-    source.connect(analyser);
-    dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-    const getVolume = () => {
-      analyser.getByteFrequencyData(dataArray);
-      let values = 0;
-      for (let i = 0; i < dataArray.length; i++) {
-        values += dataArray[i];
-      }
-      const volume = values / dataArray.length;
-      // If volume is above threshold, mark the chunk as having audio
-      if (volume > 5) chunkHasAudio = true;
-      return volume;
-    };
-
-    const waitForSilenceAndCycle = () => {
-      const SILENCE_THRESHOLD = 8;
-      let silenceStart = null;
-      const SILENCE_DURATION_NEEDED = 700; // Reduced to 700ms for snappiness
-      const intervalStartTime = Date.now();
-
-      const doCycle = () => {
-        // 1. Stop the current ones
-        if (activeRecorders.recorderTab.state === 'recording') activeRecorders.recorderTab.stop();
-        if (activeRecorders.recorderMic.state === 'recording') activeRecorders.recorderMic.stop();
-
-        // 2. Increment offset 
-        currentChunkOffset += (Date.now() - lastCycleTime) / 1000;
-        lastCycleTime = Date.now();
-
-        // 3. Start the next cycle
-        const wasSufficientlyAudible = chunkHasAudio;
-        chunkHasAudio = false;
-        activeRecorders = startNewChunk();
-        activeRecorders.wasAudible = wasSufficientlyAudible;
-      };
-
-      const checkSilence = () => {
-        const volume = getVolume();
-        const elapsedSinceInterval = Date.now() - intervalStartTime;
-
-        // HARD LIMIT: If we've been waiting too long (e.g. they are a fast speaker),
-        // we force a cycle regardless of silence to keep the transcript coming.
-        if (elapsedSinceInterval >= (MAX_CHUNK_DURATION - CHUNK_INTERVAL_MS)) {
-          console.log('Hard limit reached, forcing transcription update...');
-          doCycle();
-          return;
-        }
-
-        if (volume < SILENCE_THRESHOLD) {
-          if (!silenceStart) silenceStart = Date.now();
-
-          const silenceDuration = Date.now() - silenceStart;
-          if (silenceDuration >= SILENCE_DURATION_NEEDED) {
-            console.log('Sustained silence detected, cycling recorders...');
-            doCycle();
-          } else {
-            // Silence started but not long enough yet
-            setTimeout(checkSilence, 100);
-          }
-        } else {
-          // They started talking again, reset the silence timer
-          silenceStart = null;
-          setTimeout(checkSilence, 100);
-        }
-      };
-      checkSilence();
-    };
-
-    // Keep track of the ACTIVE recorders so we can stop them in the interval
-    let lastCycleTime = Date.now();
-    let activeRecorders = startNewChunk();
-    activeRecorders.wasAudible = false; // Initialize for the first chunk
-
-    // Loop interval
-    liveInterval = setInterval(() => {
-      console.log('Interval reached, waiting for a pause to cycle...');
-      waitForSilenceAndCycle();
-    }, CHUNK_INTERVAL_MS);
-
-    setStateRecording();
-    resetProgress();
-  } catch (err) {
-    console.error('Error starting capture:', err);
-    setStateIdle('Error starting capture: ' + err.message);
-    cleanupStream();
-  }
-});
-
-async function sendChunkToBackend(tabBlob, micBlob, consultationId, offset) {
-  const formData = new FormData();
-  formData.append('audio_file', tabBlob, 'tab_chunk.webm');
-  formData.append('mic_file', micBlob, 'mic_chunk.webm');
-  formData.append('consultation_id', consultationId);
-  formData.append('offset', offset);
-
-  try {
-    const res = await fetch('http://localhost:8000/transcripts/upload', {
-      method: 'POST',
-      body: formData,
-      credentials: 'include'
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        data.forEach(segment => addSegmentToTranscript(segment));
-      } else {
-        addSegmentToTranscript(data);
-      }
-    }
-  } catch (e) {
-    console.error('Live chunk error:', e);
-  }
-}
-
-function addSegmentToTranscript(segment) {
-  transcriptBox.style.display = 'flex';
-  const entry = document.createElement('div');
-  entry.className = 'transcript-entry';
-  let timeStr = formatTime(segment.start_time || 0);
-  entry.innerHTML = `
-    <div class="transcript-speaker">${segment.speaker || 'Speaker'} <span style="color:var(--text-muted); font-weight:normal;">[${timeStr}]</span></div>
-    <div class="transcript-text">${segment.text}</div>
-  `;
-  transcriptBox.appendChild(entry);
-  transcriptBox.scrollTop = transcriptBox.scrollHeight;
-}
-
-stopBtn.addEventListener('click', () => {
-  if (liveInterval) {
-    clearInterval(liveInterval);
-    liveInterval = null;
-  }
-
-  if (mediaRecorderTab && mediaRecorderTab.state !== 'inactive') mediaRecorderTab.stop();
-  if (mediaRecorderMic && mediaRecorderMic.state !== 'inactive') mediaRecorderMic.stop();
-
-  setStateIdle('Capture stopped.');
-  cleanupStream();
-});
-
-// End of file
+// ─── Init ────────────────────────────────────────────────────────
+checkAuth();

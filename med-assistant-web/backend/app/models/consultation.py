@@ -20,8 +20,10 @@ class Consultation(Base):
     title = Column(String, nullable=False)
     status = Column(String, default="draft", index=True)
     recall_bot_id = Column(String, nullable=True, index=True)
+    about = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     ended_at = Column(DateTime, nullable=True)
 
     transcripts = relationship("TranscriptEntry", back_populates="consultation", cascade="all, delete-orphan")
     insights = relationship("AIInsight", back_populates="consultation", uselist=False, cascade="all, delete-orphan")
+    live_insights = relationship("LiveInsight", back_populates="consultation", cascade="all, delete-orphan")

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Body
+from fastapi import APIRouter, Depends, HTTPException, Request, Body, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.deps import get_db, get_current_user
 from app.models.consultation import Consultation as ConsultationModel
@@ -6,6 +6,7 @@ from app.models.transcript import TranscriptEntry as TranscriptModel
 from app.models.user import User
 from app.services.vexa_service import vexa_service
 from app.core.config import settings
+from app.services.live_insight_service import evaluate_and_generate_live_insights
 from datetime import datetime
 import logging
 
@@ -81,6 +82,7 @@ async def recall_webhook(request: Request, db: Session = Depends(get_db)):
 @router.post("/disconnect")
 async def disconnect_bot(
     consultation_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -93,6 +95,9 @@ async def disconnect_bot(
         raise HTTPException(status_code=404, detail="Consultation not found")
 
     if consultation.recall_bot_id:
+        # Final sync before bot leaves
+        await vexa_service.sync_transcripts(consultation, db)
+        background_tasks.add_task(evaluate_and_generate_live_insights, consultation.id)
         await vexa_service.leave_call(consultation.recall_bot_id)
 
     consultation.recall_bot_id = None

@@ -28,7 +28,7 @@ def create_admin(name: str, email: str, password: str):
 if __name__ == "__main__":
     # CHANGE THESE VALUES to what you want
     create_admin(
-        name="Admin",
-        email="admin@example.com",
+        name="Essam Sheikh",
+        email="essamsheikh24@gmail.com",
         password="password",
     )

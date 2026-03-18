@@ -187,11 +187,7 @@ export default function LandingPage({ onSignInClick }) {
                         <p><strong>Patient data is processed securely</strong> and is not used to train external models.</p>
                         <p><strong>Clinicians remain responsible</strong> for all clinical decisions; the assistant is for support only.</p>
                     </div>
-                    <div className="safety-links">
-                        <a href="#privacy">Privacy policy</a>
-                        <a href="#terms">Terms of use</a>
-                        <a href="#disclaimer">Clinical safety disclaimer</a>
-                    </div>
+
                 </div>
             </section>
 

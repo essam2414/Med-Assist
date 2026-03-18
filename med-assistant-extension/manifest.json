@@ -1,21 +1,20 @@
 {
   "manifest_version": 3,
   "name": "Med Assist",
-  "description": "Tab audio capture for online medical consultations.",
-  "version": "0.2.1",
+  "description": "Live AI insights companion for active medical consultations.",
+  "version": "1.0.0",
   "permissions": [
     "sidePanel",
-    "tabCapture",
     "tabs",
     "activeTab",
     "cookies",
-    "offscreen"
+    "storage"
   ],
   "host_permissions": [
     "<all_urls>"
   ],
   "action": {
-    "default_title": "Med Assist"
+    "default_title": "Med Assist — Live Insights"
   },
   "background": {
     "service_worker": "background.js",

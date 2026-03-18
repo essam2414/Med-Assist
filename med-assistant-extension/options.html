@@ -1,135 +1,64 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>Med Consult Assistant - Microphone Permission</title>
-    <style>
-        :root {
-            --bg: #0f172a;
-            --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-            --glass-bg: rgba(30, 41, 59, 0.7);
-            --glass-border: rgba(148, 163, 184, 0.15);
-            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            --text: #f1f5f9;
-            --text-muted: #94a3b8;
-        }
-
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            width: 100vw;
-            margin: 0;
-            background-color: var(--bg);
-            background-image:
-                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
-            background-attachment: fixed;
-            color: var(--text);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            text-align: center;
-        }
-
-        .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--glass-shadow);
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 480px;
-            width: 90%;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        h2 {
-            margin: 0;
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        .text-gradient {
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        p {
-            color: var(--text-muted);
-            margin: 0;
-            line-height: 1.6;
-            font-size: 16px;
-        }
-
-        .status-box {
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-
-        .status-box:empty {
-            display: none;
-        }
-
-        #status {
-            background: rgba(16, 185, 129, 0.1);
-            color: #10b981;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-        }
-
-        #error {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        button {
-            background: var(--primary-gradient);
-            color: white;
-            border: none;
-            padding: 16px 32px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Med Assist — Settings</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+      background: #0a0f1e;
+      color: #f1f5f9;
+      padding: 40px 32px;
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+    h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .subtitle { color: #94a3b8; font-size: 14px; margin-bottom: 32px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: #1e2a3a;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 8px;
+      color: #f1f5f9;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: #3b82f6; }
+    .hint { font-size: 12px; color: #64748b; margin-top: 6px; }
+    button {
+      margin-top: 20px;
+      padding: 10px 22px;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .saved { color: #10b981; font-size: 13px; margin-top: 10px; display: none; }
+  </style>
 </head>
-
 <body>
-    <div class="glass-panel">
-        <h2><span class="text-gradient">Med</span> Assist</h2>
-        <p>The Chrome extension needs native microphone access to run in the background and mix your voice with the
-            consultation audio.</p>
-
-        <div id="status" class="status-box"></div>
-        <div id="error" class="status-box"></div>
-
-        <button id="grantBtn">Grant Microphone Access</button>
-    </div>
-
-    <script src="options.js"></script>
+  <h1>Med Assist Settings</h1>
+  <p class="subtitle">Configure the connection to your Med Assist backend.</p>
+  <div>
+    <label for="backend-url">Backend URL</label>
+    <input type="text" id="backend-url" placeholder="http://localhost:8000" />
+    <p class="hint">The URL of your running Med Assist backend server.</p>
+  </div>
+  <div>
+    <label for="dashboard-url" style="margin-top:20px; display:block">Dashboard URL</label>
+    <input type="text" id="dashboard-url" placeholder="http://localhost:5173" />
+    <p class="hint">The URL of your Med Assist web dashboard.</p>
+  </div>
+  <button id="save-btn">Save Settings</button>
+  <p class="saved" id="saved-msg">✓ Settings saved</p>
+  <script src="options.js"></script>
 </body>
-
 </html>

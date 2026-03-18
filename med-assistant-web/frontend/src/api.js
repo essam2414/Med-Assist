@@ -119,14 +119,14 @@ export async function fetchConsultations() {
   return res.json();
 }
 
-export async function createConsultation(title, patient_id = null) {
+export async function createConsultation(title, patient_id = null, about = null) {
   const res = await fetch(`${API_URL}/consultations`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     credentials: "include",
-    body: JSON.stringify({ title, patient_id }),
+    body: JSON.stringify({ title, patient_id, about }),
   });
   if (res.status === 401) {
     throw new Error("unauthorized");
@@ -351,5 +351,41 @@ export async function disconnectBot(consultation_id) {
 export async function checkServerStatus() {
   const res = await fetch(`${API_URL}/health`);
   if (!res.ok) throw new Error("Server error");
+  return res.json();
+}
+
+export async function generateConsultationInsights(consultationId) {
+  const res = await fetch(`${API_URL}/insights/generate/${consultationId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to generate AI insights");
+  }
+  return res.json();
+}
+
+export async function fetchLiveInsights(consultationId) {
+  const res = await fetch(`${API_URL}/insights/live/${consultationId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to fetch live insights");
+  }
   return res.json();
 }

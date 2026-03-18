@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
@@ -8,8 +8,89 @@ from app.models.insight import AIInsight as InsightModel
 from app.models.consultation import Consultation as ConsultationModel
 from app.schemas.insight import AIInsight, AIInsightCreate
 from app.models.user import User
+from app.services.insight_service import generate_live_insights
+from app.services.live_insight_service import evaluate_and_generate_live_insights
 
 router = APIRouter(prefix="/insights", tags=["insights"])
+
+from pydantic import BaseModel
+
+from app.models.live_insight import LiveInsight as LiveInsightModel
+from app.schemas.live_insight import LiveInsight as LiveInsightSchema
+
+class GenerateInsightsRequest(BaseModel):
+    pass
+
+@router.get("/live/{consultation_id}", response_model=List[LiveInsightSchema])
+def get_live_insights(
+    consultation_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    consultation = db.query(ConsultationModel).filter(
+        ConsultationModel.id == consultation_id,
+        ConsultationModel.doctor_id == current_user.id
+    ).first()
+    
+    if not consultation:
+        raise HTTPException(status_code=404, detail="Consultation not found")
+        
+    insights = db.query(LiveInsightModel).filter(
+        LiveInsightModel.consultation_id == consultation_id
+    ).order_by(LiveInsightModel.created_at.asc()).all()
+
+    # Trigger background evaluation ONLY if the consultation is still active (draft)
+    if consultation.status == "draft":
+        background_tasks.add_task(evaluate_and_generate_live_insights, consultation_id)
+    
+    return insights
+
+@router.get("/generate/{consultation_id}", response_model=AIInsight)
+def generate_and_save_insight(
+    consultation_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    print(f"DEBUG: Generate insights requested for ID {consultation_id}")
+    consultation = db.query(ConsultationModel).filter(
+        ConsultationModel.id == consultation_id,
+        ConsultationModel.doctor_id == current_user.id
+    ).first()
+
+    
+    if not consultation:
+        raise HTTPException(status_code=404, detail="Consultation not found")
+        
+    # Check if an insight already exists for this consultation
+    existing_insight = db.query(InsightModel).filter(InsightModel.consultation_id == consultation_id).first()
+    if existing_insight:
+        db.delete(existing_insight)
+        db.commit()
+
+    # Generate new insights using the service
+    try:
+        insight_data = generate_live_insights(consultation_id, db, current_user.id)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"Error generating insights: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate AI Insights.")
+        
+    i = InsightModel(
+        consultation_id=consultation.id,
+        summary=insight_data.get("summary", ""),
+        key_points=insight_data.get("key_points", ""),
+        suggested_questions=insight_data.get("suggested_questions", ""),
+        risk_flags=insight_data.get("risk_flags", ""),
+        emerging_themes=insight_data.get("emerging_themes", ""),
+        model_name=insight_data.get("model_name", "llama3.2"),
+        created_at=datetime.utcnow(),
+    )
+    db.add(i)
+    db.commit()
+    db.refresh(i)
+    return i
 
 @router.post("/", response_model=AIInsight)
 def create_insight(

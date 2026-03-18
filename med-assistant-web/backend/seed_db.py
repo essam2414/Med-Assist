@@ -11,12 +11,12 @@ from app.models.transcript import TranscriptEntry
 db = SessionLocal()
 
 # Find admin user or create one
-admin_user = db.query(User).filter(User.email == "admin@example.com").first()
+admin_user = db.query(User).filter(User.email == "essamsheikh24@gmail.com").first()
 if not admin_user:
     from app.auth import get_password_hash
     admin_user = User(
-        name="Admin User",
-        email="admin@example.com",
+        name="Essam Sheikh",
+        email="essamsheikh24@gmail.com",
         role="admin",
         hashed_password=get_password_hash("admin123")
     )

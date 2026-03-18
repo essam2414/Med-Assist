@@ -1,0 +1,28 @@
+NICE Guideline NG197: Shared Decision Making - Essential Clinical Recommendations
+
+DEFINITION:
+Shared decision making is a collaborative process that involves a person and their healthcare professional working together to reach a joint decision about care. It involves choosing tests and treatments based both on evidence and on the person's individual preferences, beliefs and values.
+
+CORE CLINICAL PRINCIPLES (SECTION 1.2):
+- Support shared decision making before, during, and after discussions.
+- Ask the person if they want to involve family, friends, carers, or advocates.
+- Agree an 'agenda' at the start of each discussion; say how long it will last.
+- Explain healthcare aims of each option and discuss how they align with the person's priorities and wider goals.
+- Openly discuss risks, benefits, and consequences, including the choice of no treatment or no change.
+- Clarify what the person hopes to gain and discuss any misconceptions.
+- Use 'chunk and check': deliver information in manageable segments and check understanding using the 'teach back' technique.
+- Record decisions along with details of what the person said was important to them (values and preferences).
+- Write clinical letters TO the patient rather than to their healthcare professional.
+
+COMMUNICATING RISKS AND CONSEQUENCES (SECTION 1.4):
+- Discuss risks in the context of each person's life and what matters to them.
+- Use good-quality patient decision aids, pictographs, or icon arrays.
+- Personalise information on risks and make uncertainty clear.
+- Use absolute risk (e.g., 1 in 1000) rather than relative risk (e.g., risk doubles).
+- Use natural frequencies (e.g., 10 in 100) rather than percentages (10%).
+- Use consistent denominators when comparing risks (e.g., 7 in 100 vs 20 in 100).
+- Use both positive and negative framing (e.g., 97 out of 100 succeed, 3 out of 100 do not).
+
+KEY TECHNIQUES:
+- Teach Back: Confirming understanding by getting people to 'teach back' what has been discussed.
+- Three-talk model: Introducing choice, Describing options, and Helping people explore preferences.
