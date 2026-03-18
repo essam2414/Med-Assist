@@ -20,3 +20,4 @@ class User(Base):
     consultations = relationship("Consultation", back_populates="doctor", cascade="all, delete-orphan")
     patients = relationship("Patient", back_populates="doctor", cascade="all, delete-orphan")
     chat_sessions = relationship("ChatSession", back_populates="user", cascade="all, delete-orphan")
+    ai_analytics = relationship("AIAnalytics", back_populates="doctor", cascade="all, delete-orphan")

@@ -28,6 +28,9 @@ app.add_middleware(
 # Create tables (once, on startup)
 Base.metadata.create_all(bind=engine)  # creates user, consultations, transcript_entries, ai_insights
 
+from app.api.routes_recall import router as recall_router
+from app.api.routes_ai_analytics import router as ai_analytics_router
+
 app.include_router(root_router)
 app.include_router(auth_router)
 app.include_router(consultations_router)
@@ -36,6 +39,7 @@ app.include_router(insights_router)
 app.include_router(patients_router)
 app.include_router(chat_router)
 app.include_router(recall_router)
+app.include_router(ai_analytics_router)
 
 
 @app.get("/health", tags=["health"])
