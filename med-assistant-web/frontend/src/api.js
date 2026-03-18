@@ -389,3 +389,30 @@ export async function fetchLiveInsights(consultationId) {
   }
   return res.json();
 }
+
+// AI Analytics
+export async function fetchWeeklyAnalytics(dateParam = null, generate = false) {
+  let url = `${API_URL}/api/ai-analytics/weekly`;
+  const params = new URLSearchParams();
+  if (dateParam) params.append('target_date', dateParam);
+  if (generate) params.append('generate', 'true');
+  
+  const queryString = params.toString();
+  if (queryString) url += `?${queryString}`;
+  
+  const res = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+  if (res.status === 401) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to fetch weekly analytics");
+  }
+  return res.json();
+}
+

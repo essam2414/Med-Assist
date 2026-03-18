@@ -7,3 +7,4 @@ from app.models.insight import AIInsight  # noqa
 from app.models.patient import Patient  # noqa
 from app.models.chat import ChatSession, ChatMessage  # noqa
 from app.models.live_insight import LiveInsight  # noqa
+from app.models.ai_analytics import AIAnalytics  # noqa
