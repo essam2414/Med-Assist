@@ -23,7 +23,7 @@ async def get_weekly_analytics(
         target_date = date.today()
         
     try:
-        analytics = await generate_weekly_analytics(db, current_user.id, target_date, generate)
+        analytics = await generate_weekly_analytics(db, current_user.id, current_user.name, target_date, generate)
         return analytics
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
