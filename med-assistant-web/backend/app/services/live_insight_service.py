@@ -1,5 +1,4 @@
 import json
-import time
 from datetime import datetime
 from sqlalchemy.orm import Session
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -8,43 +7,57 @@ from app.models.consultation import Consultation
 from app.models.transcript import TranscriptEntry
 from app.models.live_insight import LiveInsight
 from app.db import SessionLocal
-from app.services.knowledge_base import knowledge_base
 
 # Global set to track consultations currently generating insights
 PROCESSING_CONSULTATIONS = set()
 
-# Cache: consultation_id → relevant NICE guideline text
-# Populated once on first insight, reused for all subsequent updates.
-GUIDELINE_CACHE: dict = {}
+LIVE_SYSTEM_PROMPT = """You are a real-time clinical assistant helping a doctor during a live patient consultation.
 
-LIVE_SYSTEM_PROMPT = """You are a real-time clinical assistant during a live consultation.
+You will receive:
+1. PATIENT BACKGROUND - name and known history
+2. ALL PREVIOUS LIVE INSIGHTS - everything already communicated; do NOT repeat any of it
+3. THE NEW TRANSCRIPT SEGMENT - lines spoken since your last update (your PRIMARY source)
+4. FULL CONVERSATION SO FAR - background context only
 
-Sections provided: 1=Patient Background, 2=Your Last Insight (JSON), 3=Established Facts, 4=New Transcript (PRIMARY), 5=Full Conversation, 6=NICE Guidelines.
+Your job: identify what is GENUINELY NEW in section 3 that is NOT already in section 2.
 
-Your job: report ONLY what is GENUINELY NEW in section 4, not in sections 2/3.
-
+━━━ RULES ━━━
 GROUNDING
-- Only report symptoms/risk factors EXPLICITLY STATED in the transcript or patient record.
-- Unmentioned symptoms are "not documented" — never say "absent" or "not present".
-- Never introduce terms (e.g. vomiting, diabetes) not in the text.
-- No diagnoses, prognoses, or medical advice.
+- Only report facts EXPLICITLY STATED in sections 3 or 4. Never infer or speculate.
+- Do NOT interpret tone, emotion, or certainty unless directly quoted.
+- Do NOT give diagnoses, prognoses, or medical advice.
 
 NON-REPETITION
-- Nothing from sections 2/3 may reappear, even rephrased.
-- If nothing new, return ALL empty strings.
+- A fact already in section 2 must NOT appear again, even slightly rephrased.
+- If the new segment adds nothing materially new, return ALL empty strings. Silence is better than repetition.
 
-NEW PROBLEMS: group related facts into problem statements (not atomic data points). Only NEW ones.
+PROBLEM-LEVEL SUMMARIES (not atomic data points)
+- Under "new_problems", group related clinical facts into meaningful problem statements.
+  GOOD: "Recurrent exertional central chest pain radiating to left arm, lasting 5-10 mins, relieved by rest."
+  BAD:  "Location of pain: middle of the chest." / "Pain duration: 5-10 minutes."
 
-SUMMARY: 2-3 sentences of ONLY new information from section 4.
+SUMMARY (2-3 sentences)
+- Sentence 1: the main complaint and its key features (location, character, radiation, timing, triggers, relief).
+- Sentence 2: any associated symptoms or absence of red-flag symptoms if newly mentioned.
+- Sentence 3 (optional): where in the consultation you are (e.g. "History complete; doctor has proposed ECG.").
 
-SUGGESTIONS (max 2): check section 5 for already-answered questions. Only suggest genuinely unaddressed gaps.
+SUGGESTIONS TO CONSIDER (max 2)
+- Only suggest clarifications NOT already addressed in section 4.
+- Advance logically: if location/nature/duration are documented, move to triggers, relief, associated symptoms, risk factors, impact on functioning, red flags.
+- Never repeat a suggestion from section 2.
 
-RISKS/CONTEXT:
-- Only risk factors explicitly stated (quote what was said).
-- Prefix guideline points with "NICE:" — never repeat from previous updates.
+RISKS/CONTEXT
+- Explicitly capture: cardiovascular risk factors (smoking, hypertension, diabetes, family history), exertional pattern, relief factors, and any red-flag symptom absences (e.g. "no nausea or sweating reported").
+- Only include what is documented in sections 3 or 4.
 
-Respond ONLY with valid JSON:
-{"summary":"","new_problems":"","suggestions_to_consider":"","risks_context":""}
+━━━ OUTPUT ━━━
+Respond ONLY with a valid JSON object. No markdown, no explanation:
+{
+  "summary": "2-3 sentence clinical summary of what is new, or empty string if nothing new",
+  "new_problems": "1-3 bullet lines, each a clinical problem statement grouping related facts, or empty string",
+  "suggestions_to_consider": "Up to 2 bullet lines of next logical clarifications not yet addressed, or empty string",
+  "risks_context": "1-4 bullet lines of risk factors, red flags, and modifiers explicitly documented, or empty string"
+}
 """
 
 def evaluate_and_generate_live_insights(consultation_id: int):
@@ -69,13 +82,13 @@ def evaluate_and_generate_live_insights(consultation_id: int):
 
         patient = consultation.patient
 
-        # Query all previous insights ONCE — used for throttling, last-insight JSON, and established facts
-        all_prev_insights = db.query(LiveInsight).filter(
+        # Find the last generated live insight
+        last_insight = db.query(LiveInsight).filter(
             LiveInsight.consultation_id == consultation_id
-        ).order_by(LiveInsight.created_at.asc()).all()
-        last_insight = all_prev_insights[-1] if all_prev_insights else None
+        ).order_by(LiveInsight.created_at.desc()).first()
 
         # 1. THROTTLING
+        # Do not generate if we generated one less than 20 seconds ago
         if last_insight:
             time_diff = (datetime.utcnow() - last_insight.created_at).total_seconds()
             if time_diff < 12:
@@ -83,6 +96,7 @@ def evaluate_and_generate_live_insights(consultation_id: int):
                 return
 
         # 2. TRANSCRIPT LENGTH CHECK
+        # Check how much transcript has been added since the last insight
         query = db.query(TranscriptEntry).filter(TranscriptEntry.consultation_id == consultation_id)
         if last_insight:
             query = query.filter(TranscriptEntry.created_at > last_insight.created_at)
@@ -90,12 +104,12 @@ def evaluate_and_generate_live_insights(consultation_id: int):
         new_transcripts = query.order_by(TranscriptEntry.start_time).all()
         new_text_len = sum(len(t.text) for t in new_transcripts)
 
+        # Require at least 120 characters of new audio to bother running the LLM
         if new_text_len < 120:
-            print(f"[{consultation_id}] LIVE: Skipping. Not enough new transcript ({new_text_len} < 120 chars).")
+            print(f"[{consultation_id}] LIVE: Skipping. Not enough new transcript length ({new_text_len} < 120).")
             return
 
-        print(f"[{consultation_id}] LIVE: Generating insight from {new_text_len} chars of new audio...")
-        gen_start = time.time()
+        print(f"[{consultation_id}] LIVE: Generating new live insight based on {new_text_len} chars of new audio...")
 
         # 3. CONTEXT GATHERING
         patient_info = "No patient data available."
@@ -108,20 +122,17 @@ def evaluate_and_generate_live_insights(consultation_id: int):
         # Build the NEW segment specifically (lines added since last insight) — primary source
         new_segment_text = "\n".join([f"[{t.speaker}]: {t.text}" for t in new_transcripts])
 
-        # Build the LAST INSIGHT as compact JSON so the model sees exactly what it said
-        last_insight_json = "None — first update."
-        if last_insight:
-            last_insight_json = json.dumps({
-                "summary": last_insight.summary or "",
-                "new_problems": last_insight.key_points or "",
-                "suggestions_to_consider": last_insight.suggested_questions or "",
-                "risks_context": last_insight.risk_flags or ""
-            })
-
         # Build a compact cumulative "established facts" summary from all previous insights.
+        # This stays flat in size (one bullet per fact type, deduplicated) rather than
+        # growing linearly with every update, which keeps the prompt token count bounded.
+        all_prev_insights = db.query(LiveInsight).filter(
+            LiveInsight.consultation_id == consultation_id
+        ).order_by(LiveInsight.created_at.asc()).all()
+
         if not all_prev_insights:
             established_facts = "None - this is the first update."
         else:
+            # Collect all unique lines from all previous updates
             seen = set()
             fact_lines = []
             for pi in all_prev_insights:
@@ -135,40 +146,32 @@ def evaluate_and_generate_live_insights(consultation_id: int):
                             fact_lines.append(f"• {line.lstrip('- •')}")
             established_facts = "\n".join(fact_lines) if fact_lines else "None."
 
-        # Include more transcript context (2000 chars) so the model can see what
-        # questions have already been asked and answered — critical for gap-aware suggestions.
+        # Only include the last 800 chars of transcript for bridging context.
+        # The model already has the new segment and established facts — the full
+        # transcript is redundant and expensive.
         all_transcripts = db.query(TranscriptEntry).filter(
             TranscriptEntry.consultation_id == consultation_id
         ).order_by(TranscriptEntry.start_time).all()
         full_transcript = "\n".join([f"[{t.speaker}]: {t.text}" for t in all_transcripts])
-        conversation_context = full_transcript[-2000:] if len(full_transcript) > 2000 else full_transcript
+        bridge_context = full_transcript[-800:] if len(full_transcript) > 800 else full_transcript
 
-        # 4. NICE GUIDELINES (cached per consultation — RAG runs once only)
-        if consultation_id not in GUIDELINE_CACHE:
-            about_text = consultation.about or ""
-            guideline_query = f"{about_text} {new_segment_text[:400]}"
-            GUIDELINE_CACHE[consultation_id] = knowledge_base.query_guidelines(guideline_query, k=2)
-            print(f"[{consultation_id}] LIVE: NICE guidelines cached.")
-        relevant_guidelines = GUIDELINE_CACHE[consultation_id]
+        # Release database lock BEFORE the slow LLM generation process to avoid OperationalError on sync_transcripts!
+        db.commit()
 
-        # 5. PROMPTING — 6-section structure matching the system prompt
+        # 4. PROMPTING — compact structure
         human_content = (
             f"--- 1. PATIENT BACKGROUND ---\n{patient_info}\n\n"
-            f"--- 2. YOUR LAST INSIGHT (do NOT repeat) ---\n{last_insight_json}\n\n"
-            f"--- 3. ALL ESTABLISHED FACTS (do NOT repeat any of this) ---\n{established_facts}\n\n"
-            f"--- 4. NEW TRANSCRIPT SEGMENT (your primary source) ---\n{new_segment_text}\n\n"
-            f"--- 5. FULL CONVERSATION SO FAR (check what is already answered) ---\n{conversation_context}\n\n"
-            f"--- 6. RELEVANT NICE GUIDELINES (enrich risks/suggestions only, prefix with NICE:) ---\n{relevant_guidelines}\n"
+            f"--- 2. ESTABLISHED FACTS (do NOT repeat any of this) ---\n{established_facts}\n\n"
+            f"--- 3. NEW TRANSCRIPT SEGMENT (your primary source) ---\n{new_segment_text}\n\n"
+            f"--- 4. RECENT CONVERSATION CONTEXT ---\n{bridge_context}\n"
         )
 
         llm = ChatOllama(
             model="llama3.2",
             temperature=0,
-            num_predict=350,     # Tighter — live updates are concise
+            num_predict=400,
             num_thread=8,
-            num_ctx=3000,
-            repeat_penalty=1.15, # Discourage token repetition → faster convergence
-            keep_alive=-1,       # Keep model in memory between calls (biggest speedup)
+            num_ctx=2048,   # Reduced: inputs are now compact so we don't need 4096
         )
 
         response = llm.invoke([
@@ -212,8 +215,7 @@ def evaluate_and_generate_live_insights(consultation_id: int):
             )
             db.add(new_insight)
             db.commit()
-            gen_time = time.time() - gen_start
-            print(f"[{consultation_id}] LIVE: Saved new live insight! (generated in {gen_time:.1f}s)")
+            print(f"[{consultation_id}] LIVE: Saved new live insight!")
 
         except json.JSONDecodeError:
             print(f"[{consultation_id}] LIVE: Failed to parse JSON. Raw:", response.content)

@@ -114,6 +114,9 @@ class VexaService:
                 if segments:
                     # Clear out the existing transcripts for this exact consultation and insert fresh ones
                     # That allows real-time segments (which can change) to be properly represented.
+                    existing_entries = db.query(TranscriptEntry).filter(TranscriptEntry.consultation_id == consultation.id).all()
+                    existing_created_at = {e.start_time: e.created_at for e in existing_entries}
+                    
                     db.query(TranscriptEntry).filter(TranscriptEntry.consultation_id == consultation.id).delete()
                     
                     doctor_email = consultation.doctor.email.lower()
@@ -145,7 +148,7 @@ class VexaService:
                                 text=text,
                                 start_time=start_time,
                                 end_time=end_time,
-                                created_at=datetime.utcnow()
+                                created_at=existing_created_at.get(start_time, datetime.utcnow())
                             )
                             db.add(new_entry)
                     db.commit()
