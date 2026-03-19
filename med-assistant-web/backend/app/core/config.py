@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     RECALL_REGION: str = "us-east-1"
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 settings = Settings()

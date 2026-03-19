@@ -71,7 +71,8 @@ def send_message(session_id: int, request: ChatSendRequest, db: Session = Depend
             db.refresh(session)
     
     # Format messages for LangChain Agent
-    chat_history = [SystemMessage(content=SYSTEM_PROMPT)]
+    system_prompt_formatted = SYSTEM_PROMPT + f"\n\nIMPORTANT CONTEXT:\n- The clinician currently querying you is Dr. {current_user.name}."
+    chat_history = [SystemMessage(content=system_prompt_formatted)]
     # Skip the very last message in session.messages (which is the one just added above)
     # Limit to the last 6 messages to prevent context bloat for local models
     recent_messages = session.messages[:-1][-6:]
