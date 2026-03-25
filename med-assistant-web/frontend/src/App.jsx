@@ -1054,12 +1054,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                       </span>
                     </div>
 
-                    {c.insights && (
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", padding: "8px 12px", backgroundColor: "rgba(52, 211, 153, 0.05)", borderRadius: "8px", border: "1px solid rgba(52, 211, 153, 0.2)" }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                        <span style={{ color: "#10b981", fontWeight: 600 }}>AI Insights Generated</span>
-                      </div>
-                    )}
+
                   </div>
 
                   <div style={{
