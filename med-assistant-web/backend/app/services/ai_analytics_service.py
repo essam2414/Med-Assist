@@ -76,7 +76,8 @@ Each item describes the key acute complaints and background risk factors that we
 Your task is to write a concise summary (1-2 short paragraphs) describing exactly what was seen this week.
 
 Rules:
-- If there is only 1 consultation, do NOT use plural phrases like "several patients", "a group of individuals", or "various concerns". Frame the summary appropriately for a single case.
+- If consultation_count is 1, do NOT use plural phrases. Frame the summary for a single case.
+- If consultation_count is small (2 to 5), do NOT use sweeping generalizations like "many experiencing", "a common issue", or "a group of individuals". Use precise, appropriately scaled language (e.g. "one patient presented with...", "another discussed...").
 - Clearly differentiate between acute, active complaints (e.g. right shoulder pain) and background risk factors (e.g. history of GERD or migraines). Do not report past history as new acute complaints.
 - Base your summary ONLY on the provided issue descriptions.
 - Do NOT invent additional issues, fake patterns, or fake patient populations.
