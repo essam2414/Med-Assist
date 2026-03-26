@@ -82,7 +82,8 @@ def create_patient_retriever_tool(db: Session):
         for i, cons in enumerate(consultations):
             date_str = cons.created_at.strftime('%Y-%m-%d')
             label = " (MOST RECENT)" if i == 0 else ""
-            cons_list.append(f"- {date_str}: {cons.title}{label}")
+            doctor_name = cons.doctor.name if cons.doctor else "Unknown"
+            cons_list.append(f"- Date: {date_str}, Name/Title: {cons.title}, Clinician: Dr. {doctor_name}{label}")
         
         # Chronological list for the LLM to count and find "last"
         total_cons = len(consultations)
@@ -132,7 +133,7 @@ def create_patient_retriever_tool(db: Session):
 def get_chat_agent_executor(db: Session):
     # Performance tuning for Core Ultra 7
     llm = ChatOllama(
-        model="llama3.2", 
+        model="llama3.1", 
         temperature=0,
         num_predict=200,
         num_thread=8,       # Core Ultra 7 usually has 6 or 8 performance threads

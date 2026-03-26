@@ -225,15 +225,15 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
         <button onClick={() => setView("list")} style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
           <span>←</span> Back to list
         </button>
-        <h1 style={{ fontSize: "32px", fontWeight: 700, marginBottom: "24px", color: "#f8fafc" }}>Create Consultation</h1>
+        <h1 style={{ fontSize: "32px", fontWeight: 700, marginBottom: "24px", color: "var(--text-main)" }}>Create Consultation</h1>
 
         <div className="glass-panel" style={{ padding: "32px" }}>
           <form onSubmit={handleCreateSubmit} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>Consultation Title *</label>
+              <label style={{ fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>Consultation Title *</label>
               <input
-                style={{ padding: "12px", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.2)", backgroundColor: "rgba(15, 23, 42, 0.4)", color: "#f8fafc", outline: "none" }}
+                style={{ padding: "12px", borderRadius: "8px", border: "1px solid var(--border-main)", backgroundColor: "var(--bg-panel)", color: "var(--text-main)", outline: "none" }}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Follow-up for Hypertension"
@@ -242,14 +242,14 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <label style={{ fontSize: "14px", color: "#94a3b8", fontWeight: 500 }}>About this Consultation (Optional)</label>
+              <label style={{ fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>About this Consultation (Optional)</label>
               <textarea
                 style={{
                   padding: "12px",
                   borderRadius: "8px",
-                  border: "1px solid rgba(148, 163, 184, 0.2)",
-                  backgroundColor: "rgba(15, 23, 42, 0.4)",
-                  color: "#f8fafc",
+                  border: "1px solid var(--border-main)",
+                  backgroundColor: "var(--bg-panel)",
+                  color: "var(--text-main)",
                   outline: "none",
                   minHeight: "44px",
                   resize: "none",
@@ -266,14 +266,14 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
               </div>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px", padding: "24px", borderRadius: "12px", backgroundColor: "rgba(30, 41, 59, 0.3)", border: "1px solid rgba(148, 163, 184, 0.15)" }}>
-              <label style={{ fontSize: "16px", color: "#f8fafc", fontWeight: 600, display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px", padding: "24px", borderRadius: "12px", backgroundColor: "var(--bg-panel)", border: "1px solid var(--border-main)" }}>
+              <label style={{ fontSize: "16px", color: "var(--text-main)", fontWeight: 600, display: "flex", alignItems: "center", gap: "8px" }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 Patient Selection
               </label>
 
               <div style={{ display: "flex", flexWrap: "wrap", gap: "24px" }}>
-                <label style={{ display: "flex", alignItems: "center", gap: "10px", color: (selectedPatientId !== "") ? "#f8fafc" : "#94a3b8", cursor: "pointer", fontSize: "15px", transition: "color 0.2s" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "10px", color: (selectedPatientId !== "") ? "var(--text-main)" : "var(--text-muted)", cursor: "pointer", fontSize: "15px", transition: "color 0.2s" }}>
                   <input
                     type="radio"
                     name="patient-mode"
@@ -285,7 +285,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                   />
                   Select Existing
                 </label>
-                <label style={{ display: "flex", alignItems: "center", gap: "10px", color: (selectedPatientId === "") ? "#f8fafc" : "#94a3b8", cursor: "pointer", fontSize: "15px", transition: "color 0.2s" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "10px", color: (selectedPatientId === "") ? "var(--text-main)" : "var(--text-muted)", cursor: "pointer", fontSize: "15px", transition: "color 0.2s" }}>
                   <input
                     type="radio"
                     name="patient-mode"
@@ -311,9 +311,9 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                         width: "100%",
                         padding: "10px 12px 10px 36px",
                         borderRadius: "8px",
-                        border: "1px solid rgba(148, 163, 184, 0.2)",
-                        backgroundColor: "rgba(15, 23, 42, 0.3)",
-                        color: "#f8fafc",
+                        border: "1px solid var(--border-main)",
+                        backgroundColor: "var(--bg-panel)",
+                        color: "var(--text-main)",
                         fontSize: "14px",
                         outline: "none",
                         boxSizing: "border-box"
@@ -340,9 +340,9 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                               width: "100%",
                               padding: "14px",
                               borderRadius: "10px",
-                              border: "1px solid rgba(59, 130, 246, 0.4)",
-                              backgroundColor: "rgba(15, 23, 42, 0.6)",
-                              color: "#f8fafc",
+                              border: "1px solid var(--accent-color)",
+                              backgroundColor: "var(--bg-card)",
+                              color: "var(--text-main)",
                               outline: "none",
                               fontSize: "15px",
                               cursor: "pointer",
@@ -669,12 +669,12 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                   <style dangerouslySetInnerHTML={{
                     __html: `
                     .input-group:focus-within {
-                      border-color: rgba(59, 130, 246, 0.5) !important;
-                      background-color: rgba(15, 23, 42, 0.6) !important;
+                      border-color: var(--accent-color) !important;
+                      background-color: var(--bg-card) !important;
                       box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
                     }
                     .input-group:hover {
-                      border-color: rgba(148, 163, 184, 0.4);
+                      border-color: var(--border-main);
                     }
                   `}} />
                 </>
@@ -689,7 +689,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                     AI Insights
                   </h3>
-                  <div style={{ display: "flex", background: "rgba(15, 23, 42, 0.4)", padding: "2px", borderRadius: "6px", border: "1px solid var(--border-main)", width: "fit-content" }}>
+                  <div style={{ display: "flex", background: "var(--bg-panel)", padding: "2px", borderRadius: "6px", border: "1px solid var(--border-main)", width: "fit-content" }}>
                     <button 
                       onClick={() => setInsightMode("manual")}
                       style={{ 
@@ -1054,12 +1054,7 @@ function Consultations({ onLogout, focusedConsultationId, setFocusedConsultation
                       </span>
                     </div>
 
-                    {c.insights && (
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", padding: "8px 12px", backgroundColor: "rgba(52, 211, 153, 0.05)", borderRadius: "8px", border: "1px solid rgba(52, 211, 153, 0.2)" }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                        <span style={{ color: "#10b981", fontWeight: 600 }}>AI Insights Generated</span>
-                      </div>
-                    )}
+
                   </div>
 
                   <div style={{

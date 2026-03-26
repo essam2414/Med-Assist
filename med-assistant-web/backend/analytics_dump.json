@@ -1,0 +1,563 @@
+[
+  {
+    "analytics_id": 1,
+    "week_start": "2026-03-16 00:00:00",
+    "generated_summary": "This week, patients presented with various chest pain complaints. Some experienced a heavy pressure sensation, while others described squeezing feelings in the middle of their chest that worsened with exertion. Chest pain was relieved by rest and radiated down to one arm on occasion.\n\nRecurring themes among patients include a history of high blood pressure and smoking, which may contribute to their symptoms. Notably, multiple patients have reported radiation of pain to one arm, suggesting a possible pattern in their complaints.",
+    "consultation_count": 3,
+    "patient_count": 3,
+    "consultations": [
+      {
+        "consultation_id": 35,
+        "title": "Test ",
+        "patient": "Anonymous",
+        "insight_key_points": null,
+        "about": "Patient described having chest pain"
+      },
+      {
+        "consultation_id": 39,
+        "title": "Chest pain consultation",
+        "patient": "Anonymous",
+        "insight_key_points": "- Chest pain felt like a heavy pressure\n- Radiation to left shoulder and arm\n- Pain duration: usually 5-10 minutes",
+        "about": "patient has been recording chest pain."
+      },
+      {
+        "consultation_id": 42,
+        "title": "Demo",
+        "patient": "Anonymous",
+        "insight_key_points": "- Stable chest pain with squeezing feeling in middle of chest exacerbated by exertion\n- Pain relieved by rest and radiated down to left arm on one occasion\n- History of high blood pressure and smoking (10 cigarettes daily)\n- No nausea or vomiting, but patient is aware of potential risks associated with smoking\n- ECG ordered for tomorrow morning in the clinic",
+        "about": "Chest pain"
+      }
+    ]
+  },
+  {
+    "analytics_id": 2,
+    "week_start": "2026-03-23 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 3,
+    "week_start": "2026-03-09 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 4,
+    "week_start": "2026-03-02 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 5,
+    "week_start": "2026-02-23 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 6,
+    "week_start": "2026-03-30 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 7,
+    "week_start": "2026-04-06 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 8,
+    "week_start": "2026-04-13 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 9,
+    "week_start": "2026-04-20 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 10,
+    "week_start": "2026-04-27 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 11,
+    "week_start": "2026-05-04 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 12,
+    "week_start": "2026-05-11 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 13,
+    "week_start": "2026-05-18 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 14,
+    "week_start": "2026-05-25 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 15,
+    "week_start": "2026-06-01 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 16,
+    "week_start": "2026-06-08 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 17,
+    "week_start": "2026-06-15 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 18,
+    "week_start": "2026-06-22 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 19,
+    "week_start": "2026-06-29 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 20,
+    "week_start": "2026-07-06 00:00:00",
+    "generated_summary": "No completed consultations recorded for this week.",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 22,
+    "week_start": "2026-02-16 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 23,
+    "week_start": "2026-02-09 00:00:00",
+    "generated_summary": "This week, one patient presented with an acute lumbar sprain, exacerbated by prolonged bed rest. The condition was assessed and managed accordingly.\n\nAnother patient discussed elevated HbA1c levels (8.2%) indicating poor glucose control, accompanied by increased thirst. Background risk factors included Type 2 Diabetes, neuropathy concerns, and a history of medication non-adherence. A plan to increase Metformin dose with potential initial GI upset was discussed, along with the importance of diet reduction in managing blood sugar levels.",
+    "consultation_count": 2,
+    "patient_count": 2,
+    "consultations": [
+      {
+        "consultation_id": 17,
+        "title": "Back Pain Evaluation",
+        "patient": "Arthur Pendelton",
+        "insight_key_points": "- Acute lumbar sprain\n- Prolonged bed rest is worse for it",
+        "about": null
+      },
+      {
+        "consultation_id": 25,
+        "title": "HbA1c Review",
+        "patient": "Diana Rossing",
+        "insight_key_points": "- Elevated HbA1c (8.2%) indicates poor glucose control; patient reports increased thirst\n- Patient has Type 2 Diabetes, neuropathy concerns, and history of medication non-adherence during holidays\n- Doctor plans to increase Metformin dose with potential GI upset initially\n- Importance of diet reduction in managing blood sugar levels\n- Scheduled follow-up in three months for A1c recheck",
+        "about": null
+      }
+    ]
+  },
+  {
+    "analytics_id": 24,
+    "week_start": "2026-02-02 00:00:00",
+    "generated_summary": "This week, Dr. Essam Sheikh saw a patient presenting with chronic migraines and a long-standing history of GERD. The patient's background risk factors include previous episodes of migraines and acid reflux.\n\nThe patient recently developed acute right shoulder pain, characterized by sharp pain upon elevation, which is a new development in the patient's medical history.",
+    "consultation_count": 1,
+    "patient_count": 1,
+    "consultations": [
+      {
+        "consultation_id": 30,
+        "title": "Right Shoulder Pain",
+        "patient": "Ethan Vance",
+        "insight_key_points": "- Chronic migraines and GERD\n- Recent onset of right shoulder pain with sharp pain on elevation",
+        "about": null
+      }
+    ]
+  },
+  {
+    "analytics_id": 25,
+    "week_start": "2026-01-26 00:00:00",
+    "generated_summary": "This week's consultation with Dr. Essam Sheikh focused on a routine wellness exam for one patient. The patient presented with no acute complaints or issues during the examination.\n\nThe only notable aspect of this visit was the routine nature of the appointment, with no significant health concerns or active complaints documented.",
+    "consultation_count": 1,
+    "patient_count": 1,
+    "consultations": [
+      {
+        "consultation_id": 24,
+        "title": "Annual Physical and Flu Shot",
+        "patient": "Cedric Diggens",
+        "insight_key_points": "- Routine Wellness Exam: No acute problems.",
+        "about": null
+      }
+    ]
+  },
+  {
+    "analytics_id": 28,
+    "week_start": "2026-01-19 00:00:00",
+    "generated_summary": "This week, two patients presented with distinct health concerns. Dr. Essam Sheikh saw one patient who has been managing hypertension, with recent improvements noted in blood pressure control. The patient also experienced dizziness upon standing, which is being monitored as part of their ongoing care.\n\nIn the second consultation, another patient was diagnosed with early signs of osteoarthritis in the right knee. Characterized by sharp pain on manipulation and exacerbation upon weight-bearing activities, this condition will require further management to alleviate symptoms and slow disease progression.",
+    "consultation_count": 2,
+    "patient_count": 2,
+    "consultations": [
+      {
+        "consultation_id": 16,
+        "title": "Follow-up on Blood Pressure",
+        "patient": "Arthur Pendelton",
+        "insight_key_points": "- Hypertension management\n- Dizziness upon standing\n- Improved blood pressure with current medication",
+        "about": null
+      },
+      {
+        "consultation_id": 22,
+        "title": "Knee Pain Consultation",
+        "patient": "Cedric Diggens",
+        "insight_key_points": "- Patient presents with early signs of osteoarthritis in the right knee, characterized by sharp pain on manipulation and exacerbation upon weight-bearing activities.",
+        "about": null
+      }
+    ]
+  },
+  {
+    "analytics_id": 29,
+    "week_start": "2026-01-12 00:00:00",
+    "generated_summary": "This week, one patient presented with difficulty falling asleep due to racing thoughts and work stress, accompanied by excessive daytime fatigue likely related to insomnia. The patient's history of hypertension may be contributing to sleep quality issues.\n\nAnother patient discussed a mole on their left shoulder that has darkened and possibly increased in size, with irregular borders and variation in pigment observed during dermatoscope examination.",
+    "consultation_count": 2,
+    "patient_count": 2,
+    "consultations": [
+      {
+        "consultation_id": 18,
+        "title": "Insomnia and Stress Management",
+        "patient": "Arthur Pendelton",
+        "insight_key_points": "- {'problem_statement': 'Difficulty falling asleep due to racing thoughts and work stress'}\n- {'problem_statement': 'Excessive daytime fatigue likely related to insomnia'}\n- {'risk_factor': 'History of hypertension, potentially impacting sleep quality'}",
+        "about": null
+      },
+      {
+        "consultation_id": 20,
+        "title": "Routine Skin Mole Check",
+        "patient": "Beatrice Lowe",
+        "insight_key_points": "- Mole on left shoulder has darkened and possibly increased in size\n- Irregular borders and variation in pigment observed during dermatoscope examination",
+        "about": null
+      }
+    ]
+  },
+  {
+    "analytics_id": 30,
+    "week_start": "2026-01-05 00:00:00",
+    "generated_summary": "This week, a patient presented with tingling in their toes that occurs at night and resolves upon shaking. The clinical examination revealed diminished sensation on the heels, consistent with early peripheral neuropathy. \n\nThe patient's history of Type 2 Diabetes is a significant concern, as it increases the risk for diabetic complications, including neuropathy. As part of management, regular foot inspections are recommended to monitor for any changes or progression of symptoms.",
+    "consultation_count": 1,
+    "patient_count": 1,
+    "consultations": [
+      {
+        "consultation_id": 26,
+        "title": "Diabetic Foot Exam",
+        "patient": "Diana Rossing",
+        "insight_key_points": "- Primary presenting complaint: Tingling in toes at night that resolves upon shaking\n- Clinical feature: Diminished sensation on heels consistent with early peripheral neuropathy\n- Risk factor for diabetic complications: Type 2 Diabetes, neuropathy concerns\n- Recommendation: Regular foot inspections and addressing risk factors associated with diabetes",
+        "about": null
+      }
+    ]
+  },
+  {
+    "analytics_id": 31,
+    "week_start": "2025-12-29 00:00:00",
+    "generated_summary": "This week, two patients presented with distinct health issues. \n\nOne patient, a 52-year-old male, experienced burning urination and frequent urination since yesterday morning, accompanied by lower stomach discomfort without fever or chills. He has osteoarthritis in his knee and is otherwise in good general wellness.\n\nAnother patient struggled with difficulty interpreting nutrition labels and finding suitable snacks, particularly at grocery stores, due to confusion about balancing their diet with diabetes management. They have type 2 Diabetes and neuropathy concerns.",
+    "consultation_count": 2,
+    "patient_count": 2,
+    "consultations": [
+      {
+        "consultation_id": 23,
+        "title": "Suspected UTI",
+        "patient": "Cedric Diggens",
+        "insight_key_points": "- Patient presents with primary complaint of burning urination and frequent urination since yesterday morning\n- Associated symptom: lower stomach discomfort without fever or chills\n- Risk factor: male, aged 52 (1970-01-01)\n- Relevant past medical history: osteoarthritis in knee, general wellness\n- Medications to be initiated: Macrobid for UTI treatment",
+        "about": null
+      },
+      {
+        "consultation_id": 27,
+        "title": "Dietician Referral",
+        "patient": "Diana Rossing",
+        "insight_key_points": "- Primary presenting complaint: Difficulty with nutrition label interpretation and finding suitable snacks\n- Associated symptoms: Confusion at grocery stores; struggles to balance diet with diabetes management\n- Relevant past medical history: Type 2 Diabetes, neuropathy concerns\n- Medications: None mentioned during the consultation\n- Social history: No relevant information disclosed",
+        "about": null
+      }
+    ]
+  },
+  {
+    "analytics_id": 32,
+    "week_start": "2025-12-22 00:00:00",
+    "generated_summary": "This week, one patient presented with worsening asthma symptoms over the last two weeks. The patient experienced nocturnal wheezing and an increase in the use of their rescue inhaler. Additionally, they reported shortness of breath three to four times a week, which significantly impacted their sleep.\n\nThe patient's background risk factors were not explicitly documented during this consultation.",
+    "consultation_count": 1,
+    "patient_count": 1,
+    "consultations": [
+      {
+        "consultation_id": 19,
+        "title": "Asthma Flare-up Checkup",
+        "patient": "Beatrice Lowe",
+        "insight_key_points": "- Worsening asthma symptoms over the last two weeks\n- Nocturnal wheezing and increased use of rescue inhaler\n- Shortness of breath three to four times a week affecting sleep",
+        "about": null
+      }
+    ]
+  },
+  {
+    "analytics_id": 33,
+    "week_start": "2025-12-15 00:00:00",
+    "generated_summary": "This week, one patient presented with worsening seasonal allergies, characterized by constant nasal congestion, runny nose, non-stop eye watering, and sneezing. The patient has a history of asthma, which may be exacerbated by using a steroid nasal spray, such as Flonase. To alleviate symptoms, over-the-counter antihistamine eye drops were recommended.\n\nAnother patient discussed chronic migraine with frequent episodes (6-8/month), debilitating symptoms affecting work and daily activities. The patient also expressed concerns about medication overuse, specifically sumatriptan, and considered preventative medication Topiramate. Additionally, the patient has a history of GERD, which is noted in their key diagnoses.",
+    "consultation_count": 2,
+    "patient_count": 2,
+    "consultations": [
+      {
+        "consultation_id": 21,
+        "title": "Seasonal Allergies",
+        "patient": "Beatrice Lowe",
+        "insight_key_points": "- Worsening seasonal allergies with symptoms including constant nasal congestion, runny nose, non-stop eye watering, and sneezing\n- History of asthma that may be exacerbated by using a steroid nasal spray\n- Concerns about potential impact on asthma from using Flonase\n- Recommendation for over-the-counter antihistamine eye drops to alleviate symptoms\n- Daily use of Flonase suggested to target inflammation in nasal passages",
+        "about": null
+      },
+      {
+        "consultation_id": 28,
+        "title": "Chronic Migraine Consultation",
+        "patient": "Ethan Vance",
+        "insight_key_points": "- {'problem_statement': 'Chronic Migraine: Frequent episodes (6-8/month) with debilitating symptoms affecting work and daily activities'}\n- {'problem_statement': 'Medication Overuse: Concerns about overusing sumatriptan, leading to consideration of preventative medication Topiramate'}\n- {'problem_statement': \"GERD: Presence in patient's key history/diagnoses\"}",
+        "about": null
+      }
+    ]
+  },
+  {
+    "analytics_id": 34,
+    "week_start": "2025-12-08 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 35,
+    "week_start": "2025-12-01 00:00:00",
+    "generated_summary": "This week, a patient presented with a burning sensation in their chest, primarily after eating dinner and laying down. They also reported a sour taste in the back of their throat and occasional coughing at night, which is related to their existing history of GERD. \n\nThe patient's chronic migraines and GERD history were noted as background risk factors.",
+    "consultation_count": 1,
+    "patient_count": 1,
+    "consultations": [
+      {
+        "consultation_id": 29,
+        "title": "Acid Reflux Symptoms",
+        "patient": "Ethan Vance",
+        "insight_key_points": "- Burning sensation in chest, mostly after eating dinner and laying down\n- Sour taste in the back of throat\n- Occasional cough at night due to GERD\n- Chronic migraines and GERD history\n- Risk factors: chronic migraines",
+        "about": null
+      }
+    ]
+  },
+  {
+    "analytics_id": 36,
+    "week_start": "2025-11-24 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 37,
+    "week_start": "2025-11-17 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 38,
+    "week_start": "2025-11-10 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 39,
+    "week_start": "2025-11-03 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 40,
+    "week_start": "2025-10-27 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 41,
+    "week_start": "2025-10-20 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 42,
+    "week_start": "2025-10-13 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 43,
+    "week_start": "2025-10-06 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 44,
+    "week_start": "2025-09-29 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 45,
+    "week_start": "2025-09-22 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 46,
+    "week_start": "2025-09-15 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 47,
+    "week_start": "2025-09-08 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 48,
+    "week_start": "2025-09-01 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 49,
+    "week_start": "2025-08-25 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 50,
+    "week_start": "2025-08-18 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 51,
+    "week_start": "2025-08-11 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 52,
+    "week_start": "2025-08-04 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 53,
+    "week_start": "2025-07-28 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 54,
+    "week_start": "2025-07-21 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 55,
+    "week_start": "2025-07-14 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  },
+  {
+    "analytics_id": 56,
+    "week_start": "2025-07-07 00:00:00",
+    "generated_summary": "",
+    "consultation_count": 0,
+    "patient_count": 0,
+    "consultations": []
+  }
+]

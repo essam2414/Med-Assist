@@ -114,10 +114,13 @@ class VexaService:
                 if segments:
                     # Clear out the existing transcripts for this exact consultation and insert fresh ones
                     # That allows real-time segments (which can change) to be properly represented.
+                    existing_entries = db.query(TranscriptEntry).filter(TranscriptEntry.consultation_id == consultation.id).all()
+                    existing_created_at = {e.start_time: e.created_at for e in existing_entries}
+                    
                     db.query(TranscriptEntry).filter(TranscriptEntry.consultation_id == consultation.id).delete()
                     
-                    doctor_email = consultation.doctor.email.lower()
-                    doctor_name = consultation.doctor.name.lower()
+                    doctor_email = consultation.doctor.email.lower() if consultation.doctor and consultation.doctor.email else ""
+                    doctor_name = consultation.doctor.name.lower() if consultation.doctor and consultation.doctor.name else ""
                     
                     for seg in segments:
                         text = seg.get("text", "").strip()
@@ -128,9 +131,12 @@ class VexaService:
                         speaker_email = seg.get("speaker_email") or seg.get("email")
                         
                         is_doctor = False
-                        if speaker_email and speaker_email.lower() == doctor_email:
+                        safe_speaker_email = speaker_email.lower() if speaker_email else ""
+                        safe_raw_speaker = raw_speaker.lower() if raw_speaker else ""
+                        
+                        if safe_speaker_email and safe_speaker_email == doctor_email:
                             is_doctor = True
-                        elif raw_speaker.lower() == doctor_name or raw_speaker.lower() == doctor_email:
+                        elif safe_raw_speaker == doctor_name or safe_raw_speaker == doctor_email:
                             is_doctor = True
                         
                         speaker_label = "doctor" if is_doctor else "patient"
@@ -145,7 +151,7 @@ class VexaService:
                                 text=text,
                                 start_time=start_time,
                                 end_time=end_time,
-                                created_at=datetime.utcnow()
+                                created_at=existing_created_at.get(start_time, datetime.utcnow())
                             )
                             db.add(new_entry)
                     db.commit()

@@ -1,0 +1,48 @@
+Patient: Michael (Age 52, History: High Blood Pressure, Smoker).
+Doctor: Dr. Smith.
+Reason for visit: Chest pain.
+
+
+Doctor: Good morning. I see you've come in today regarding some chest pain?
+
+Patient: Hi. Yes, it started about three days ago. I’ve been getting this tight squeezing feeling right in the middle of my chest.
+
+Doctor: I'm sorry to hear that. Can you tell me exactly what you're doing when you feel this squeezing?
+
+Patient: It mostly happens when I'm walking up the hill to my house after work. Or if I'm doing heavy lifting in the garden.
+
+Doctor: And does the pain travel anywhere else? Like up to your jaw or down your arms?
+
+Patient: Actually, yes. Yesterday when it happened, it felt like it was shooting down my left arm a little bit. It worried me.
+
+Doctor: How long does the pain usually last when it starts?
+
+Patient: Only about 5 or maybe 10 minutes. If I just stop walking and sit on the bench for a moment, it goes away completely.
+
+
+Doctor: Okay, so it comes on with exertion and stops when you rest. Besides the pain, are you getting any other symptoms? For example, do you feel sick to your stomach, or find yourself sweating heavily?
+
+Patient: No, nothing like that. No sweating, and my stomach is fine. I do get a tiny bit breathless, but I think that's just because I'm walking uphill.
+
+Doctor: Have you ever had anything like this in the past?
+
+Patient: Never. This is the first time. 
+
+Doctor: Let's review your history. You take medication for high blood pressure, correct? 
+
+Patient: Yes, and I’ve been taking my pills every morning.
+
+Doctor: And are you still smoking?
+
+Patient: Yes, about 10 a day. I know I need to quit.
+
+
+Doctor: We can discuss strategies for that, but right now I want to focus on this chest pain. Given the way you describe it—the squeezing feeling that comes with effort and goes away with rest—I want to be cautious. 
+
+Patient: What do you think it is, doctor?
+
+Doctor: It sounds like classic angina. Because this is a new symptom for you, it's important we get a proper look at your heart. We are going to need to do an ECG right now here in the clinic.
+
+Patient: An ECG? Okay, if you think it's best.
+
+Doctor: Yes, and I'm also going to arrange for some blood tests later this week to check your cholesterol and blood sugar levels. But let's start with the ECG. I'll ask the nurse to set it up.

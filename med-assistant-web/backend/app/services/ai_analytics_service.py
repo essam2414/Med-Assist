@@ -70,23 +70,23 @@ async def generate_weekly_analytics(db: Session, doctor_id: int, doctor_name: st
                     """System:
 
 You are an assistant generating a weekly overview of the health issues discussed in a doctor's consultations.
-You will be given a list of that doctor's consultations for one week.
-Each item describes the key issues/complaints that were talked about in that consultation.
+You will be given data for EXACTLY {consultation_count} consultation(s) representing {patient_count} patient(s) for this week.
+Each item describes the key acute complaints and background risk factors that were documented in that consultation.
 
-Your task is to write a concise summary (1-2 short paragraphs) describing what issues were discussed across all patients this week.
-Focus only on what was actually talked about (symptoms, problems, concerns).
+Your task is to write a concise summary (1-2 short paragraphs) describing exactly what was seen this week.
 
 Rules:
-- Base your summary only on the provided consultation issue descriptions.
-- Do NOT invent additional issues or patterns that are not clearly supported by the list.
+- If consultation_count is 1, do NOT use plural phrases. Frame the summary for a single case.
+- If consultation_count is small (2 to 5), do NOT use sweeping generalizations like "many experiencing", "a common issue", or "a group of individuals". Use precise, appropriately scaled language (e.g. "one patient presented with...", "another discussed...").
+- Clearly differentiate between acute, active complaints (e.g. right shoulder pain) and background risk factors (e.g. history of GERD or migraines). Do not report past history as new acute complaints.
+- Base your summary ONLY on the provided issue descriptions.
+- Do NOT invent additional issues, fake patterns, or fake patient populations.
 - Do NOT give diagnoses, treatment recommendations, or management plans.
-- Do NOT mention tests, medications, or referrals.
-- If you notice repeated issues (e.g. several patients with similar complaints), you may briefly mention that, but only if it clearly appears multiple times.
 - Do not include greetings or sign-offs; output only the summary text.
 
 User:
 
-Consultations for Dr {doctor_name} from {week_start} to {week_end}:
+Data for Dr {doctor_name} from {week_start} to {week_end} ({consultation_count} consultations, {patient_count} patients):
 
 {consultation_issues}
 """
@@ -97,7 +97,9 @@ Consultations for Dr {doctor_name} from {week_start} to {week_end}:
                         "doctor_name": doctor_name or "Doctor",
                         "week_start": week_start.strftime("%B %d, %Y"),
                         "week_end": week_end.strftime("%B %d, %Y"),
-                        "consultation_issues": combined_text
+                        "consultation_issues": combined_text,
+                        "consultation_count": consultation_count,
+                        "patient_count": patient_count
                     })
                     summary_text = response.content.strip() if hasattr(response, 'content') else str(response)
                 except Exception as e:
