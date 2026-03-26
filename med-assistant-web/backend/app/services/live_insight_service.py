@@ -96,7 +96,6 @@ def evaluate_and_generate_live_insights(consultation_id: int):
                 return
 
         # 2. TRANSCRIPT LENGTH CHECK
-        # Check how much transcript has been added since the last insight
         query = db.query(TranscriptEntry).filter(TranscriptEntry.consultation_id == consultation_id)
         if last_insight:
             query = query.filter(TranscriptEntry.created_at > last_insight.created_at)
@@ -104,9 +103,10 @@ def evaluate_and_generate_live_insights(consultation_id: int):
         new_transcripts = query.order_by(TranscriptEntry.start_time).all()
         new_text_len = sum(len(t.text) for t in new_transcripts)
 
-        # Require at least 120 characters of new audio to bother running the LLM
-        if new_text_len < 120:
-            print(f"[{consultation_id}] LIVE: Skipping. Not enough new transcript length ({new_text_len} < 120).")
+        # We previously checked for 120 chars, but this caused critical 
+        # medical facts (like family history) to be ignored if spoken briefly.
+        # Now we only ensure there is SOME new text before running the LLM.
+        if new_text_len == 0:
             return
 
         print(f"[{consultation_id}] LIVE: Generating new live insight based on {new_text_len} chars of new audio...")
