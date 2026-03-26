@@ -133,7 +133,7 @@ def create_patient_retriever_tool(db: Session):
 def get_chat_agent_executor(db: Session):
     # Performance tuning for Core Ultra 7
     llm = ChatOllama(
-        model="llama3.2", 
+        model="llama3.1", 
         temperature=0,
         num_predict=200,
         num_thread=8,       # Core Ultra 7 usually has 6 or 8 performance threads
