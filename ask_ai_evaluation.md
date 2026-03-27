@@ -1,7 +1,7 @@
 # Evaluating the "Ask AI" Chat Feature
 
 ## 1. How the Pipeline Works
-To make it safe for medical use, I built it as an autonomous **ReAct Agent** powered by a Retrieval-Augmented Generation (RAG) pipeline. 
+To make it safe for medical use, I built an autonomous **ReAct Agent** powered by a Retrieval-Augmented Generation (RAG) pipeline using LangChain. 
 
 When a doctor asks a question, the AI doesn't guess the answer. Instead, it follows a strict flow:
 1. **The Tool Call:** The AI pauses, extracts the patient's name from the prompt, and triggers a custom Python tool.
