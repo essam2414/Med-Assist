@@ -17,7 +17,7 @@ A key design choice I made was forcing the AI to explicitly ignore the doctor's 
 ## 2. Testing Methodology
 To evaluate the system without bias, I wrote an automated Python testing script using the **RAGAS framework**. RAGAS uses an "Evaluator LLM" (in my case, OpenAI's `GPT-4o`) to act as a strict, mathematical Judge. 
 
-My script didn't use arbitrary mock data. It directly queried my SQLite Database to test 4 real patients across 20 distinct consultations. It generated questions asking for demographics, timeline summaries, and specific details from individual visits. I also injected 3 adversarial "trick" questions (like asking for a chocolate cake recipe or medication dosages) to test if my prompt guardrails actually worked.
+My script used mock data directly queried from the SQLite Database to test 4 mock patients across 20 distinct consultations. It generated questions asking for demographics, timeline summaries, and specific details from individual visits. I also injected 3 adversarial "trick" questions (like asking for a chocolate cake recipe or medication dosages) to test if my prompt guardrails actually worked.
 
 ---
 
