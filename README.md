@@ -61,20 +61,49 @@ docker compose -f docker-compose.yml -f docker-compose.local-db.yml --profile cp
 ### 2. Backend & AI Setup (FastAPI + Ollama)
 The backend manages Med-Assist logic and uses local LLM inference via Ollama.
 
-#### A. Install Python Dependencies
+#### A. Configure API Keys (First-Time Setup)
+
+Before starting the backend, set the required keys in:
+
+`/home/runner/work/Med-Assist/Med-Assist/med-assistant-web/backend/.env`
+
+Required keys:
+
+- **OPENAI_API_KEY**  
+  - **Used for:** AI features and model calls in backend services  
+  - **Get it from:** OpenAI platform API keys page (`https://platform.openai.com/api-keys`)
+
+- **ASSEMBLYAI_API_KEY**  
+  - **Used for:** AssemblyAI-integrated speech/transcription paths  
+  - **Get it from:** AssemblyAI dashboard (`https://www.assemblyai.com/dashboard`)
+
+- **RECALL_API_KEY**  
+  - **Used for:** Recall integration paths configured in backend settings  
+  - **Get it from:** Recall.ai dashboard (`https://www.recall.ai/`)
+
+- **VEXA_API_KEY**  
+  - **Used for:** Auth header when backend calls the local Vexa gateway  
+  - **Get it from:** your Vexa admin token value (`ADMIN_API_TOKEN`) from your Vexa environment configuration (for example `vexa/.env` based on `vexa/env-example.cpu`)
+
+Optional key:
+
+- **LANGCHAIN_API_KEY** (only if you want LangSmith tracing enabled)
+  - **Get it from:** LangSmith settings (`https://smith.langchain.com/`)
+
+#### B. Install Python Dependencies
 ```powershell
 cd med-assistant-web/backend
 .\.venv\Scripts\Activate
 pip install -r requirements.txt
 ```
 
-#### B. Download Ollama Models
+#### C. Download Ollama Models
 ```powershell
 ollama pull llama3.1
 ollama pull llama3.2
 ```
 
-#### C. Start Backend
+#### D. Start Backend
 ```powershell
 uvicorn app.main:app --reload --port 8000
 ```
