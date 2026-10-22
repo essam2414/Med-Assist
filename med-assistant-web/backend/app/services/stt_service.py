@@ -4,9 +4,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Initialize the OpenAI Client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
 import asyncio
 
 async def transcribe_audio_async(file_path: str, speaker_name: str = None) -> list[dict]:
@@ -16,6 +13,14 @@ async def transcribe_audio_async(file_path: str, speaker_name: str = None) -> li
     """
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Audio file not found at {file_path}")
+
+    # OpenAI transcription is an optional legacy upload path. Vexa supplies the
+    # transcripts in the normal live-meeting workflow, so do not require a key
+    # just to import or start the backend.
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is required for uploaded-audio transcription")
+    client = OpenAI(api_key=api_key)
 
     # Use Whisper to transcribe the audio asynchronously 
     try:

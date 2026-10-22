@@ -10,17 +10,17 @@ logger = logging.getLogger(__name__)
 
 class VexaService:
     def __init__(self):
-        # Local Vexa instances
-        self.gateway_base_url = "http://localhost:8056"
-        self.collector_base_url = "http://localhost:8123"
+        self.gateway_base_url = settings.VEXA_GATEWAY_URL.rstrip("/")
+        self.collector_base_url = settings.VEXA_COLLECTOR_URL.rstrip("/")
 
     @property
     def headers(self):
-        # Define API Key header. If no API key is enforced locally, this can be empty or a dummy value
-        return {
+        headers = {
             "Content-Type": "application/json",
-            "X-API-Key": "jb6gLEGcJabjOf7LWACNDFigWV7BxAcwEj4GCjKH" # Generated API token for Med-Assistant user
         }
+        if settings.VEXA_API_KEY:
+            headers["X-API-Key"] = settings.VEXA_API_KEY
+        return headers
 
     def _extract_google_meet_id(self, url: str) -> str:
         """Extracts the native meeting ID (e.g., abc-defg-hij) from a Google Meet URL."""
