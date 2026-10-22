@@ -14,7 +14,6 @@ class Settings(BaseSettings):
     ASSEMBLYAI_API_KEY: str
     RECALL_API_KEY: str
     RECALL_REGION: str = "us-east-1"
-    VEXA_API_KEY: str = "token"
     class Config:
         env_file = ".env"
         extra = "ignore"

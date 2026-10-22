@@ -61,34 +61,18 @@ docker compose -f docker-compose.yml -f docker-compose.local-db.yml --profile cp
 ### 2. Backend & AI Setup (FastAPI + Ollama)
 The backend manages Med-Assist logic and uses local LLM inference via Ollama.
 
-#### A. Configure API Keys (First-Time Setup)
+#### A. Configure Backend Environment (First-Time Setup)
 
-Before starting the backend, set the required keys in:
+Before starting the backend, open:
 
 `/home/runner/work/Med-Assist/Med-Assist/med-assistant-web/backend/.env`
 
-Required keys:
+Current setup notes:
 
-- **OPENAI_API_KEY**  
-  - **Used for:** AI features and model calls in backend services  
-  - **Get it from:** OpenAI platform API keys page (`https://platform.openai.com/api-keys`)
-
-- **ASSEMBLYAI_API_KEY**  
-  - **Used for:** AssemblyAI-integrated speech/transcription paths  
-  - **Get it from:** AssemblyAI dashboard (`https://www.assemblyai.com/dashboard`)
-
-- **RECALL_API_KEY**  
-  - **Used for:** Recall integration paths configured in backend settings  
-  - **Get it from:** Recall.ai dashboard (`https://www.recall.ai/`)
-
-- **VEXA_API_KEY**  
-  - **Used for:** Auth header when backend calls the local Vexa gateway  
-  - **Get it from:** your Vexa admin token value (`ADMIN_API_TOKEN`) from your Vexa environment configuration (for example `vexa/.env` based on `vexa/env-example.cpu`)
-
-Optional key:
-
-- **LANGCHAIN_API_KEY** (only if you want LangSmith tracing enabled)
-  - **Get it from:** LangSmith settings (`https://smith.langchain.com/`)
+- This project version uses local services for the core app flow.
+- Keep **Vexa-related local values** configured through the Vexa stack (`vexa` directory and compose/env files).
+- In `med-assistant-web/backend/.env`, set `VEXA_API_KEY` to match the local Vexa token used by your stack (default local value is `token` in `vexa/env-example.cpu` as `ADMIN_API_TOKEN`).
+- `LANGCHAIN_API_KEY` is optional and only needed if you want LangSmith tracing.
 
 #### B. Install Python Dependencies
 ```powershell
