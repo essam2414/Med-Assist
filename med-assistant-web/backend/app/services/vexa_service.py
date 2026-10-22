@@ -19,7 +19,7 @@ class VexaService:
         # Define API Key header. If no API key is enforced locally, this can be empty or a dummy value
         return {
             "Content-Type": "application/json",
-            "X-API-Key": "jb6gLEGcJabjOf7LWACNDFigWV7BxAcwEj4GCjKH" # Generated API token for Med-Assistant user
+            "X-API-Key": settings.VEXA_API_KEY
         }
 
     def _extract_google_meet_id(self, url: str) -> str:
