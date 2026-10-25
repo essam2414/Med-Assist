@@ -1,4 +1,4 @@
-﻿# Med-Assist (EUS328 Final Year Project) Achieved 82% grade.
+﻿# Med-Assist (Final Year Project Achieved 82% grade)
 
 Med-Assist is a clinician-focused consultation app with AI-assisted documentation, patient history chat, live insights, and weekly summaries. It's main feature is a locally hosted meeting bot joining an online meeting during a consultation and transcribing the audio and feeding it into a local AI system for live insights. The project does not use any third party infrastructure adhering to NHS guidelines. This repository contains the React web app, FastAPI backend, Chrome extension, and a local Vexa meeting-bot/transcription stack.
 
